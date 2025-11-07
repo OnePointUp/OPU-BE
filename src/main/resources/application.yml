@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: opu-be
+  datasource:
+    url: {DATASOURCE-URL}
+    username: {DATASOURCE-USERNAME}
+    password: {DATASOURCE-PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: true
