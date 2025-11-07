@@ -1,3 +1,8 @@
+/*
+* 사용 예시
+* node make.js order Order
+* */
+
 const fs = require('fs');
 const path = require('path');
 
