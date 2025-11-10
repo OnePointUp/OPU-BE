@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS member(
                                      password VARCHAR(255) NULL,
                                      nickname VARCHAR(50) NOT NULL,
                                      profile_image_url VARCHAR(512) NULL,
-                                     introduction VARCHAR(200) NULL,
+                                     bio VARCHAR(200) NULL,
                                      authorization ENUM('MEMBER','ADMIN') NOT NULL DEFAULT 'MEMBER',
                                      auth_provider VARCHAR(32) NOT NULL DEFAULT 'local',
                                      provider_id VARCHAR(255) NULL,
