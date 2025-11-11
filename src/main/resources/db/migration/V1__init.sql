@@ -33,8 +33,6 @@ CREATE TABLE IF NOT EXISTS opu (
                                    id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
                                    member_id BIGINT NULL,
                                    category_id BIGINT NULL,
-                                   original_opu_id BIGINT NULL,
-                                   fork_count INT NOT NULL DEFAULT 0,
                                    title VARCHAR(100) NOT NULL,
                                    description VARCHAR(255) NULL,
                                    required_minutes INT NULL,
@@ -44,7 +42,6 @@ CREATE TABLE IF NOT EXISTS opu (
                                    deleted_at TIMESTAMP NULL,
                                    CONSTRAINT fk_opu_creator FOREIGN KEY (member_id) REFERENCES member(id) ON DELETE SET NULL,
                                    CONSTRAINT fk_opu_category FOREIGN KEY (category_id) REFERENCES opu_category(id) ON DELETE SET NULL,
-                                   CONSTRAINT fk_opu_original FOREIGN KEY (original_opu_id) REFERENCES opu(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 인덱스 (조회패턴에 맞게)
