@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS opu (
                                    updated_at TIMESTAMP NULL ON UPDATE CURRENT_TIMESTAMP,
                                    deleted_at TIMESTAMP NULL,
                                    CONSTRAINT fk_opu_creator FOREIGN KEY (member_id) REFERENCES member(id) ON DELETE SET NULL,
-                                   CONSTRAINT fk_opu_category FOREIGN KEY (category_id) REFERENCES opu_category(id) ON DELETE SET NULL,
+                                   CONSTRAINT fk_opu_category FOREIGN KEY (category_id) REFERENCES opu_category(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 인덱스 (조회패턴에 맞게)
@@ -50,7 +50,7 @@ CREATE INDEX idx_opu_category ON opu(category_id);
 CREATE INDEX idx_opu_shared_created ON opu(is_shared, created_at DESC);
 CREATE INDEX idx_opu_cat_shared_created ON opu(category_id, is_shared, created_at DESC);
 CREATE INDEX idx_opu_member_created ON opu(member_id, created_at DESC);
-CREATE INDEX idx_opu_original ON opu(original_opu_id);
+
 
 
 -- 사용자 OPU 수행 테이블
