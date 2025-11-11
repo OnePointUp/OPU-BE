@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS notification (
                                             id BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
                                             member_id BIGINT NOT NULL,
                                             title VARCHAR(100) NOT NULL,
-    message VARCHAR(255) NOT NULL,
+    description VARCHAR(255) NOT NULL,
     is_read BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
