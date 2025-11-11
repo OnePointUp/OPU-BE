@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  mariadb:
+    image: mariadb:10.11
+    container_name: opu-mariadb
+    restart: always
+    ports:
+      - "${DB_PORT}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+      TZ: Asia/Seoul
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --max-allowed-packet=64M
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-p${DB_ROOT_PASSWORD}"]
+      interval: 5s
+      retries: 5
+
+  flyway:
+    image: flyway/flyway:11
+    container_name: opu-flyway
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    volumes:
+      - ./src/main/resources/db/migration:/flyway/sql:ro
+    environment:
+      FLYWAY_URL: jdbc:mariadb://mariadb:3306/${DB_NAME}
+      FLYWAY_USER: ${FLYWAY_USER}
+      FLYWAY_PASSWORD: ${FLYWAY_PASSWORD}
+      FLYWAY_BASELINE_ON_MIGRATE: "true"
+      FLYWAY_VALIDATE_ON_MIGRATE: "true"
+    command: migrate
+
+volumes:
+  mariadb_data:
