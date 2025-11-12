@@ -2,9 +2,11 @@ package com.opu.opube.feature.member.command.application.service;
 
 import com.opu.opube.common.email.EmailService;
 import com.opu.opube.common.jwt.JwtEmailTokenProvider;
+import com.opu.opube.common.jwt.JwtTokenProvider;
 import com.opu.opube.exception.BusinessException;
 import com.opu.opube.exception.ErrorCode;
 import com.opu.opube.feature.member.command.application.dto.RegisterRequest;
+import com.opu.opube.feature.member.command.application.dto.TokenResponse;
 import com.opu.opube.feature.member.command.domain.aggregate.Authorization;
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.member.command.domain.repository.MemberRepository;
@@ -23,6 +25,7 @@ public class AuthService {
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtEmailTokenProvider tokenProvider;
+    private final JwtTokenProvider jwtTokenProvider;
     private final EmailService emailService;
 
     @Transactional
@@ -70,6 +73,29 @@ public class AuthService {
         }
 
         return saved.getId();
+    }
+
+    @Transactional(readOnly = true)
+    public TokenResponse login(String email, String rawPassword) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "가입된 회원이 아닙니다."));
+
+        if (!passwordEncoder.matches(rawPassword, member.getPassword())) {
+            throw new BusinessException(ErrorCode.INVALID_PASSWORD, "비밀번호가 일치하지 않습니다.");
+        }
+
+        if (!member.isEmailVerified()) {
+            throw new BusinessException(ErrorCode.EMAIL_NOT_VERIFIED, "이메일 인증이 필요합니다.");
+        }
+
+        String access = jwtTokenProvider.createAccessToken(member.getId());
+        String refresh = jwtTokenProvider.createRefreshToken(member.getId());
+
+        return TokenResponse.builder()
+                .accessToken(access)
+                .refreshToken(refresh)
+                .expiresInSeconds( (long) (jwtTokenProvider.getAccessExpirationSeconds()) )
+                .build();
     }
 
     @Transactional
