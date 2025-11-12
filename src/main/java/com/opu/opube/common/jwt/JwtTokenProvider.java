@@ -18,7 +18,7 @@ public class JwtTokenProvider {
     public JwtTokenProvider(
             @Value("${app.jwt.secret}") String secret,
             @Value("${app.jwt.access-exp-sec:900}") long accessExpSec,
-            @Value("${app.jwt.refresh-exp-sec:1209600}") long refreshExpSec) { // default 14 days
+            @Value("${app.jwt.refresh-exp-sec:1209600}") long refreshExpSec) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
         this.accessTokenMillis = accessExpSec * 1000;
         this.refreshTokenMillis = refreshExpSec * 1000;

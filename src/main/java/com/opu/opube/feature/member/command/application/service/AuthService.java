@@ -94,7 +94,7 @@ public class AuthService {
         return TokenResponse.builder()
                 .accessToken(access)
                 .refreshToken(refresh)
-                .expiresInSeconds( (long) (jwtTokenProvider.getAccessExpirationSeconds()) )
+                .expiresInSeconds(jwtTokenProvider.getAccessExpirationSeconds())
                 .build();
     }
 
