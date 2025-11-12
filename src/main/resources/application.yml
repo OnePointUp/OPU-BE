@@ -16,3 +16,21 @@ spring:
     enabled: true
     baseline-on-migrate: true
     locations: classpath:db/migration
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${GMAIL_SENDER_MAIL}
+    password: ${GMAIL_APP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+app:
+  jwt:
+    email:
+      secret: ${JWT_EMAIL_SECRET}
+      expiration-minutes: 60
