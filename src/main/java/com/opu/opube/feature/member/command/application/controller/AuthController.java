@@ -1,8 +1,10 @@
 package com.opu.opube.feature.member.command.application.controller;
 
 import com.opu.opube.common.dto.ApiResponse;
+import com.opu.opube.feature.member.command.application.dto.LoginRequest;
 import com.opu.opube.feature.member.command.application.dto.RegisterRequest;
 import com.opu.opube.feature.member.command.application.dto.RegisterResponse;
+import com.opu.opube.feature.member.command.application.dto.TokenResponse;
 import com.opu.opube.feature.member.command.application.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,12 @@ public class AuthController {
                 .build();
 
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<TokenResponse>> login(@RequestBody @Valid LoginRequest req) {
+        TokenResponse tokens = authService.login(req.getEmail(), req.getPassword());
+        return ResponseEntity.ok(ApiResponse.success(tokens));
     }
 
     @GetMapping("/verify")
