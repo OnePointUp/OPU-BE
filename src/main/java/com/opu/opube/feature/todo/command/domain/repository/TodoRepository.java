@@ -1,8 +1,7 @@
 package com.opu.opube.feature.todo.command.domain.repository;
 
-import java.util.UUID;
 import com.opu.opube.feature.todo.command.domain.aggregate.Todo;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface TodoRepository {
-    Todo save(Todo todo);
+public interface TodoRepository extends JpaRepository<Todo, Long> {
 }

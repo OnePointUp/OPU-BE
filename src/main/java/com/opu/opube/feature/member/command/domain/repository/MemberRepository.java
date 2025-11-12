@@ -1,8 +1,14 @@
 package com.opu.opube.feature.member.command.domain.repository;
 
-import java.util.UUID;
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-public interface MemberRepository {
-    Member save(Member member);
+import java.util.Optional;
+
+@Repository
+public interface MemberRepository extends JpaRepository<Member, Long> {
+    Optional<Member> findByEmail(String email);
+    Optional<Member> findByAuthProviderAndProviderId(String authProvider, String providerId);
+    boolean existsByEmail(String email);
 }

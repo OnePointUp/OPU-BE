@@ -1,7 +1,6 @@
 package com.opu.opube.feature.todo.command.domain.aggregate;
 
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
-import com.opu.opube.feature.opu.command.domain.aggregate.Opu;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -12,40 +11,40 @@ import java.time.LocalTime;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "todo")
+@Table(name = "routine")
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Todo {
+public class Routine {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // 루틴 생성자
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "routine_id")
-    private Routine routine;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "opu_id")
-    private Opu opu;
-
     @Column(name = "title", length = 100, nullable = false)
     private String title;
 
-    @Column(name = "scheduled_date")
-    private LocalDate scheduledDate;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "frequency", nullable = false, length = 16)
+    private Frequency frequency;
 
-    @Column(name = "scheduled_time")
-    private LocalTime scheduledTime;
+    @Column(name = "start_date", nullable = false)
+    private LocalDate startDate;
 
-    @Column(name = "is_completed", nullable = false)
-    private boolean completed = false;
+    @Column(name = "end_date")
+    private LocalDate endDate;
+
+    @Column(name = "alarm_time")
+    private LocalTime alarmTime;
+
+    @Column(name = "is_active", nullable = false)
+    private boolean active = true;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -55,7 +54,8 @@ public class Todo {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public void markCompleted() { this.completed = true; }
-    public void markUncompleted() { this.completed = false; }
-    public void updateTitle(String t) { if (t != null) this.title = t; }
+    // 상태 조작 메서드
+    public void activate() { this.active = true; }
+    public void deactivate() { this.active = false; }
+    public void updateAlarmTime(LocalTime t) { this.alarmTime = t; }
 }
