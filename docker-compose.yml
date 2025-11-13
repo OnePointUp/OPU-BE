@@ -40,5 +40,16 @@ services:
       FLYWAY_VALIDATE_ON_MIGRATE: "true"
     command: migrate
 
+  redis:
+    image: redis:7-alpine
+    container_name: opu-redis
+    restart: always
+    ports:
+      - "${REDIS_PORT}:6379"
+    command: [ "redis-server", "--requirepass", "${REDIS_PASSWORD}" ]
+    volumes:
+      - redis_data:/data
+
 volumes:
   mariadb_data:
+  redis_data:
