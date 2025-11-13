@@ -1,4 +1,4 @@
-package com.opu.opube.feature.member.command.application.dto;
+package com.opu.opube.feature.auth.command.application.dto.response;
 
 import lombok.Builder;
 import lombok.Getter;

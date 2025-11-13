@@ -1,8 +1,12 @@
-package com.opu.opube.feature.member.command.application.controller;
+package com.opu.opube.feature.auth.command.application.controller;
 
 import com.opu.opube.common.dto.ApiResponse;
-import com.opu.opube.feature.member.command.application.dto.*;
-import com.opu.opube.feature.member.command.application.service.AuthService;
+import com.opu.opube.feature.auth.command.application.dto.request.LoginRequest;
+import com.opu.opube.feature.auth.command.application.dto.request.RefreshTokenRequest;
+import com.opu.opube.feature.auth.command.application.dto.request.RegisterRequest;
+import com.opu.opube.feature.auth.command.application.dto.response.RegisterResponse;
+import com.opu.opube.feature.auth.command.application.dto.response.TokenResponse;
+import com.opu.opube.feature.auth.command.application.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
