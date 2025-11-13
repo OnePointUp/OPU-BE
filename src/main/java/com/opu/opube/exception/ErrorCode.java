@@ -22,7 +22,11 @@ public enum ErrorCode {
     DUPLICATE_EMAIL("01008", "이미 가입된 이메일입니다.", HttpStatus.CONFLICT),
     MEMBER_NOT_FOUND("01009", "회원 정보를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     INVALID_PASSWORD("01010", "비밀번호가 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
-    EMAIL_NOT_VERIFIED("01011", "이메일 인증이 완료되지 않았습니다.", HttpStatus.FORBIDDEN)
+    EMAIL_NOT_VERIFIED("01011", "이메일 인증이 완료되지 않았습니다.", HttpStatus.FORBIDDEN),
+    REFRESH_TOKEN_NOT_FOUND("01012", "저장된 리프레시 토큰이 없습니다.", HttpStatus.UNAUTHORIZED),
+    REFRESH_TOKEN_MISMATCH("01013", "리프레시 토큰이 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
+    INVALID_REFRESH_TOKEN("01014", "유효하지 않은 리프레시 토큰입니다.", HttpStatus.UNAUTHORIZED),
+    LOGOUT_USER("01015", "로그아웃된 사용자입니다.", HttpStatus.UNAUTHORIZED)
     ;
 
     private final String code;

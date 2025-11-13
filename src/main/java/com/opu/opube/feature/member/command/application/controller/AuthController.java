@@ -1,10 +1,7 @@
 package com.opu.opube.feature.member.command.application.controller;
 
 import com.opu.opube.common.dto.ApiResponse;
-import com.opu.opube.feature.member.command.application.dto.LoginRequest;
-import com.opu.opube.feature.member.command.application.dto.RegisterRequest;
-import com.opu.opube.feature.member.command.application.dto.RegisterResponse;
-import com.opu.opube.feature.member.command.application.dto.TokenResponse;
+import com.opu.opube.feature.member.command.application.dto.*;
 import com.opu.opube.feature.member.command.application.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -43,5 +40,11 @@ public class AuthController {
     public ResponseEntity<ApiResponse<String>> verify(@RequestParam("token") String token) {
         authService.verifyEmail(token);
         return ResponseEntity.ok(ApiResponse.success("이메일 인증이 완료되었습니다."));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<TokenResponse>> refresh(@RequestBody @Valid RefreshTokenRequest req) {
+        TokenResponse tokenResponse = authService.refreshToken(req);
+        return ResponseEntity.ok(ApiResponse.success(tokenResponse));
     }
 }
