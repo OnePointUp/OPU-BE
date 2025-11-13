@@ -18,6 +18,9 @@ public enum ErrorCode {
     EMPTY_JWT("01006", "JWT 클레임이 비어있습니다.", HttpStatus.UNAUTHORIZED),
     INVALID_FILE_TYPE("05003","유효하지 않은 파일 타입입니다." ,HttpStatus.BAD_REQUEST),
 
+    MAIL_SEND_FAILED("01006", "이메일 전송에 실패했습니다.", HttpStatus.INTERNAL_SERVER_ERROR),
+    DUPLICATE_EMAIL("01007", "이미 가입된 이메일입니다.", HttpStatus.CONFLICT),
+
     ;
 
     private final String code;
