@@ -1,4 +1,4 @@
-package com.opu.opube.feature.member.command.application.controller;
+package com.opu.opube.feature.auth.command.application.controller;
 
 import com.opu.opube.common.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;

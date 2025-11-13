@@ -1,13 +1,13 @@
-package com.opu.opube.feature.member.command.application.service;
+package com.opu.opube.feature.auth.command.application.service;
 
 import com.opu.opube.common.email.EmailService;
 import com.opu.opube.common.jwt.JwtEmailTokenProvider;
 import com.opu.opube.common.jwt.JwtTokenProvider;
 import com.opu.opube.exception.BusinessException;
 import com.opu.opube.exception.ErrorCode;
-import com.opu.opube.feature.member.command.application.dto.RefreshTokenRequest;
-import com.opu.opube.feature.member.command.application.dto.RegisterRequest;
-import com.opu.opube.feature.member.command.application.dto.TokenResponse;
+import com.opu.opube.feature.auth.command.application.dto.request.RefreshTokenRequest;
+import com.opu.opube.feature.auth.command.application.dto.request.RegisterRequest;
+import com.opu.opube.feature.auth.command.application.dto.response.TokenResponse;
 import com.opu.opube.feature.member.command.domain.aggregate.Authorization;
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.member.command.domain.repository.MemberRepository;

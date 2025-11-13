@@ -1,4 +1,4 @@
-package com.opu.opube.feature.member.command.application.service;
+package com.opu.opube.feature.auth.command.application.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;

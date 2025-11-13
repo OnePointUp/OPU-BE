@@ -1,4 +1,4 @@
-package com.opu.opube.feature.member.command.application.dto;
+package com.opu.opube.feature.auth.command.application.dto.request;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
