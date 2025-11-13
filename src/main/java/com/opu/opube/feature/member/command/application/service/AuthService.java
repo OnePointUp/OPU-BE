@@ -5,6 +5,7 @@ import com.opu.opube.common.jwt.JwtEmailTokenProvider;
 import com.opu.opube.common.jwt.JwtTokenProvider;
 import com.opu.opube.exception.BusinessException;
 import com.opu.opube.exception.ErrorCode;
+import com.opu.opube.feature.member.command.application.dto.RefreshTokenRequest;
 import com.opu.opube.feature.member.command.application.dto.RegisterRequest;
 import com.opu.opube.feature.member.command.application.dto.TokenResponse;
 import com.opu.opube.feature.member.command.domain.aggregate.Authorization;
@@ -27,6 +28,8 @@ public class AuthService {
     private final JwtEmailTokenProvider tokenProvider;
     private final JwtTokenProvider jwtTokenProvider;
     private final EmailService emailService;
+    private final RefreshTokenService refreshTokenService;
+
 
     @Transactional
     public Long register(RegisterRequest req, String backendBaseUrl) {
@@ -88,15 +91,66 @@ public class AuthService {
             throw new BusinessException(ErrorCode.EMAIL_NOT_VERIFIED, "이메일 인증이 필요합니다.");
         }
 
-        String access = jwtTokenProvider.createAccessToken(member.getId());
-        String refresh = jwtTokenProvider.createRefreshToken(member.getId());
+        String accessToken = jwtTokenProvider.createAccessToken(member.getId());
+        String refreshToken = jwtTokenProvider.createRefreshToken(member.getId());
+
+        long accessExpSec = jwtTokenProvider.getAccessExpirationSeconds();
+        long refreshExpSec = jwtTokenProvider.getRefreshExpirationSeconds();
+
+        refreshTokenService.save(member.getId(), refreshToken, refreshExpSec);
 
         return TokenResponse.builder()
-                .accessToken(access)
-                .refreshToken(refresh)
-                .expiresInSeconds(jwtTokenProvider.getAccessExpirationSeconds())
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .tokenType("Bearer")
+                .expiresInSeconds(accessExpSec)
+                .refreshExpiresInSeconds(refreshExpSec)
                 .build();
     }
+
+    @Transactional(readOnly = true)
+    public TokenResponse refreshToken(RefreshTokenRequest req) {
+        String refreshToken = req.getRefreshToken();
+
+        // 1) 기본 검증 (서명/만료 등)
+        jwtTokenProvider.validateToken(refreshToken);
+
+        // 2) 타입 확인
+        if (!jwtTokenProvider.isRefreshToken(refreshToken)) {
+            throw new BusinessException(ErrorCode.INVALID_REFRESH_TOKEN, "refresh 토큰이 아닙니다.");
+        }
+
+        // 3) memberId 추출
+        Long memberId = jwtTokenProvider.parseMemberId(refreshToken);
+
+        // 4) Redis에 저장된 토큰과 비교
+        String storedToken = refreshTokenService.get(memberId);
+        if (storedToken == null) {
+            throw new BusinessException(ErrorCode.REFRESH_TOKEN_NOT_FOUND);
+        }
+        if (!storedToken.equals(refreshToken)) {
+            throw new BusinessException(ErrorCode.REFRESH_TOKEN_MISMATCH);
+        }
+
+        // 5) 새 토큰 발급
+        String newAccessToken = jwtTokenProvider.createAccessToken(memberId);
+        String newRefreshToken = jwtTokenProvider.createRefreshToken(memberId);
+
+        long accessExpSec = jwtTokenProvider.getAccessExpirationSeconds();
+        long refreshExpSec = jwtTokenProvider.getRefreshExpirationSeconds();
+
+        // 6) Redis에 refreshToken 갱신
+        refreshTokenService.save(memberId, newRefreshToken, refreshExpSec);
+
+        return TokenResponse.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .tokenType("Bearer")
+                .expiresInSeconds(accessExpSec)
+                .refreshExpiresInSeconds(refreshExpSec)
+                .build();
+    }
+
 
     @Transactional
     public void verifyEmail(String token) {
