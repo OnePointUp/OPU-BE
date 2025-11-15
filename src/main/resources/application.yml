@@ -44,3 +44,11 @@ app:
     secret: ${JWT_SECRET}
     access-exp-sec: 900
     refresh-exp-sec: 1209600
+
+kakao:
+  oauth:
+    client-id: ${KAKAO_REST_API_KEY}
+    client-secret: ${KAKAO_CLIENT_SECRET:}
+    redirect-uri: ${KAKAO_REDIRECT_URI}
+    token-uri: https://kauth.kakao.com/oauth/token
+    user-info-uri: https://kapi.kakao.com/v2/user/me
