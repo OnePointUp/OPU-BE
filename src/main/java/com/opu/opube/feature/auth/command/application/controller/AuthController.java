@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-@Slf4j
 public class AuthController {
     private final AuthService authService;
 
@@ -60,7 +59,6 @@ public class AuthController {
     public ResponseEntity<ApiResponse<KakaoLoginResponse>> kakaoLogin(
             @RequestParam String code
     ) {
-        log.info("[KakaoLogin] code={}", code);
         return ResponseEntity.ok(
                 ApiResponse.success(authService.kakaoLogin(code))
         );
