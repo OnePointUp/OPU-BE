@@ -26,7 +26,10 @@ public enum ErrorCode {
     REFRESH_TOKEN_NOT_FOUND("01012", "저장된 리프레시 토큰이 없습니다.", HttpStatus.UNAUTHORIZED),
     REFRESH_TOKEN_MISMATCH("01013", "리프레시 토큰이 일치하지 않습니다.", HttpStatus.UNAUTHORIZED),
     INVALID_REFRESH_TOKEN("01014", "유효하지 않은 리프레시 토큰입니다.", HttpStatus.UNAUTHORIZED),
-    LOGOUT_USER("01015", "로그아웃된 사용자입니다.", HttpStatus.UNAUTHORIZED)
+    LOGOUT_USER("01015", "로그아웃된 사용자입니다.", HttpStatus.UNAUTHORIZED),
+
+    OAUTH_LOGIN_FAILED("01016", "소셜 로그인에 실패했습니다.", HttpStatus.UNAUTHORIZED),
+    DUPLICATE_PROVIDER_MEMBER("01017", "이미 가입된 소셜 계정입니다.", HttpStatus.CONFLICT)
     ;
 
     private final String code;
