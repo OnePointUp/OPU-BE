@@ -1,20 +1,24 @@
 package com.opu.opube.feature.auth.command.application.controller;
 
 import com.opu.opube.common.dto.ApiResponse;
+import com.opu.opube.feature.auth.command.application.dto.request.KakaoRegisterRequest;
 import com.opu.opube.feature.auth.command.application.dto.request.LoginRequest;
 import com.opu.opube.feature.auth.command.application.dto.request.RefreshTokenRequest;
 import com.opu.opube.feature.auth.command.application.dto.request.RegisterRequest;
+import com.opu.opube.feature.auth.command.application.dto.response.KakaoLoginResponse;
 import com.opu.opube.feature.auth.command.application.dto.response.RegisterResponse;
 import com.opu.opube.feature.auth.command.application.dto.response.TokenResponse;
 import com.opu.opube.feature.auth.command.application.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthController {
     private final AuthService authService;
 
@@ -50,5 +54,24 @@ public class AuthController {
     public ResponseEntity<ApiResponse<TokenResponse>> refresh(@RequestBody @Valid RefreshTokenRequest req) {
         TokenResponse tokenResponse = authService.refreshToken(req);
         return ResponseEntity.ok(ApiResponse.success(tokenResponse));
+    }
+
+    @GetMapping("/kakao/login")
+    public ResponseEntity<ApiResponse<KakaoLoginResponse>> kakaoLogin(
+            @RequestParam String code
+    ) {
+        log.info("[KakaoLogin] code={}", code);
+        return ResponseEntity.ok(
+                ApiResponse.success(authService.kakaoLogin(code))
+        );
+    }
+
+    @PostMapping("/kakao/register")
+    public ResponseEntity<ApiResponse<TokenResponse>> kakaoRegister(
+            @RequestBody @Valid KakaoRegisterRequest req
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.success(authService.kakaoRegister(req))
+        );
     }
 }
