@@ -25,8 +25,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
 
 @Service
 @RequiredArgsConstructor
@@ -40,7 +42,7 @@ public class AuthService {
     private final EmailService emailService;
     private final RefreshTokenService refreshTokenService;
     private final KakaoOAuthProperties kakaoProps;
-    private final RestTemplate restTemplate;
+    private final WebClient webClient;
 
 
     @Transactional
@@ -262,27 +264,33 @@ public class AuthService {
 
 
     private KakaoTokenResponse requestKakaoToken(String code) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
 
-        LinkedMultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-        body.add("grant_type", "authorization_code");
-        body.add("client_id", kakaoProps.getClientId());
-        body.add("redirect_uri", kakaoProps.getRedirectUri());
-        body.add("code", code);
+        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        form.add("grant_type", "authorization_code");
+        form.add("client_id", kakaoProps.getClientId());
+        form.add("redirect_uri", kakaoProps.getRedirectUri());
+        form.add("code", code);
+
         if (StringUtils.hasText(kakaoProps.getClientSecret())) {
-            body.add("client_secret", kakaoProps.getClientSecret());
+            form.add("client_secret", kakaoProps.getClientSecret());
         }
 
-        HttpEntity<?> entity = new HttpEntity<>(body, headers);
+        KakaoTokenResponse tokenResponse = webClient.post()
+                .uri(kakaoProps.getTokenUri())
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(BodyInserters.fromFormData(form))
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, clientResponse ->
+                        clientResponse.bodyToMono(String.class)
+                                .map(body -> new BusinessException(
+                                        ErrorCode.OAUTH_LOGIN_FAILED,
+                                        "카카오 토큰 발급 실패: " + body
+                                ))
+                )
+                .bodyToMono(KakaoTokenResponse.class)
+                .block();
 
-        ResponseEntity<KakaoTokenResponse> response =
-                restTemplate.postForEntity(kakaoProps.getTokenUri(), entity, KakaoTokenResponse.class);
-
-        KakaoTokenResponse tokenResponse = response.getBody();
-        if (!response.getStatusCode().is2xxSuccessful()
-                || tokenResponse == null
-                || !StringUtils.hasText(tokenResponse.getAccessToken())) {
+        if (tokenResponse == null || !StringUtils.hasText(tokenResponse.getAccessToken())) {
             throw new BusinessException(ErrorCode.OAUTH_LOGIN_FAILED, "카카오 토큰 발급에 실패했습니다.");
         }
 
@@ -290,18 +298,22 @@ public class AuthService {
     }
 
     private KakaoUserInfoResponse requestKakaoUserInfo(String accessToken) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(accessToken);
 
-        HttpEntity<Void> entity = new HttpEntity<>(headers);
+        KakaoUserInfoResponse userInfo = webClient.get()
+                .uri(kakaoProps.getUserInfoUri())
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, clientResponse ->
+                        clientResponse.bodyToMono(String.class)
+                                .map(body -> new BusinessException(
+                                        ErrorCode.OAUTH_LOGIN_FAILED,
+                                        "카카오 사용자 정보 조회 실패: " + body
+                                ))
+                )
+                .bodyToMono(KakaoUserInfoResponse.class)
+                .block();
 
-        ResponseEntity<KakaoUserInfoResponse> response =
-                restTemplate.exchange(kakaoProps.getUserInfoUri(), HttpMethod.GET, entity, KakaoUserInfoResponse.class);
-
-        KakaoUserInfoResponse userInfo = response.getBody();
-        if (!response.getStatusCode().is2xxSuccessful()
-                || userInfo == null
-                || userInfo.getId() == null) {
+        if (userInfo == null || userInfo.getId() == null) {
             throw new BusinessException(ErrorCode.OAUTH_LOGIN_FAILED, "카카오 사용자 정보 조회에 실패했습니다.");
         }
 
