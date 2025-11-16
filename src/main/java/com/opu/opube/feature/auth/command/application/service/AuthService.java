@@ -300,18 +300,22 @@ public class AuthService {
     }
 
     private KakaoUserInfoResponse requestKakaoUserInfo(String accessToken) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setBearerAuth(accessToken);
 
-        HttpEntity<Void> entity = new HttpEntity<>(headers);
+        KakaoUserInfoResponse userInfo = webClient.get()
+                .uri(kakaoProps.getUserInfoUri())
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                .retrieve()
+                .onStatus(HttpStatusCode::isError, clientResponse ->
+                        clientResponse.bodyToMono(String.class)
+                                .map(body -> new BusinessException(
+                                        ErrorCode.OAUTH_LOGIN_FAILED,
+                                        "카카오 사용자 정보 조회 실패: " + body
+                                ))
+                )
+                .bodyToMono(KakaoUserInfoResponse.class)
+                .block();
 
-        ResponseEntity<KakaoUserInfoResponse> response =
-                restTemplate.exchange(kakaoProps.getUserInfoUri(), HttpMethod.GET, entity, KakaoUserInfoResponse.class);
-
-        KakaoUserInfoResponse userInfo = response.getBody();
-        if (!response.getStatusCode().is2xxSuccessful()
-                || userInfo == null
-                || userInfo.getId() == null) {
+        if (userInfo == null || userInfo.getId() == null) {
             throw new BusinessException(ErrorCode.OAUTH_LOGIN_FAILED, "카카오 사용자 정보 조회에 실패했습니다.");
         }
 
