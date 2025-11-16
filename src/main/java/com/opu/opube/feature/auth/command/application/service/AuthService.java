@@ -27,7 +27,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -43,7 +42,6 @@ public class AuthService {
     private final EmailService emailService;
     private final RefreshTokenService refreshTokenService;
     private final KakaoOAuthProperties kakaoProps;
-    private final RestTemplate restTemplate;
     private final WebClient webClient;
 
 
