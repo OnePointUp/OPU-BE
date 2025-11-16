@@ -7,28 +7,40 @@ import com.opu.opube.exception.BusinessException;
 import com.opu.opube.exception.ErrorCode;
 import com.opu.opube.feature.auth.command.application.dto.request.RefreshTokenRequest;
 import com.opu.opube.feature.auth.command.application.dto.request.RegisterRequest;
+import com.opu.opube.feature.auth.command.application.dto.request.KakaoRegisterRequest;
 import com.opu.opube.feature.auth.command.application.dto.response.TokenResponse;
+import com.opu.opube.feature.auth.command.application.dto.response.KakaoLoginResponse;
+import com.opu.opube.feature.auth.command.application.dto.response.KakaoTokenResponse;
+import com.opu.opube.feature.auth.command.application.dto.response.KakaoUserInfoResponse;
+import com.opu.opube.feature.auth.command.config.KakaoOAuthProperties;
 import com.opu.opube.feature.member.command.domain.aggregate.Authorization;
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.member.command.domain.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.StringUtils;
+import org.springframework.web.client.RestTemplate;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AuthService {
+
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtEmailTokenProvider tokenProvider;
     private final JwtTokenProvider jwtTokenProvider;
     private final EmailService emailService;
     private final RefreshTokenService refreshTokenService;
+    private final KakaoOAuthProperties kakaoProps;
+    private final RestTemplate restTemplate;
 
 
     @Transactional
@@ -59,7 +71,6 @@ public class AuthService {
                 @Override
                 public void afterCommit() {
                     try {
-                        // 메일 전송: 실패 시 예외를 던지지 않음 (로그)
                         emailService.sendHtml(saved.getEmail(), "OPU 이메일 인증", html);
                         log.info("회원가입 이메일 발송 요청 완료. memberId={}", saved.getId());
                     } catch (Exception ex) {
@@ -77,6 +88,7 @@ public class AuthService {
 
         return saved.getId();
     }
+
 
     @Transactional(readOnly = true)
     public TokenResponse login(String email, String rawPassword) {
@@ -107,6 +119,7 @@ public class AuthService {
                 .refreshExpiresInSeconds(refreshExpSec)
                 .build();
     }
+
 
     @Transactional(readOnly = true)
     public TokenResponse refreshToken(RefreshTokenRequest req) {
@@ -161,6 +174,141 @@ public class AuthService {
         memberRepository.save(m);
     }
 
+    //카카오 로그인
+    @Transactional(readOnly = true)
+    public KakaoLoginResponse kakaoLogin(String code) {
+        // 1) 인가 코드 → Kakao Access Token
+        KakaoTokenResponse tokenResponse = requestKakaoToken(code);
+
+        // 2) Access Token으로 사용자 정보 조회 (id만 사용)
+        KakaoUserInfoResponse userInfo = requestKakaoUserInfo(tokenResponse.getAccessToken());
+        Long kakaoId = userInfo.getId();
+        String providerId = String.valueOf(kakaoId);
+
+        // 3) 기존 회원 조회
+        Member member = memberRepository.findByAuthProviderAndProviderId("kakao", providerId)
+                .orElse(null);
+
+        // 4) 신규 회원이라면 추가 정보 필요
+        if (member == null) {
+            return KakaoLoginResponse.builder()
+                    .needAdditionalInfo(true)
+                    .providerId(providerId)
+                    .build();
+        }
+
+        // 5) 기존 회원 → JWT 발급
+        String accessToken = jwtTokenProvider.createAccessToken(member.getId());
+        String refreshToken = jwtTokenProvider.createRefreshToken(member.getId());
+
+        long accessExpSec = jwtTokenProvider.getAccessExpirationSeconds();
+        long refreshExpSec = jwtTokenProvider.getRefreshExpirationSeconds();
+
+        refreshTokenService.save(member.getId(), refreshToken, refreshExpSec);
+
+        return KakaoLoginResponse.builder()
+                .needAdditionalInfo(false)
+                .providerId(providerId)
+                .token(
+                        TokenResponse.builder()
+                                .accessToken(accessToken)
+                                .refreshToken(refreshToken)
+                                .tokenType("Bearer")
+                                .expiresInSeconds(accessExpSec)
+                                .refreshExpiresInSeconds(refreshExpSec)
+                                .build()
+                )
+                .build();
+    }
+
+
+    @Transactional
+    public TokenResponse kakaoRegister(KakaoRegisterRequest req) {
+        String providerId = req.getProviderId();
+
+        // 이미 가입된 providerId이면 예외
+        if (memberRepository.findByAuthProviderAndProviderId("kakao", providerId).isPresent()) {
+            throw new BusinessException(ErrorCode.DUPLICATE_PROVIDER_MEMBER, "이미 가입된 카카오 계정입니다.");
+        }
+
+        Member newMember = Member.builder()
+                .email(null)
+                .password(null)
+                .nickname(req.getNickname())
+                .authorization(Authorization.MEMBER)
+                .authProvider("kakao")
+                .providerId(providerId)
+                .emailVerified(true) // 소셜 로그인은 바로 인증된 것으로 처리
+                .build();
+
+        Member saved = memberRepository.save(newMember);
+
+        String accessToken = jwtTokenProvider.createAccessToken(saved.getId());
+        String refreshToken = jwtTokenProvider.createRefreshToken(saved.getId());
+
+        long accessExpSec = jwtTokenProvider.getAccessExpirationSeconds();
+        long refreshExpSec = jwtTokenProvider.getRefreshExpirationSeconds();
+
+        refreshTokenService.save(saved.getId(), refreshToken, refreshExpSec);
+
+        return TokenResponse.builder()
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .tokenType("Bearer")
+                .expiresInSeconds(accessExpSec)
+                .refreshExpiresInSeconds(refreshExpSec)
+                .build();
+    }
+
+
+    private KakaoTokenResponse requestKakaoToken(String code) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        LinkedMultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("grant_type", "authorization_code");
+        body.add("client_id", kakaoProps.getClientId());
+        body.add("redirect_uri", kakaoProps.getRedirectUri());
+        body.add("code", code);
+        if (StringUtils.hasText(kakaoProps.getClientSecret())) {
+            body.add("client_secret", kakaoProps.getClientSecret());
+        }
+
+        HttpEntity<?> entity = new HttpEntity<>(body, headers);
+
+        ResponseEntity<KakaoTokenResponse> response =
+                restTemplate.postForEntity(kakaoProps.getTokenUri(), entity, KakaoTokenResponse.class);
+
+        KakaoTokenResponse tokenResponse = response.getBody();
+        if (!response.getStatusCode().is2xxSuccessful()
+                || tokenResponse == null
+                || !StringUtils.hasText(tokenResponse.getAccessToken())) {
+            throw new BusinessException(ErrorCode.OAUTH_LOGIN_FAILED, "카카오 토큰 발급에 실패했습니다.");
+        }
+
+        return tokenResponse;
+    }
+
+    private KakaoUserInfoResponse requestKakaoUserInfo(String accessToken) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessToken);
+
+        HttpEntity<Void> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<KakaoUserInfoResponse> response =
+                restTemplate.exchange(kakaoProps.getUserInfoUri(), HttpMethod.GET, entity, KakaoUserInfoResponse.class);
+
+        KakaoUserInfoResponse userInfo = response.getBody();
+        if (!response.getStatusCode().is2xxSuccessful()
+                || userInfo == null
+                || userInfo.getId() == null) {
+            throw new BusinessException(ErrorCode.OAUTH_LOGIN_FAILED, "카카오 사용자 정보 조회에 실패했습니다.");
+        }
+
+        return userInfo;
+    }
+
+
     private String buildVerificationHtml(String nickname, String verifyUrl) {
         return """
 <html>
@@ -173,9 +321,9 @@ public class AuthService {
     </h2>
 
     <p style="font-size:15px; color:#555; text-align:center; margin-bottom:24px; line-height:1.5;">
-                      <span style="font-weight:700; color:#B8DD7C;">%s</span> 님, 환영합니다! 🍀<br/>
-                      아래 버튼을 눌러 계정 인증을 완료해주세요.
-                    </p>
+      <span style="font-weight:700; color:#B8DD7C;">%s</span> 님, 환영합니다! 🍀<br/>
+      아래 버튼을 눌러 계정 인증을 완료해주세요.
+    </p>
 
     <a href="%s" target="_blank"
        style="display:block; width:100%%; background:#B8DD7C; color:#fff;
@@ -185,7 +333,6 @@ public class AuthService {
       이메일 인증하기
     </a>
 
- 
     <hr style="border:none; border-top:1px solid #eee; margin:24px 0;" />
 
     <p style="font-size:12px; color:#aaa; text-align:center; margin:0;">
@@ -196,7 +343,6 @@ public class AuthService {
   </div>
 </body>
 </html>
-"""
-                .formatted(nickname, verifyUrl, verifyUrl);
+""".formatted(nickname, verifyUrl, verifyUrl);
     }
 }
