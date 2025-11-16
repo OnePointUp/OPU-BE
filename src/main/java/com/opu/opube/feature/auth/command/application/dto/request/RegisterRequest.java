@@ -16,5 +16,5 @@ public class RegisterRequest {
     @NotBlank @Size(min = 2, max = 50)
     private String nickname;
 
-    // 프로필 이미지 추가
+    private String profileImageUrl;
 }
