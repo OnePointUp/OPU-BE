@@ -1,5 +1,7 @@
 package com.opu.opube.feature.member.command.domain.aggregate;
 
+import com.opu.opube.exception.BusinessException;
+import com.opu.opube.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -70,10 +72,22 @@ public class Member {
         this.lastLogin = at;
     }
 
-    public void updateProfile(String nickname, String profileImageUrl, String bio) {
-        if (nickname != null) this.nickname = nickname;
-        this.profileImageUrl = profileImageUrl;
-        this.bio = bio;
+    public void updateProfile(String nickname, String bio, String profileImageUrl) {
+        if (nickname != null) {
+            if (nickname.isBlank() || nickname.length() < 2 || nickname.length() > 20) {
+                throw new BusinessException(ErrorCode.INVALID_NICKNAME_LENGTH);
+            }
+            this.nickname = nickname;
+        }
+        if (bio != null) {
+            if (bio.length() > 100) {
+                throw new BusinessException(ErrorCode.INVALID_BIO_LENGTH);
+            }
+            this.bio = bio;
+        }
+        if (profileImageUrl != null) {
+            this.profileImageUrl = profileImageUrl;
+        }
     }
 
     public void verifyEmail() {

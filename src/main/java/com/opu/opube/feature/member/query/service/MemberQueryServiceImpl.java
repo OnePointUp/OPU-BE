@@ -1,8 +1,7 @@
-package com.opu.opube.feature.member.command.application.service;
+package com.opu.opube.feature.member.query.service;
 
 import com.opu.opube.exception.BusinessException;
 import com.opu.opube.exception.ErrorCode;
-import com.opu.opube.feature.member.command.application.dto.request.UpdateMemberProfileRequest;
 import com.opu.opube.feature.member.command.application.dto.response.MemberProfileResponse;
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.member.command.domain.repository.MemberRepository;
@@ -12,22 +11,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-public class MemberCommandServiceImpl implements MemberCommandService {
+public class MemberQueryServiceImpl implements MemberQueryService {
 
     private final MemberRepository memberRepository;
 
     @Override
-    @Transactional
-    public MemberProfileResponse updateProfile(Long memberId, UpdateMemberProfileRequest req) {
+    @Transactional(readOnly = true)
+    public MemberProfileResponse getMyProfile(Long memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
-
-        member.updateProfile(
-                req.getNickname(),
-                req.getBio(),
-                req.getProfileImageUrl()
-        );
-
         return MemberProfileResponse.from(member);
     }
 }
