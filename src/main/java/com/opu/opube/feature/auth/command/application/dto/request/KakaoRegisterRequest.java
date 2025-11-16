@@ -13,5 +13,5 @@ public class KakaoRegisterRequest {
     @NotBlank
     private String nickname;
 
-    //추후 알림 설정 추가
+    private String profileImageUrl;
 }
