@@ -59,6 +59,7 @@ public class AuthService {
                 .authorization(Authorization.MEMBER)
                 .authProvider("local")
                 .emailVerified(false)
+                .profileImageUrl(req.getProfileImageUrl())
                 .build();
 
         Member saved = memberRepository.save(m);
@@ -241,6 +242,7 @@ public class AuthService {
                 .authProvider("kakao")
                 .providerId(providerId)
                 .emailVerified(true) // 소셜 로그인은 바로 인증된 것으로 처리
+                .profileImageUrl(req.getProfileImageUrl())
                 .build();
 
         Member saved = memberRepository.save(newMember);
