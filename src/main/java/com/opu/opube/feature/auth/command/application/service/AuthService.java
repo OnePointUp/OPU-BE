@@ -357,6 +357,6 @@ public class AuthService {
   </div>
 </body>
 </html>
-""".formatted(nickname, verifyUrl, verifyUrl);
+""".formatted(nickname, verifyUrl);
     }
 }
