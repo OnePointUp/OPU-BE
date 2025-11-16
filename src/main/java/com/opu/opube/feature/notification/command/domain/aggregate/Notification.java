@@ -1,4 +1,4 @@
-package com.opu.opube.feature.notifiaction.command.domain.aggregate;
+package com.opu.opube.feature.notification.command.domain.aggregate;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -10,7 +10,7 @@ import org.hibernate.annotations.UuidGenerator;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Notifiaction {
+public class Notification {
 
     @Id
     @UuidGenerator
