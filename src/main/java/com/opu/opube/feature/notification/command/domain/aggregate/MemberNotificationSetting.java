@@ -1,34 +1,28 @@
 package com.opu.opube.feature.notification.command.domain.aggregate;
 
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
+import com.opu.opube.feature.opu.command.domain.aggregate.Opu;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Notification {
+public class MemberNotificationSetting {
     @Id
     @Column(updatable = false, nullable = false)
     private Long id;
 
     @Column(nullable = false)
-    private String title;
-
-    @Column(nullable = false)
-    private String message;
-
-    @Column(name = "is_read", nullable = false)
-    @Builder.Default
-    private Boolean isRead = false;
-
-    @Column(name = "linked_content_id")
-    private Integer linkedContentId;
+    private Boolean enabled;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
@@ -37,4 +31,8 @@ public class Notification {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "notification_type_id", nullable = false)
     private NotificationType notificationType;
+
+    @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 }
