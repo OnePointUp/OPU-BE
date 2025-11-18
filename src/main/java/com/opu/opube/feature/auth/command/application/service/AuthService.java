@@ -5,9 +5,7 @@ import com.opu.opube.common.jwt.JwtEmailTokenProvider;
 import com.opu.opube.common.jwt.JwtTokenProvider;
 import com.opu.opube.exception.BusinessException;
 import com.opu.opube.exception.ErrorCode;
-import com.opu.opube.feature.auth.command.application.dto.request.RefreshTokenRequest;
-import com.opu.opube.feature.auth.command.application.dto.request.RegisterRequest;
-import com.opu.opube.feature.auth.command.application.dto.request.KakaoRegisterRequest;
+import com.opu.opube.feature.auth.command.application.dto.request.*;
 import com.opu.opube.feature.auth.command.application.dto.response.TokenResponse;
 import com.opu.opube.feature.auth.command.application.dto.response.KakaoLoginResponse;
 import com.opu.opube.feature.auth.command.application.dto.response.KakaoTokenResponse;
@@ -64,7 +62,8 @@ public class AuthService {
 
         Member saved = memberRepository.save(m);
 
-        String token = tokenProvider.createTokenForMemberId(saved.getId());
+        // ✅ 이메일 인증용 토큰 생성 (createEmailVerifyToken 사용)
+        String token = tokenProvider.createEmailVerifyToken(saved.getId());
         String verifyUrl = backendBaseUrl + "/api/v1/auth/verify?token=" + token;
         String html = buildVerificationHtml(saved.getNickname(), verifyUrl);
 
@@ -175,6 +174,71 @@ public class AuthService {
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원"));
         m.verifyEmail();
         memberRepository.save(m);
+    }
+
+
+    @Transactional
+    public void requestPasswordReset(PasswordResetRequest req, String frontendBaseUrl) {
+        String email = req.getEmail();
+
+        Member member = memberRepository.findByEmail(email)
+                .orElse(null);
+
+        if (member == null) {
+            log.info("비밀번호 재설정 요청 - 존재하지 않는 이메일: {}", email);
+            return;
+        }
+
+        String token = tokenProvider.createPasswordResetToken(member.getId());
+
+        String resetUrl = frontendBaseUrl + "/reset-password?token=" + token;
+
+        String html = buildPasswordResetHtml(member.getNickname(), resetUrl);
+
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    try {
+                        emailService.sendHtml(member.getEmail(), "OPU 비밀번호 재설정 안내", html);
+                        log.info("비밀번호 재설정 이메일 발송 완료. memberId={}", member.getId());
+                    } catch (Exception ex) {
+                        log.error("비밀번호 재설정 이메일 발송 실패 (memberId={})", member.getId(), ex);
+                    }
+                }
+            });
+        } else {
+            try {
+                emailService.sendHtml(member.getEmail(), "OPU 비밀번호 재설정 안내", html);
+            } catch (Exception ex) {
+                log.error("동기 환경에서 비밀번호 재설정 이메일 발송 실패 (email={})", email, ex);
+            }
+        }
+    }
+
+
+    @Transactional
+    public void resetPassword(PasswordResetConfirmRequest req) {
+        String token = req.getToken();
+
+        if (!tokenProvider.isPasswordResetToken(token)) {
+            throw new BusinessException(ErrorCode.INVALID_PASSWORD_RESET_TOKEN, "비밀번호 재설정 토큰이 아닙니다.");
+        }
+
+        Long memberId = tokenProvider.parseMemberIdFromToken(token);
+
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+        // 필요 시 규칙 강화
+        String rawPassword = req.getNewPassword();
+        if (rawPassword == null || rawPassword.length() < 8) {
+            throw new BusinessException(ErrorCode.INVALID_PASSWORD, "비밀번호는 8자 이상이어야 합니다.");
+        }
+
+        member.changePassword(passwordEncoder.encode(rawPassword));
+
+        refreshTokenService.delete(member.getId()); // 구현되어 있으면 사용
     }
 
     //카카오 로그인
@@ -349,7 +413,7 @@ public class AuthService {
 
     <hr style="border:none; border-top:1px solid #eee; margin:24px 0;" />
 
-    <p style="font-size:12px; color:#aaa; text-align:center; margin:0;">
+    <p style="font-size:12px; color:#aaa; text-align:center; margin:0%%;">
       본 메일은 발신 전용입니다.<br/>
       © 2025 OPU. All rights reserved.
     </p>
@@ -358,5 +422,45 @@ public class AuthService {
 </body>
 </html>
 """.formatted(nickname, verifyUrl);
+    }
+
+    private String buildPasswordResetHtml(String nickname, String resetUrl) {
+        return """
+<html>
+<body style="margin:0; padding:0; background:#f8f9fc; font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;">
+  <div style="max-width:480px; margin:40px auto; background:#fff; border-radius:12px; padding:32px 24px;
+              box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+
+    <h2 style="margin:0 0 8px; font-size:22px; color:#1A1C1F; text-align:center;">
+      비밀번호 재설정 안내
+    </h2>
+
+    <p style="font-size:15px; color:#555; text-align:center; margin-bottom:24px; line-height:1.5;">
+      <span style="font-weight:700; color:#B8DD7C;">%s</span> 님, 비밀번호 재설정 요청이 접수되었습니다.<br/>
+      아래 버튼을 눌러 새 비밀번호를 설정해주세요.
+    </p>
+
+    <a href="%s" target="_blank"
+       style="display:block; width:100%%; background:#B8DD7C; color:#fff;
+              text-decoration:none; padding:14px 0; border-radius:8px;
+              font-size:16px; font-weight:600; text-align:center;">
+      비밀번호 재설정 페이지로 이동
+    </a>
+
+    <p style="font-size:12px; color:#999; text-align:center; margin-top:16px;">
+      만약 본인이 요청하지 않았다면, 이 메일은 무시하셔도 됩니다.
+    </p>
+
+    <hr style="border:none; border-top:1px solid #eee; margin:24px 0;" />
+
+    <p style="font-size:12px; color:#aaa; text-align:center; margin:0;">
+      본 메일은 발신 전용입니다.<br/>
+      © 2025 OPU. All rights reserved.
+    </p>
+
+  </div>
+</body>
+</html>
+""".formatted(nickname, resetUrl);
     }
 }
