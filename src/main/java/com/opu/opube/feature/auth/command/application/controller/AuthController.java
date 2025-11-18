@@ -1,10 +1,7 @@
 package com.opu.opube.feature.auth.command.application.controller;
 
 import com.opu.opube.common.dto.ApiResponse;
-import com.opu.opube.feature.auth.command.application.dto.request.KakaoRegisterRequest;
-import com.opu.opube.feature.auth.command.application.dto.request.LoginRequest;
-import com.opu.opube.feature.auth.command.application.dto.request.RefreshTokenRequest;
-import com.opu.opube.feature.auth.command.application.dto.request.RegisterRequest;
+import com.opu.opube.feature.auth.command.application.dto.request.*;
 import com.opu.opube.feature.auth.command.application.dto.response.KakaoLoginResponse;
 import com.opu.opube.feature.auth.command.application.dto.response.RegisterResponse;
 import com.opu.opube.feature.auth.command.application.dto.response.TokenResponse;
@@ -12,6 +9,7 @@ import com.opu.opube.feature.auth.command.application.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +18,9 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
+
+    @Value("${app.frontend-base-url}")
+    private String frontendBaseUrl;   // ← 여기로 설정값 주입
 
     String backendBaseUrl = "http://localhost:8080";
 
@@ -71,5 +72,21 @@ public class AuthController {
         return ResponseEntity.ok(
                 ApiResponse.success(authService.kakaoRegister(req))
         );
+    }
+
+    @PostMapping("/password/reset-request")
+    public ResponseEntity<ApiResponse<Void>> requestPasswordReset(
+            @RequestBody PasswordResetRequest req
+    ) {
+        authService.requestPasswordReset(req, frontendBaseUrl);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @PostMapping("/password/reset")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(
+            @RequestBody PasswordResetConfirmRequest req
+    ) {
+        authService.resetPassword(req);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 }
