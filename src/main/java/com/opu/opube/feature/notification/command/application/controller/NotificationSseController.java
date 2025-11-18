@@ -3,7 +3,9 @@ package com.opu.opube.feature.notification.command.application.controller;
 
 import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
 import com.opu.opube.feature.notification.command.application.dto.response.NotificationResponse;
+import com.opu.opube.feature.notification.command.application.service.NotificationCommandService;
 import com.opu.opube.feature.notification.command.application.service.NotificationSseService;
+import com.opu.opube.feature.notification.command.domain.aggregate.NotificationTypeCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,6 +20,7 @@ import java.time.LocalDateTime;
 public class NotificationSseController {
 
     private final NotificationSseService notificationSseService;
+    private final NotificationCommandService notificationCommandService;
 
     @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter connect(
@@ -25,19 +28,5 @@ public class NotificationSseController {
     ) {
         Long memberId = principal.getMemberId();
         return notificationSseService.connect(memberId);
-    }
-
-    @PostMapping("/test-send")
-    public void testSend(
-            @AuthenticationPrincipal MemberPrincipal principal
-    ) {
-        NotificationResponse dto = NotificationResponse.builder()
-                .title("테스트 알림")
-                .message("이것은 테스트 메시지입니다.")
-                .typeCode("EVENING")
-                .createdAt(LocalDateTime.now())
-                .build();
-
-        notificationSseService.sendToMember(principal.getMemberId(), dto);
     }
 }
