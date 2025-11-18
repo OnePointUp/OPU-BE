@@ -34,7 +34,6 @@ public enum ErrorCode {
     INVALID_BIO_LENGTH("01019", "Bio 길이가 유효하지 않습니다.", HttpStatus.BAD_REQUEST),
     INVALID_PASSWORD_RESET_TOKEN("01018", "유효하지 않은 비밀번호 재설정 토큰입니다.", HttpStatus.UNAUTHORIZED),
     NOTIFICATION_TYPE_NOT_FOUND("02001", "알림 타입을 찾을 수 없습니다.", HttpStatus.BAD_REQUEST);
-    ;
 
 
 
