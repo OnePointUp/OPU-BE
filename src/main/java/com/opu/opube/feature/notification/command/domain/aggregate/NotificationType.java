@@ -18,6 +18,7 @@ import org.hibernate.annotations.UuidGenerator;
 @AllArgsConstructor
 public class NotificationType {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(updatable = false, nullable = false)
     private Long id;
 
