@@ -28,7 +28,7 @@ public class FavoriteOpu {
     @JoinColumn(name = "opu_id", nullable = false)
     private Opu opu;
 
-    @Column(updatable = false, nullable = false)
+    @Column(name = "created_at", updatable = false, nullable = false)
     @CreationTimestamp
     private LocalDateTime createdAt;
 }

@@ -37,11 +37,12 @@ public class Opu {
     @Column(nullable = false)
     private Boolean isShared;
 
-    @Column(updatable = false, nullable = false)
+    @Column(name = "created_at", updatable = false, nullable = false)
     @CreationTimestamp
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
+    @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
     private LocalDateTime deletedAt;
