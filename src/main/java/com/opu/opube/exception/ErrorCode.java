@@ -31,8 +31,11 @@ public enum ErrorCode {
     OAUTH_LOGIN_FAILED("01016", "소셜 로그인에 실패했습니다.", HttpStatus.UNAUTHORIZED),
     DUPLICATE_PROVIDER_MEMBER("01017", "이미 가입된 소셜 계정입니다.", HttpStatus.CONFLICT),
     INVALID_NICKNAME_LENGTH("01018", "닉네임 길이가 유효하지 않습니다.", HttpStatus.BAD_REQUEST),
-    INVALID_BIO_LENGTH("01019", "Bio 길이가 유효하지 않습니다.", HttpStatus.BAD_REQUEST)
+    INVALID_BIO_LENGTH("01019", "Bio 길이가 유효하지 않습니다.", HttpStatus.BAD_REQUEST),
+    INVALID_PASSWORD_RESET_TOKEN("01018", "유효하지 않은 비밀번호 재설정 토큰입니다.", HttpStatus.UNAUTHORIZED)
     ;
+
+
 
     private final String code;
     private final String message;
