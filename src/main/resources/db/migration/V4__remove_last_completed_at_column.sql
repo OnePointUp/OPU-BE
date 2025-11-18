@@ -1,0 +1,1 @@
+ALTER TABLE member_opu_counter DROP COLUMN last_completed_at;
