@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Builder
 public class NotificationResponse {
     private Long id;
-    private String typeCode;
+    private String code;
     private String title;
     private String message;
     private Integer linkedContentId;
@@ -20,7 +20,7 @@ public class NotificationResponse {
     public static NotificationResponse from(Notification n) {
         return NotificationResponse.builder()
                 .id(n.getId())
-                .typeCode(n.getNotificationType().getCode())
+                .code(n.getNotificationType().getCode())
                 .title(n.getTitle())
                 .message(n.getMessage())
                 .linkedContentId(n.getLinkedContentId())
