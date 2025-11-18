@@ -1,41 +1,32 @@
 package com.opu.opube.feature.opu.command.domain.aggregate;
 
+
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import jakarta.persistence.*;
-import lombok.*;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
-
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.annotations.UuidGenerator;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Opu {
+public class MemberOpuCounter {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(updatable = false, nullable = false, length = 64)
-    private String title;
-
-    @Column(updatable = false, nullable = false)
-    private String description;
-
     @Builder.Default
-    @Column(nullable = false, length = 8) // VARCHAR(8) & NOT NULL
-    private String emoji = "🍀";
-
-    @Column(name = "required_minutes", updatable = false, nullable = false)
-    private Integer requiredMinutes;
-
     @Column(nullable = false)
-    private Boolean isShared;
+    private Integer totalCompletions = 0;
+
+    private LocalDateTime lastCompletedAt;
 
     @Column(updatable = false, nullable = false)
     @CreationTimestamp
@@ -44,13 +35,11 @@ public class Opu {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-    private LocalDateTime deletedAt;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "category_id")
-    private OpuCategory category;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "opu_id", nullable = false)
+    private Opu opu;
 }
