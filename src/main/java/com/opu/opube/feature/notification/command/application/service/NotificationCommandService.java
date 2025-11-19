@@ -12,4 +12,8 @@ public interface NotificationCommandService {
             String message,
             Integer linkedContentId
     );
+
+    void markAsRead(Long memberId, Long notificationId);
+
+    void markAllAsRead(Long memberId);
 }
