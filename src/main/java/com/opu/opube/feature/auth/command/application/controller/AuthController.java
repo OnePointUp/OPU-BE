@@ -89,4 +89,12 @@ public class AuthController {
         authService.resetPassword(req);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
+
+    @PostMapping("/verify/resend")
+    public ResponseEntity<ApiResponse<Void>> resendVerificationEmail(
+            @RequestBody ResendVerificationEmailRequest req
+    ) {
+        authService.resendVerificationEmail(req.getEmail(), backendBaseUrl);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
 }
