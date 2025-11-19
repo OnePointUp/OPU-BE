@@ -387,6 +387,46 @@ public class AuthService {
     }
 
 
+    @Transactional
+    public void resendVerificationEmail(String email, String backendBaseUrl) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.MEMBER_NOT_FOUND,
+                        "가입된 회원이 아닙니다."
+                ));
+
+        if (member.isEmailVerified()) {
+            throw new BusinessException(
+                    ErrorCode.EMAIL_ALREADY_VERIFIED,
+                    "이미 이메일 인증이 완료된 계정입니다."
+            );
+        }
+
+        String token = tokenProvider.createEmailVerifyToken(member.getId());
+        String verifyUrl = backendBaseUrl + "/api/v1/auth/verify?token=" + token;
+        String html = buildVerificationHtml(member.getNickname(), verifyUrl);
+
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    try {
+                        emailService.sendHtml(member.getEmail(), "OPU 이메일 인증", html);
+                        log.info("이메일 인증 재전송 완료. memberId={}", member.getId());
+                    } catch (Exception ex) {
+                        log.error("이메일 인증 재전송 실패 (memberId={})", member.getId(), ex);
+                    }
+                }
+            });
+        } else {
+            try {
+                emailService.sendHtml(member.getEmail(), "OPU 이메일 인증", html);
+            } catch (Exception ex) {
+                log.error("동기 환경에서 이메일 재전송 실패 (memberId={})", member.getId(), ex);
+            }
+        }
+    }
+
     private String buildVerificationHtml(String nickname, String verifyUrl) {
         return """
 <html>
