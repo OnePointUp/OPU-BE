@@ -35,7 +35,13 @@ public enum ErrorCode {
     INVALID_PASSWORD_RESET_TOKEN("01020", "유효하지 않은 비밀번호 재설정 토큰입니다.", HttpStatus.UNAUTHORIZED),
     EMAIL_ALREADY_VERIFIED("01021", "이미 이메일 인증이 완료된 계정입니다.", HttpStatus.BAD_REQUEST),
     NOTIFICATION_TYPE_NOT_FOUND("02001", "알림 타입을 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
-    NOTIFICATION_NOT_FOUND("02002", "알림을 찾을 수 없습니다.", HttpStatus.NOT_FOUND);
+    NOTIFICATION_NOT_FOUND("02002", "알림을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+
+    // OPU
+    OPU_CATEGORY_NOT_FOUND("03001", "해당 OPU 카테고리를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+
+
+    ;
 
 
 

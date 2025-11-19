@@ -22,4 +22,10 @@ public class MemberQueryServiceImpl implements MemberQueryService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
         return MemberProfileResponse.from(member);
     }
+
+    @Override
+    public Member getMember(Long memberId) {
+        return memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+    }
 }

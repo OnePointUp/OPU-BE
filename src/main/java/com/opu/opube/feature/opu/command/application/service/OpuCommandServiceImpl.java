@@ -1,5 +1,13 @@
 package com.opu.opube.feature.opu.command.application.service;
 
+import com.opu.opube.exception.BusinessException;
+import com.opu.opube.exception.ErrorCode;
+import com.opu.opube.feature.member.command.domain.aggregate.Member;
+import com.opu.opube.feature.member.query.service.MemberQueryService;
+import com.opu.opube.feature.opu.command.application.dto.request.OpuRegisterDto;
+import com.opu.opube.feature.opu.command.domain.aggregate.Opu;
+import com.opu.opube.feature.opu.command.domain.aggregate.OpuCategory;
+import com.opu.opube.feature.opu.command.domain.repository.OpuCategoryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,5 +19,17 @@ import com.opu.opube.feature.opu.command.domain.repository.OpuRepository;
 public class OpuCommandServiceImpl implements OpuCommandService {
 
     private final OpuRepository opuRepository;
+    private final MemberQueryService memberQueryService;
+    private final OpuCategoryRepository opuCategoryRepository;
 
+    @Override
+    public Long registerOpu(OpuRegisterDto dto, Long memberId) {
+        Member member = memberQueryService.getMember(memberId);
+        OpuCategory category = opuCategoryRepository.getOpuCategoryById(dto.categoryId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.OPU_CATEGORY_NOT_FOUND));
+
+        Opu opu = Opu.toEntity(dto, member, category);
+        Opu savedOpu = opuRepository.save(opu);
+        return savedOpu.getId();
+    }
 }
