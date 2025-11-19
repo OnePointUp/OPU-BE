@@ -57,4 +57,23 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
 
         return dto;
     }
+
+    @Override
+    @Transactional
+    public void markAsRead(Long memberId, Long notificationId) {
+        Notification notification = notificationRepository
+                .findByIdAndMember_Id(notificationId, memberId)
+                .orElseThrow(() ->
+                        new BusinessException(ErrorCode.NOTIFICATION_NOT_FOUND));
+
+        if (!Boolean.TRUE.equals(notification.getIsRead())) {
+            notification.markAsRead();
+        }
+    }
+
+    @Override
+    @Transactional
+    public void markAllAsRead(Long memberId) {
+        notificationRepository.markAllAsReadByMemberId(memberId);
+    }
 }
