@@ -5,11 +5,9 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.annotations.UuidGenerator;
 
 @Entity
 @Getter
@@ -18,6 +16,7 @@ import org.hibernate.annotations.UuidGenerator;
 @AllArgsConstructor
 public class NotificationType {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(updatable = false, nullable = false)
     private Long id;
 

@@ -1,8 +1,8 @@
 package com.opu.opube.feature.notification.command.domain.repository;
 
-import java.util.UUID;
 import com.opu.opube.feature.notification.command.domain.aggregate.Notification;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface NotificationRepository {
-    Notification save(Notification notification);
+public interface NotificationRepository extends JpaRepository<Notification, Long> {
+
 }

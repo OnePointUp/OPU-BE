@@ -32,8 +32,9 @@ public enum ErrorCode {
     DUPLICATE_PROVIDER_MEMBER("01017", "이미 가입된 소셜 계정입니다.", HttpStatus.CONFLICT),
     INVALID_NICKNAME_LENGTH("01018", "닉네임 길이가 유효하지 않습니다.", HttpStatus.BAD_REQUEST),
     INVALID_BIO_LENGTH("01019", "Bio 길이가 유효하지 않습니다.", HttpStatus.BAD_REQUEST),
-    INVALID_PASSWORD_RESET_TOKEN("01018", "유효하지 않은 비밀번호 재설정 토큰입니다.", HttpStatus.UNAUTHORIZED)
-    ;
+    INVALID_PASSWORD_RESET_TOKEN("01018", "유효하지 않은 비밀번호 재설정 토큰입니다.", HttpStatus.UNAUTHORIZED),
+    NOTIFICATION_TYPE_NOT_FOUND("02001", "알림 타입을 찾을 수 없습니다.", HttpStatus.BAD_REQUEST);
+
 
 
 
