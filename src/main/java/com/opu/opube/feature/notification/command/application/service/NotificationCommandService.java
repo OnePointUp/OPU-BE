@@ -16,4 +16,7 @@ public interface NotificationCommandService {
     void markAsRead(Long memberId, Long notificationId);
 
     void markAllAsRead(Long memberId);
+
+    void updateSetting(Long memberId, String code, boolean enabled);
+
 }

@@ -4,9 +4,11 @@ import com.opu.opube.exception.BusinessException;
 import com.opu.opube.exception.ErrorCode;
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.notification.command.application.dto.response.NotificationResponse;
+import com.opu.opube.feature.notification.command.domain.aggregate.MemberNotificationSetting;
 import com.opu.opube.feature.notification.command.domain.aggregate.Notification;
 import com.opu.opube.feature.notification.command.domain.aggregate.NotificationType;
 import com.opu.opube.feature.notification.command.domain.aggregate.NotificationTypeCode;
+import com.opu.opube.feature.notification.command.domain.repository.MemberNotificationSettingRepository;
 import com.opu.opube.feature.notification.command.domain.repository.NotificationTypeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +24,7 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
     private final NotificationRepository notificationRepository;
     private final NotificationTypeRepository notificationTypeRepository;
     private final NotificationSseService notificationSseService;
+    private final MemberNotificationSettingRepository memberNotificationSettingRepository;
 
     @Override
     @Transactional
@@ -75,5 +78,28 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
     @Transactional
     public void markAllAsRead(Long memberId) {
         notificationRepository.markAllAsReadByMemberId(memberId);
+    }
+
+    @Override
+    @Transactional
+    public void updateSetting(Long memberId, String code, boolean enabled) {
+
+        NotificationType type = notificationTypeRepository.findByCode(code)
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.NOTIFICATION_TYPE_NOT_FOUND,
+                        "존재하지 않는 알림 코드입니다: " + code
+                ));
+
+        MemberNotificationSetting setting = memberNotificationSettingRepository
+                .findByMemberIdAndNotificationTypeId(memberId, type.getId())
+                .orElseGet(() -> MemberNotificationSetting.builder()
+                        .member(Member.builder().id(memberId).build())
+                        .notificationType(type)
+                        .enabled(enabled)
+                        .build()
+                );
+
+        setting.changeEnabled(enabled);
+        memberNotificationSettingRepository.save(setting);
     }
 }

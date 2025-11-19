@@ -2,6 +2,7 @@ package com.opu.opube.feature.notification.command.application.controller;
 
 import com.opu.opube.common.dto.ApiResponse;
 import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
+import com.opu.opube.feature.notification.command.application.dto.request.NotificationSettingRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -31,6 +32,17 @@ public class NotificationCommandController {
     ) {
         Long memberId = principal.getMemberId();
         notificationCommandService.markAllAsRead(memberId);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @PatchMapping("/settings/{code}")
+    public ResponseEntity<ApiResponse<Void>> updateSetting(
+            @AuthenticationPrincipal MemberPrincipal principal,
+            @PathVariable String code,
+            @RequestBody NotificationSettingRequest request
+    ) {
+        Long memberId = principal.getMemberId();
+        notificationCommandService.updateSetting(memberId, code, request.getEnabled());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 }
