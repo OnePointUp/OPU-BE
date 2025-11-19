@@ -11,7 +11,7 @@ import com.opu.opube.feature.opu.command.application.service.OpuCommandService;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/debug/opu")
+@RequestMapping("/api/v1/opu")
 public class OpuCommandController {
 
     private final OpuCommandService opuCommandService;
