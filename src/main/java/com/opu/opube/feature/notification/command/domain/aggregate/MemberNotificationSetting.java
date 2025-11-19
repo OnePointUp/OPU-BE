@@ -36,4 +36,10 @@ public class MemberNotificationSetting {
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
+
+    public void changeEnabled(boolean enabled) {
+        if (!this.enabled.equals(enabled)) {
+            this.enabled = enabled;
+        }
+    }
 }
