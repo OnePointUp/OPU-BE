@@ -7,6 +7,7 @@ import com.opu.opube.feature.notification.command.domain.aggregate.NotificationT
 import com.opu.opube.feature.notification.command.domain.repository.NotificationTypeRepository;
 import com.opu.opube.feature.notification.query.infrastructure.repository.NotificationScheduleQueryRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +17,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class NotificationScheduleService {
 
@@ -27,6 +29,7 @@ public class NotificationScheduleService {
     @Transactional
     public void runScheduledNotifications() {
         LocalTime now = LocalTime.now().truncatedTo(ChronoUnit.MINUTES);
+        log.info("[Scheduler] runScheduledNotifications started at {}", now);
 
         for (NotificationTypeCode code : List.of(
                 NotificationTypeCode.MORNING,
@@ -55,12 +58,15 @@ public class NotificationScheduleService {
             return;
         }
 
+        log.info("[Scheduler] {}: time matched. Finding target members...", typeCode);
+
         List<Long> memberIds = scheduleQueryRepository.findTargetMemberIdsForType(
                 type.getId(),
                 type.getDefaultEnabled(),
                 allType.getId(),
                 allType.getDefaultEnabled()
         );
+        log.info("[Scheduler] {}: target members = {}", typeCode, memberIds.size());
 
         for (Long memberId : memberIds) {
             notificationCommandService.sendNotification(
