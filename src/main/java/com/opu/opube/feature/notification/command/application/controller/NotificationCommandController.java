@@ -45,4 +45,6 @@ public class NotificationCommandController {
         notificationCommandService.updateSetting(memberId, code, request.getEnabled());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
+
+
 }
