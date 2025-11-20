@@ -1,6 +1,7 @@
 package com.opu.opube.feature.opu.command.domain.aggregate;
 
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
+import com.opu.opube.feature.opu.command.application.dto.request.OpuRegisterDto;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -54,4 +55,16 @@ public class Opu {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
+
+    public static Opu toEntity(OpuRegisterDto dto, Member member, OpuCategory category) {
+        return Opu.builder()
+                .title(dto.getTitle())
+                .description(dto.getDescription())
+                .requiredMinutes(dto.getRequiredMinutes())
+                .emoji(dto.getEmoji() != null ? dto.getEmoji() : "🍀")
+                .isShared(dto.getIsShared())
+                .category(category)
+                .member(member)
+                .build();
+    }
 }
