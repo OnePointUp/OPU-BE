@@ -64,3 +64,9 @@ aws:
     cloudfront-domain: ${AWS_CLOUDFRONT_DOMAIN}
     access-key: ${AWS_ACCESS_KEY}
     secret-key: ${AWS_SECRET_KEY}
+
+webpush:
+    vapid:
+      public-key: ${WEBPUSH_PUBLIC_KEY}
+      private-key: ${WEBPUSH_PRIVATE_KEY}
+      subject: ${WEBPUSH_SUBJECT}
