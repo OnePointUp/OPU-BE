@@ -24,6 +24,7 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
     private final NotificationRepository notificationRepository;
     private final NotificationTypeRepository notificationTypeRepository;
     private final NotificationSseService notificationSseService;
+    private final WebPushNotificationService webPushNotificationService;
     private final MemberNotificationSettingRepository memberNotificationSettingRepository;
 
     @Override
@@ -57,6 +58,8 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
         NotificationResponse dto = NotificationResponse.from(saved);
 
         notificationSseService.sendToMember(memberId, dto);
+
+        webPushNotificationService.sendToMember(memberId, title, message);
 
         return dto;
     }
