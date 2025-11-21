@@ -303,7 +303,7 @@ public class AuthService {
         }
 
         member.changePassword(passwordEncoder.encode(rawPassword));
-
+        member.updatePasswordResetIssuedAt(LocalDateTime.now());
         refreshTokenService.delete(member.getId());
     }
 
