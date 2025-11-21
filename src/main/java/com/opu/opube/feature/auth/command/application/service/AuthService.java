@@ -231,6 +231,13 @@ public class AuthService {
 
         String token = emailTokenProvider.createPasswordResetToken(member.getId());
 
+        Date issuedAt = emailTokenProvider.getIssuedAt(token);
+        member.updatePasswordResetIssuedAt(
+                issuedAt.toInstant()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDateTime()
+        );
+
         String resetUrl = frontendBaseUrl + "/reset-password?token=" + token;
 
         String html = buildPasswordResetHtml(member.getNickname(), resetUrl);
@@ -262,15 +269,34 @@ public class AuthService {
         String token = req.getToken();
 
         if (!emailTokenProvider.isPasswordResetToken(token)) {
-            throw new BusinessException(ErrorCode.INVALID_PASSWORD_RESET_TOKEN, "비밀번호 재설정 토큰이 아닙니다.");
+            throw new BusinessException(
+                    ErrorCode.INVALID_PASSWORD_RESET_TOKEN,
+                    "비밀번호 재설정 토큰이 아닙니다."
+            );
         }
 
+        // 토큰에서 memberId, iat 추출
         Long memberId = emailTokenProvider.parseMemberIdFromToken(token);
+        Date issuedAt = emailTokenProvider.getIssuedAt(token);
 
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.MEMBER_NOT_FOUND
+                ));
 
-        // 필요 시 규칙 강화
+        // 가장 최근에 발급된 토큰인지 체크
+        if (member.getPasswordResetIssuedAt() != null) {
+            LocalDateTime tokenIat =
+                    issuedAt.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+
+            if (tokenIat.isBefore(member.getPasswordResetIssuedAt())) {
+                throw new BusinessException(
+                        ErrorCode.PASSWORD_RESET_TOKEN_EXPIRED
+                );
+            }
+        }
+
+        // 비밀번호 규칙
         String rawPassword = req.getNewPassword();
         if (rawPassword == null || rawPassword.length() < 8) {
             throw new BusinessException(ErrorCode.INVALID_PASSWORD, "비밀번호는 8자 이상이어야 합니다.");
@@ -278,7 +304,7 @@ public class AuthService {
 
         member.changePassword(passwordEncoder.encode(rawPassword));
 
-        refreshTokenService.delete(member.getId()); // 구현되어 있으면 사용
+        refreshTokenService.delete(member.getId());
     }
 
     //카카오 로그인
