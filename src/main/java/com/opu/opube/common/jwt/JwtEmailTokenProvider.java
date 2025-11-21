@@ -1,5 +1,7 @@
 package com.opu.opube.common.jwt;
 
+import com.opu.opube.exception.BusinessException;
+import com.opu.opube.exception.ErrorCode;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -69,6 +71,11 @@ public class JwtEmailTokenProvider {
         return "password-reset".equals(getTokenType(token));
     }
 
+    public Date getIssuedAt(String token) {
+        Claims claims = parseClaims(token);
+        return claims.getIssuedAt();
+    }
+
     /** 공통 Claims 파서 */
     private Claims parseClaims(String token) {
         try {
@@ -78,7 +85,7 @@ public class JwtEmailTokenProvider {
                     .parseClaimsJws(token)
                     .getBody();
         } catch (JwtException | IllegalArgumentException e) {
-            throw new IllegalStateException("유효하지 않은 토큰입니다.", e);
+            throw new BusinessException(ErrorCode.INVALID_JWT);
         }
     }
 }

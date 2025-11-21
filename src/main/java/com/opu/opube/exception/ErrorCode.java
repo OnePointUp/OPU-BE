@@ -13,7 +13,7 @@ public enum ErrorCode {
     INTERNAL_SERVER_ERROR("01001", "내부 서버 오류입니다.", HttpStatus.INTERNAL_SERVER_ERROR),
     UNAUTHORIZED_USER("01002", "인증되지 않은 사용자입니다.",HttpStatus.UNAUTHORIZED),
     EXPIRED_JWT("01003", "JWT 토큰이 만료되었습니다.", HttpStatus.UNAUTHORIZED),
-    INVALID_JWT("01004", "잘못된 JWT 토큰입니다.", HttpStatus.UNAUTHORIZED),
+    INVALID_JWT("01004", "유효하지 않은 JWT 토큰입니다.", HttpStatus.UNAUTHORIZED),
     UNSUPPORTED_JWT("01005", "지원하지 않는 JWT 토큰입니다.", HttpStatus.UNAUTHORIZED),
     EMPTY_JWT("01006", "JWT 클레임이 비어있습니다.", HttpStatus.UNAUTHORIZED),
     INVALID_FILE_TYPE("05003","유효하지 않은 파일 타입입니다." ,HttpStatus.BAD_REQUEST),
@@ -34,6 +34,11 @@ public enum ErrorCode {
     INVALID_BIO_LENGTH("01019", "Bio 길이가 유효하지 않습니다.", HttpStatus.BAD_REQUEST),
     INVALID_PASSWORD_RESET_TOKEN("01020", "유효하지 않은 비밀번호 재설정 토큰입니다.", HttpStatus.UNAUTHORIZED),
     EMAIL_ALREADY_VERIFIED("01021", "이미 이메일 인증이 완료된 계정입니다.", HttpStatus.BAD_REQUEST),
+    INVALID_EMAIL_VERIFY_TOKEN("01022", "유효하지 않은 이메일 인증 토큰입니다.", HttpStatus.UNAUTHORIZED),
+    EMAIL_VERIFY_TOKEN_EXPIRED("01023", "이메일 인증 토큰이 만료되었거나 최신 토큰이 아닙니다.", HttpStatus.UNAUTHORIZED),
+    PASSWORD_RESET_TOKEN_EXPIRED("01024", "비밀번호 재설정 토큰이 만료되었거나 최신 토큰이 아닙니다.", HttpStatus.UNAUTHORIZED),
+
+
     NOTIFICATION_TYPE_NOT_FOUND("02001", "알림 타입을 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
     NOTIFICATION_NOT_FOUND("02002", "알림을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
 
