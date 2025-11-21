@@ -28,6 +28,10 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -35,7 +39,7 @@ public class AuthService {
 
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
-    private final JwtEmailTokenProvider tokenProvider;
+    private final JwtEmailTokenProvider emailTokenProvider;
     private final JwtTokenProvider jwtTokenProvider;
     private final EmailService emailService;
     private final RefreshTokenService refreshTokenService;
@@ -62,8 +66,17 @@ public class AuthService {
 
         Member saved = memberRepository.save(m);
 
-        // ✅ 이메일 인증용 토큰 생성 (createEmailVerifyToken 사용)
-        String token = tokenProvider.createEmailVerifyToken(saved.getId());
+        // 이메일 인증용 토큰 생성
+        String token = emailTokenProvider.createEmailVerifyToken(saved.getId());
+
+        // 토큰 발급 시각(iat)을 member에 저장
+        Date issuedAt = emailTokenProvider.getIssuedAt(token);
+        saved.updateEmailVerifyIssuedAt(
+                issuedAt.toInstant()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDateTime()
+        );
+
         String verifyUrl = backendBaseUrl + "/api/v1/auth/verify?token=" + token;
         String html = buildVerificationHtml(saved.getNickname(), verifyUrl);
 
@@ -169,11 +182,38 @@ public class AuthService {
 
     @Transactional
     public void verifyEmail(String token) {
-        Long memberId = tokenProvider.parseMemberIdFromToken(token);
+
+        // 토큰 타입 검증
+        if (!emailTokenProvider.isEmailVerifyToken(token)) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_EMAIL_VERIFY_TOKEN
+            );
+        }
+
+        // 토큰에서 memberId, iat 추출
+        Long memberId = emailTokenProvider.parseMemberIdFromToken(token);
+        Date issuedAt = emailTokenProvider.getIssuedAt(token);
+
         Member m = memberRepository.findById(memberId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 회원"));
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.MEMBER_NOT_FOUND,
+                        "존재하지 않는 회원입니다."
+                ));
+
+        // DB의 마지막 발급 시각과 비교
+        if (m.getEmailVerifyIssuedAt() != null) {
+            LocalDateTime tokenIat =
+                    issuedAt.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+
+            if (tokenIat.isBefore(m.getEmailVerifyIssuedAt())) {
+                throw new BusinessException(
+                        ErrorCode.EMAIL_VERIFY_TOKEN_EXPIRED
+                );
+            }
+        }
+
+        // 인증 처리
         m.verifyEmail();
-        memberRepository.save(m);
     }
 
 
@@ -189,7 +229,7 @@ public class AuthService {
             return;
         }
 
-        String token = tokenProvider.createPasswordResetToken(member.getId());
+        String token = emailTokenProvider.createPasswordResetToken(member.getId());
 
         String resetUrl = frontendBaseUrl + "/reset-password?token=" + token;
 
@@ -221,11 +261,11 @@ public class AuthService {
     public void resetPassword(PasswordResetConfirmRequest req) {
         String token = req.getToken();
 
-        if (!tokenProvider.isPasswordResetToken(token)) {
+        if (!emailTokenProvider.isPasswordResetToken(token)) {
             throw new BusinessException(ErrorCode.INVALID_PASSWORD_RESET_TOKEN, "비밀번호 재설정 토큰이 아닙니다.");
         }
 
-        Long memberId = tokenProvider.parseMemberIdFromToken(token);
+        Long memberId = emailTokenProvider.parseMemberIdFromToken(token);
 
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
@@ -397,12 +437,21 @@ public class AuthService {
 
         if (member.isEmailVerified()) {
             throw new BusinessException(
-                    ErrorCode.EMAIL_ALREADY_VERIFIED,
-                    "이미 이메일 인증이 완료된 계정입니다."
+                    ErrorCode.EMAIL_ALREADY_VERIFIED
             );
         }
 
-        String token = tokenProvider.createEmailVerifyToken(member.getId());
+        // 토큰 생성
+        String token = emailTokenProvider.createEmailVerifyToken(member.getId());
+
+        // 2) 토큰 발급 시각 저장 (기존 값 덮어씀)
+        Date issuedAt = emailTokenProvider.getIssuedAt(token);
+        member.updateEmailVerifyIssuedAt(
+                issuedAt.toInstant()
+                        .atZone(ZoneId.systemDefault())
+                        .toLocalDateTime()
+        );
+
         String verifyUrl = backendBaseUrl + "/api/v1/auth/verify?token=" + token;
         String html = buildVerificationHtml(member.getNickname(), verifyUrl);
 
