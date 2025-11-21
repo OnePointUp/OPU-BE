@@ -71,6 +71,11 @@ public class JwtEmailTokenProvider {
         return "password-reset".equals(getTokenType(token));
     }
 
+    public Date getIssuedAt(String token) {
+        Claims claims = parseClaims(token);
+        return claims.getIssuedAt();
+    }
+
     /** 공통 Claims 파서 */
     private Claims parseClaims(String token) {
         try {
