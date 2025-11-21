@@ -5,12 +5,14 @@ import com.opu.opube.feature.auth.command.application.dto.request.*;
 import com.opu.opube.feature.auth.command.application.dto.response.KakaoLoginResponse;
 import com.opu.opube.feature.auth.command.application.dto.response.RegisterResponse;
 import com.opu.opube.feature.auth.command.application.dto.response.TokenResponse;
+import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
 import com.opu.opube.feature.auth.command.application.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -95,6 +97,16 @@ public class AuthController {
             @RequestBody ResendVerificationEmailRequest req
     ) {
         authService.resendVerificationEmail(req.getEmail(), backendBaseUrl);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @PostMapping("/password/change")
+    public ResponseEntity<ApiResponse<Void>> changePassword(
+            @RequestBody @Valid ChangePasswordRequest req,
+            @AuthenticationPrincipal MemberPrincipal principal
+    ) {
+        Long memberId = principal.getMemberId();
+        authService.changePassword(memberId, req);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

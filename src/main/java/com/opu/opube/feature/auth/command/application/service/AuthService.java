@@ -502,6 +502,23 @@ public class AuthService {
         }
     }
 
+    @Transactional
+    public void changePassword(Long memberId, ChangePasswordRequest req) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+        if (!passwordEncoder.matches(req.getOldPassword(), member.getPassword())) {
+            throw new BusinessException(ErrorCode.INVALID_PASSWORD, "기존 비밀번호가 일치하지 않습니다.");
+        }
+
+        if (req.getNewPassword().length() < 8) {
+            throw new BusinessException(ErrorCode.INVALID_PASSWORD, "비밀번호는 8자 이상이어야 합니다.");
+        }
+
+        member.changePassword(passwordEncoder.encode(req.getNewPassword()));
+        refreshTokenService.delete(memberId);
+    }
+
     private String buildVerificationHtml(String nickname, String verifyUrl) {
         return """
 <html>
