@@ -63,6 +63,12 @@ public class Member {
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
+    @Column(name = "email_verify_issued_at")
+    private LocalDateTime emailVerifyIssuedAt;
+
+    @Column(name = "password_reset_issued_at")
+    private LocalDateTime passwordResetIssuedAt;
+
 
     public void markDeleted() {
         this.deletedAt = LocalDateTime.now();
@@ -109,5 +115,13 @@ public class Member {
     @Override
     public int hashCode() {
         return Objects.hashCode(id);
+    }
+
+    public void updateEmailVerifyIssuedAt(LocalDateTime issuedAt) {
+        this.emailVerifyIssuedAt = issuedAt;
+    }
+
+    public void updatePasswordResetIssuedAt(LocalDateTime issuedAt) {
+        this.passwordResetIssuedAt = issuedAt;
     }
 }
