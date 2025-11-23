@@ -109,4 +109,13 @@ public class AuthController {
         authService.changePassword(memberId, req);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
+
+    @PostMapping("/password/check")
+    public ResponseEntity<ApiResponse<Void>> checkPassword(
+            @AuthenticationPrincipal MemberPrincipal principal,
+            @RequestBody @Valid PasswordCheckRequest req
+    ) {
+        authService.checkCurrentPassword(principal.getMemberId(), req.getPassword());
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
 }
