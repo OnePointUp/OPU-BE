@@ -86,9 +86,6 @@ public class Todo {
     }
 
     public void updateStatus(TodoStatusUpdateDto dto) {
-/*        if (dto == null) {
-            throw new BusinessException(ErrorCode.)
-        }*/
         this.completed = dto.getCompleted();
     }
 }
