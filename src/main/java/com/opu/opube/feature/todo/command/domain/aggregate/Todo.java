@@ -48,6 +48,7 @@ public class Todo {
     @Column(name = "scheduled_time")
     private LocalTime scheduledTime;
 
+    @Setter
     @Column(name = "sort_order")
     private Integer sortOrder;
 

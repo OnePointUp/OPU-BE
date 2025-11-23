@@ -3,6 +3,7 @@ package com.opu.opube.feature.todo.command.application.service;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoCreateDto;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoStatusUpdateDto;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoUpdateDto;
+import jakarta.validation.constraints.Min;
 
 public interface TodoCommandService {
     Long createTodo(Long memberId, TodoCreateDto todoCreateDto);
@@ -12,5 +13,7 @@ public interface TodoCommandService {
     void updateStatus(Long memberId, TodoStatusUpdateDto dto, Long todoId);
 
     void deleteTodo(Long memberId, Long todoId);
+
+    void reorderTodo(Long memberId, int newOrder, Long todoId);
     // command methods here
 }

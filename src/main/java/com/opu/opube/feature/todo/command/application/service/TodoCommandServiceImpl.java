@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.opu.opube.feature.todo.command.domain.repository.TodoRepository;
 
+import java.time.LocalDate;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -26,9 +28,10 @@ public class TodoCommandServiceImpl implements TodoCommandService {
     public Long createTodo(Long memberId, TodoCreateDto todoCreateDto) {
         Member member = memberQueryService.getMember(memberId);
 
-        Integer maxOrder = todoRepository.findMaxSortOrderByMemberAndScheduledDate(member, todoCreateDto.getScheduledDate());
+        Integer maxOrder = todoRepository.findMaxSortOrderByMemberIdAndDate(memberId, todoCreateDto.getScheduledDate());
+        int newOrder = (maxOrder != null ? maxOrder : -1) + 1;
 
-        Todo todo = Todo.toEntity(todoCreateDto, member, maxOrder + 1);
+        Todo todo = Todo.toEntity(todoCreateDto, member, newOrder);
         Todo savedTodo = todoRepository.save(todo);
         return savedTodo.getId();
     }
@@ -68,6 +71,7 @@ public class TodoCommandServiceImpl implements TodoCommandService {
     }
 
     @Override
+    @Transactional
     public void deleteTodo(Long memberId, Long todoId) {
         Member member = memberQueryService.getMember(memberId);
         Todo todo = todoRepository.findById(todoId)
@@ -80,5 +84,29 @@ public class TodoCommandServiceImpl implements TodoCommandService {
         // todo 멱등성 관리
 
         todoRepository.delete(todo);
+    }
+
+    @Override
+    @Transactional
+    public void reorderTodo(Long memberId, int newOrder, Long todoId) {
+        Member member = memberQueryService.getMember(memberId);
+        Todo todo = todoRepository.findById(todoId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.TODO_NOT_FOUND));
+
+        if (!todo.isOwnedBy(member)) {
+            throw new BusinessException(ErrorCode.TODO_FORBIDDEN);
+        }
+
+        LocalDate date = todo.getScheduledDate();
+        int oldOrder = todo.getSortOrder();
+        if (oldOrder == newOrder) return; // idempotent 처리
+
+        if (oldOrder < newOrder) {
+            todoRepository.incrementSortOrderBetween(memberId, date, oldOrder + 1, newOrder, -1);
+        } else {
+            todoRepository.incrementSortOrderBetween(memberId, date, newOrder, oldOrder - 1, 1);
+        }
+
+        todo.setSortOrder(newOrder);
     }
 }
