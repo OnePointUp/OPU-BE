@@ -118,4 +118,12 @@ public class AuthController {
         authService.checkCurrentPassword(principal.getMemberId(), req.getPassword());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(
+            @AuthenticationPrincipal MemberPrincipal principal
+    ) {
+        authService.logout(principal.getMemberId());
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
 }
