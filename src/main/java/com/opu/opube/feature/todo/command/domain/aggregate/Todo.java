@@ -48,6 +48,9 @@ public class Todo {
     @Column(name = "scheduled_time")
     private LocalTime scheduledTime;
 
+    @Column(name = "sort_order")
+    private Integer sortOrder;
+
     @Builder.Default
     @Column(name = "is_completed", nullable = false)
     private boolean completed = false;
@@ -60,12 +63,13 @@ public class Todo {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public static Todo toEntity(TodoCreateDto todoCreateDto, Member member) {
+    public static Todo toEntity(TodoCreateDto todoCreateDto, Member member, Integer sortOrder) {
         return Todo.builder()
                 .title(todoCreateDto.getTitle())
                 .scheduledDate(todoCreateDto.getScheduledDate())
                 .scheduledTime(todoCreateDto.getScheduledTime())
                 .member(member)
+                .sortOrder(sortOrder)
                 .build();
     }
 

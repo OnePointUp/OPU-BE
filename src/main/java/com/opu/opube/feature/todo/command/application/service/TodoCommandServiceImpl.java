@@ -25,7 +25,10 @@ public class TodoCommandServiceImpl implements TodoCommandService {
     @Transactional
     public Long createTodo(Long memberId, TodoCreateDto todoCreateDto) {
         Member member = memberQueryService.getMember(memberId);
-        Todo todo = Todo.toEntity(todoCreateDto, member);
+
+        Integer maxOrder = todoRepository.findMaxSortOrderByMemberAndScheduledDate(member, todoCreateDto.getScheduledDate());
+
+        Todo todo = Todo.toEntity(todoCreateDto, member, maxOrder + 1);
         Todo savedTodo = todoRepository.save(todo);
         return savedTodo.getId();
     }
