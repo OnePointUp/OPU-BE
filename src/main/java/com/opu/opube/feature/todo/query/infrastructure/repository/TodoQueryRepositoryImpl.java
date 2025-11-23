@@ -3,6 +3,10 @@ package com.opu.opube.feature.todo.query.infrastructure.repository;
 import com.opu.opube.common.dto.PageResponse;
 import com.opu.opube.feature.todo.command.domain.aggregate.QTodo;
 import com.opu.opube.feature.todo.query.dto.response.TodoResponseDto;
+import com.opu.opube.feature.todo.query.dto.response.TodoStatisticsDto;
+import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -46,5 +50,32 @@ public class TodoQueryRepositoryImpl implements TodoQueryRepository {
                 .collect(Collectors.toList());
 
         return PageResponse.from(content, totalCount, page, size);
+    }
+
+    @Override
+    public List<TodoStatisticsDto> findStatisticsByDateRange(Long memberId, LocalDate startDate, LocalDate endDate) {
+        QTodo todo = QTodo.todo;
+
+        // 완료된 Todos 를 조건부로 계산
+        NumberExpression<Long> completedCount = Expressions.cases()
+                .when(todo.completed.eq(true))
+                .then(1L)
+                .otherwise(0L)
+                .sum();
+
+        // 날짜별 통계 조회
+        return queryFactory
+                .select(Projections.constructor(
+                        TodoStatisticsDto.class,
+                        todo.scheduledDate.as("date"),
+                        todo.count().as("totalCount"),                                           // 전체 Todo 수
+                        completedCount.as("completedCount")
+                ))
+                .from(todo)
+                .where(todo.member.id.eq(memberId)
+                        .and(todo.scheduledDate.between(startDate, endDate)))
+                .groupBy(todo.scheduledDate)
+                .orderBy(todo.scheduledDate.asc())
+                .fetch();
     }
 }
