@@ -31,7 +31,10 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
         return queryFactory
                 .select(opu.id.count())
                 .from(opu)
-                .where(opu.member.id.eq(memberId))
+                .where(
+                        opu.member.id.eq(memberId),
+                        opu.deletedAt.isNull()
+                )
                 .fetchOne();
     }
 }
