@@ -17,7 +17,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/debug/todo")
+@RequestMapping("/api/v1/todo")
 public class TodoQueryController {
 
     private final TodoQueryService todoQueryService;
@@ -43,7 +43,7 @@ public class TodoQueryController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @AuthenticationPrincipal MemberPrincipal memberPrincipal
     ) {
-        Long memberId = 1L; // memberPrincipal.getMemberId();
+        Long memberId = memberPrincipal.getMemberId();
         // 시작일 기준으로 7일 범위 계산
         LocalDate endDate = startDate.plusDays(6);
         List<TodoStatisticsDto> statistics = todoQueryService.getStatisticsByDateRange(memberId, startDate, endDate);
@@ -61,7 +61,7 @@ public class TodoQueryController {
             @RequestParam int month,
             @AuthenticationPrincipal MemberPrincipal memberPrincipal
     ) {
-        Long memberId = 1L; //memberPrincipal.getMemberId();
+        Long memberId = memberPrincipal.getMemberId();
         YearMonth yearMonth = YearMonth.of(year, month);
         LocalDate startDate = yearMonth.atDay(1);
         LocalDate endDate = yearMonth.atEndOfMonth();
