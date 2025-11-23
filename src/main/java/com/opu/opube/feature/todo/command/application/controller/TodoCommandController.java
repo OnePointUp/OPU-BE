@@ -16,7 +16,7 @@ import com.opu.opube.feature.todo.command.application.service.TodoCommandService
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/debug/todo")
+@RequestMapping("/api/v1/todo")
 @Validated
 public class TodoCommandController {
 
@@ -27,7 +27,7 @@ public class TodoCommandController {
             @AuthenticationPrincipal MemberPrincipal principal,
             @Valid @RequestBody TodoCreateDto todoCreateDto
             ) {
-        Long memberId = 1L; //principal.getMemberId();
+        Long memberId = principal.getMemberId();
         Long todoId = todoCommandService.createTodo(memberId, todoCreateDto);
         return ResponseEntity.ok(ApiResponse.success(todoId));
     }
@@ -38,7 +38,7 @@ public class TodoCommandController {
             @PathVariable Long todoId,
             @RequestBody TodoUpdateDto dto
     ) {
-        Long memberId = 1L; //todo : principal.getMemberId();
+        Long memberId = principal.getMemberId();
         todoCommandService.updateTodo(memberId, dto, todoId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
@@ -49,7 +49,7 @@ public class TodoCommandController {
             @PathVariable Long todoId,
             @Valid @RequestBody TodoStatusUpdateDto dto
     ) {
-        Long memberId = 1L; //todo : principal.getMemberId();
+        Long memberId = principal.getMemberId();
         todoCommandService.updateStatus(memberId, dto, todoId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
@@ -60,7 +60,7 @@ public class TodoCommandController {
             @PathVariable Long todoId,
             @RequestParam("newOrder") @Min(0) int newOrder
     ) {
-        Long memberId = 1L; //todo : principal.getMemberId();
+        Long memberId = principal.getMemberId();
         todoCommandService.reorderTodo(memberId, newOrder, todoId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
@@ -70,7 +70,7 @@ public class TodoCommandController {
             @AuthenticationPrincipal MemberPrincipal principal,
             @PathVariable Long todoId
     ) {
-        Long memberId = 1L; //todo : principal.getMemberId();
+        Long memberId = principal.getMemberId();
         todoCommandService.deleteTodo(memberId, todoId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
