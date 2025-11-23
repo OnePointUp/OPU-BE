@@ -1,8 +1,10 @@
 package com.opu.opube.feature.todo.command.domain.aggregate;
 
+import com.opu.opube.exception.BusinessException;
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.opu.command.domain.aggregate.Opu;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoCreateDto;
+import com.opu.opube.feature.todo.command.application.dto.request.TodoStatusUpdateDto;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoUpdateDto;
 import jakarta.persistence.*;
 import lombok.*;
@@ -73,11 +75,15 @@ public class Todo {
         if (scheduledDate != null) this.scheduledTime = scheduledTime;
     }
 
-    public void markCompleted() { this.completed = true; }
-    public void markUncompleted() { this.completed = false; }
-
     public boolean isOwnedBy(Member member) {
         return this.member != null && member != null
                 && this.member.getId().equals(member.getId());
+    }
+
+    public void updateStatus(TodoStatusUpdateDto dto) {
+/*        if (dto == null) {
+            throw new BusinessException(ErrorCode.)
+        }*/
+        this.completed = dto.getCompleted();
     }
 }

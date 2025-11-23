@@ -5,6 +5,7 @@ import com.opu.opube.exception.ErrorCode;
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.member.query.service.MemberQueryService;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoCreateDto;
+import com.opu.opube.feature.todo.command.application.dto.request.TodoStatusUpdateDto;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoUpdateDto;
 import com.opu.opube.feature.todo.command.domain.aggregate.Todo;
 import lombok.RequiredArgsConstructor;
@@ -42,5 +43,24 @@ public class TodoCommandServiceImpl implements TodoCommandService {
 
         todo.patch(dto.getTitle(), dto.getScheduledDate(), dto.getScheduledTime());
 
+    }
+
+    @Override
+    @Transactional
+    public void updateStatus(Long memberId, TodoStatusUpdateDto dto, Long todoId) {
+        Member member = memberQueryService.getMember(memberId);
+        Todo todo = todoRepository.findById(todoId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.TODO_NOT_FOUND));
+
+        if (!todo.isOwnedBy(member)) {
+            throw new BusinessException(ErrorCode.TODO_FORBIDDEN);
+        }
+
+        // 이미 상태가 같은 경우 → 무시 (idempotent; 멱등성)
+        if (todo.isCompleted() == dto.getCompleted()) {
+            return;
+        }
+
+        todo.updateStatus(dto);
     }
 }

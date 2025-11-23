@@ -39,4 +39,15 @@ public class TodoCommandController {
         todoCommandService.updateTodo(memberId, dto, todoId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
+
+    @PatchMapping("/{todoId}/status")
+    public ResponseEntity<ApiResponse<Void>> updateTodo(
+            @AuthenticationPrincipal MemberPrincipal principal,
+            @PathVariable Long todoId,
+            @Valid @RequestBody TodoStatusUpdateDto dto
+    ) {
+        Long memberId = 1L; //todo : principal.getMemberId();
+        todoCommandService.updateStatus(memberId, dto, todoId);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
 }
