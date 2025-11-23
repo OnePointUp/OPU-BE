@@ -531,6 +531,12 @@ public class AuthService {
         }
     }
 
+
+    @Transactional
+    public void logout(Long memberId) {
+        refreshTokenService.delete(memberId);
+    }
+
     private String buildVerificationHtml(String nickname, String verifyUrl) {
         return """
 <html>
