@@ -4,6 +4,7 @@ import com.opu.opube.common.dto.ApiResponse;
 import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoCreateDto;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoUpdateDto;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -20,7 +21,7 @@ public class TodoCommandController {
     @PostMapping
     public ResponseEntity<ApiResponse<Long>> createTodo(
             @AuthenticationPrincipal MemberPrincipal principal,
-            @RequestBody TodoCreateDto todoCreateDto
+            @Valid @RequestBody TodoCreateDto todoCreateDto
             ) {
         Long memberId = principal.getMemberId();
         Long todoId = todoCommandService.createTodo(memberId, todoCreateDto);
@@ -32,7 +33,7 @@ public class TodoCommandController {
             @AuthenticationPrincipal MemberPrincipal principal,
             @RequestBody TodoUpdateDto dto
     ) {
-        Long memberId = principal.getMemberId();
+        Long memberId = 1L; //todo : principal.getMemberId();
         todoCommandService.updateTodo(memberId, dto);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
