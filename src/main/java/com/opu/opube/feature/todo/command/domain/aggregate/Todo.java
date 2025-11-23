@@ -2,6 +2,7 @@ package com.opu.opube.feature.todo.command.domain.aggregate;
 
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.opu.command.domain.aggregate.Opu;
+import com.opu.opube.feature.todo.command.application.dto.request.TodoCreateDto;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -44,6 +45,7 @@ public class Todo {
     @Column(name = "scheduled_time")
     private LocalTime scheduledTime;
 
+    @Builder.Default
     @Column(name = "is_completed", nullable = false)
     private boolean completed = false;
 
@@ -54,6 +56,15 @@ public class Todo {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    public static Todo toEntity(TodoCreateDto todoCreateDto, Member member) {
+        return Todo.builder()
+                .title(todoCreateDto.getTitle())
+                .scheduledDate(todoCreateDto.getScheduledDate())
+                .scheduledTime(todoCreateDto.getScheduledTime())
+                .member(member)
+                .build();
+    }
 
     public void markCompleted() { this.completed = true; }
     public void markUncompleted() { this.completed = false; }
