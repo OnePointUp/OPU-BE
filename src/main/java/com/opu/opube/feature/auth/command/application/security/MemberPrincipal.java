@@ -15,11 +15,15 @@ public class MemberPrincipal implements UserDetails {
 
     private final Long memberId;
     private final String email;
+    private final String nickname;
+    private final String profileImageUrl;
     private final Authorization authorization;
 
     public MemberPrincipal(Member member) {
         this.memberId = member.getId();
         this.email = member.getEmail();
+        this.nickname = member.getNickname();
+        this.profileImageUrl = member.getProfileImageUrl();
         this.authorization = member.getAuthorization();
     }
 

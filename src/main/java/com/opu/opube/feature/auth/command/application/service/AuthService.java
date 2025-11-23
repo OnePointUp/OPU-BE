@@ -519,6 +519,18 @@ public class AuthService {
         refreshTokenService.delete(memberId);
     }
 
+    @Transactional(readOnly = true)
+    public void checkCurrentPassword(Long memberId, String rawPassword) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+        if (!passwordEncoder.matches(rawPassword, member.getPassword())) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_PASSWORD
+            );
+        }
+    }
+
     private String buildVerificationHtml(String nickname, String verifyUrl) {
         return """
 <html>
