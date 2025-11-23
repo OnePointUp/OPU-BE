@@ -10,5 +10,7 @@ public interface TodoCommandService {
     void updateTodo(Long memberId, TodoUpdateDto dto, Long todoId);
 
     void updateStatus(Long memberId, TodoStatusUpdateDto dto, Long todoId);
+
+    void deleteTodo(Long memberId, Long todoId);
     // command methods here
 }

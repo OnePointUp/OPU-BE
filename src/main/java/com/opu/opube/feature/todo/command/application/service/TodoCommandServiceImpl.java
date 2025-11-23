@@ -63,4 +63,19 @@ public class TodoCommandServiceImpl implements TodoCommandService {
 
         todo.updateStatus(dto);
     }
+
+    @Override
+    public void deleteTodo(Long memberId, Long todoId) {
+        Member member = memberQueryService.getMember(memberId);
+        Todo todo = todoRepository.findById(todoId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.TODO_NOT_FOUND));
+
+        if (!todo.isOwnedBy(member)) {
+            throw new BusinessException(ErrorCode.TODO_FORBIDDEN);
+        }
+
+        // todo 멱등성 관리
+
+        todoRepository.delete(todo);
+    }
 }

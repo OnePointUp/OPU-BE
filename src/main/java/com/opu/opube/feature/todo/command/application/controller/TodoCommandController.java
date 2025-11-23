@@ -50,4 +50,14 @@ public class TodoCommandController {
         todoCommandService.updateStatus(memberId, dto, todoId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
+
+    @DeleteMapping("{todoId}")
+    public ResponseEntity<ApiResponse<Void>> deleteTodo(
+            @AuthenticationPrincipal MemberPrincipal principal,
+            @PathVariable Long todoId
+    ) {
+        Long memberId = 1L; //todo : principal.getMemberId();
+        todoCommandService.deleteTodo(memberId, todoId);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
 }
