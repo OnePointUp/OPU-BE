@@ -7,7 +7,6 @@ import java.time.LocalTime;
 
 @Getter
 public class TodoUpdateDto {
-    Long todoId;
     String title;
     LocalDate scheduledDate;
     LocalTime scheduledTime;

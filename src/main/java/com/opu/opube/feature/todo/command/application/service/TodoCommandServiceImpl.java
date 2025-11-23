@@ -31,9 +31,9 @@ public class TodoCommandServiceImpl implements TodoCommandService {
 
     @Override
     @Transactional
-    public void updateTodo(Long memberId, TodoUpdateDto dto) {
+    public void updateTodo(Long memberId, TodoUpdateDto dto, Long todoId) {
         Member member = memberQueryService.getMember(memberId);
-        Todo todo = todoRepository.findById(dto.getTodoId())
+        Todo todo = todoRepository.findById(todoId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.TODO_NOT_FOUND));
 
         if (!todo.isOwnedBy(member)) {
