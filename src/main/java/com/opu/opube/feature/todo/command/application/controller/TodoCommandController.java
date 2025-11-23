@@ -3,6 +3,7 @@ package com.opu.opube.feature.todo.command.application.controller;
 import com.opu.opube.common.dto.ApiResponse;
 import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoCreateDto;
+import com.opu.opube.feature.todo.command.application.dto.request.TodoUpdateDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -24,5 +25,15 @@ public class TodoCommandController {
         Long memberId = principal.getMemberId();
         Long todoId = todoCommandService.createTodo(memberId, todoCreateDto);
         return ResponseEntity.ok(ApiResponse.success(todoId));
+    }
+
+    @PatchMapping
+    public ResponseEntity<ApiResponse<Void>> updateTodo(
+            @AuthenticationPrincipal MemberPrincipal principal,
+            @RequestBody TodoUpdateDto dto
+    ) {
+        Long memberId = principal.getMemberId();
+        todoCommandService.updateTodo(memberId, dto);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

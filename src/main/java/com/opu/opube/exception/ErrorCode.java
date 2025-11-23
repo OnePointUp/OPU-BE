@@ -46,6 +46,9 @@ public enum ErrorCode {
     OPU_CATEGORY_NOT_FOUND("03001", "해당 OPU 카테고리를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
 
 
+    // TODO
+    TODO_NOT_FOUND("04001", "해당 TODO를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    TODO_FORBIDDEN("04002", "해당 TODO에 접근 권한이 없습니다.", HttpStatus.FORBIDDEN),
     ;
 
 
