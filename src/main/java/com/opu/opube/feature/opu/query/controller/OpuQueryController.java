@@ -2,8 +2,6 @@ package com.opu.opube.feature.opu.query.controller;
 
 import com.opu.opube.common.dto.ApiResponse;
 import com.opu.opube.common.dto.PageResponse;
-import com.opu.opube.exception.BusinessException;
-import com.opu.opube.exception.ErrorCode;
 import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
 import com.opu.opube.feature.opu.query.dto.request.OpuListFilterRequest;
 import com.opu.opube.feature.opu.query.dto.response.OpuSummaryResponse;
