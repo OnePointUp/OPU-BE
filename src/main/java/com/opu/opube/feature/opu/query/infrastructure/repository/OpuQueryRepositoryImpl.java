@@ -8,6 +8,8 @@ import com.opu.opube.feature.opu.query.dto.response.OpuSummaryResponse;
 import com.opu.opube.feature.opu.query.dto.response.QOpuSummaryResponse;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Expression;
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.JPAExpressions;
@@ -122,7 +124,7 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
             );
         }
 
-        // 이 OPU를 찜한 사용자 수
+        // 이 OPU를 찜한 전체 사용자 수
         Expression<Long> favoriteCountExpr =
                 JPAExpressions
                         .select(favoriteOpu.count())
@@ -160,7 +162,23 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
                         ? Expressions.FALSE
                         : opu.member.id.eq(loginMemberId);
 
-        // ---- 내용 조회 (페이징) ----
+        // 정렬
+        String sort = (filter.getSort() == null) ? "newest" : filter.getSort();
+        OrderSpecifier<?> orderSpecifier;
+
+        switch (sort) {
+            case "name_asc" ->               // 이름(제목) 오름차순
+                    orderSpecifier = opu.title.asc();
+            case "completion" ->             // 완료 많은 순
+                    orderSpecifier = new OrderSpecifier<>(Order.DESC, myCompletionCountExpr);
+            case "favorite" ->               // 찜 많은 순
+                    orderSpecifier = new OrderSpecifier<>(Order.DESC, favoriteCountExpr);
+            case "newest"->
+                    orderSpecifier = opu.createdAt.desc();
+            default ->                       // 최신순(기본값)
+                    orderSpecifier = opu.createdAt.desc();
+        }
+
         List<OpuSummaryResponse> content = queryFactory
                 .select(new QOpuSummaryResponse(
                         opu.id,
@@ -181,7 +199,7 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
                 .leftJoin(opu.category, category)
                 .leftJoin(opu.member, member)
                 .where(predicate)
-                .orderBy(opu.createdAt.desc())
+                .orderBy(orderSpecifier)
                 .offset((long) page * size)
                 .limit(size)
                 .fetch();
