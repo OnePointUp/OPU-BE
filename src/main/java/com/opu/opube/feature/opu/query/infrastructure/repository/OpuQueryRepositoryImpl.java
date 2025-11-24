@@ -122,11 +122,10 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
             );
         }
 
-
         // 이 OPU를 찜한 사용자 수
         Expression<Long> favoriteCountExpr =
                 JPAExpressions
-                        .select(favoriteOpu.count().coalesce(0L))
+                        .select(favoriteOpu.count())
                         .from(favoriteOpu)
                         .where(favoriteOpu.opu.id.eq(opu.id));
 
@@ -135,9 +134,7 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
                 (loginMemberId == null)
                         ? Expressions.constant(0L)
                         : JPAExpressions
-                        .select(
-                                opuCounter.totalCompletions.longValue().coalesce(0L)
-                        )
+                        .select(opuCounter.totalCompletions.longValue())
                         .from(opuCounter)
                         .where(
                                 opuCounter.member.id.eq(loginMemberId),
@@ -157,18 +154,28 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
                         )
                         .exists();
 
+        // 이 OPU가 내 것인지 여부
+        BooleanExpression isMineExpr =
+                (loginMemberId == null)
+                        ? Expressions.FALSE
+                        : opu.member.id.eq(loginMemberId);
+
+        // ---- 내용 조회 (페이징) ----
         List<OpuSummaryResponse> content = queryFactory
                 .select(new QOpuSummaryResponse(
                         opu.id,
                         opu.emoji,
                         opu.title,
-                        category.name,
+                        opu.category.id,     // categoryId
+                        category.name,       // categoryName
                         opu.requiredMinutes,
                         opu.description,
-                        isFavoriteExpr,
+                        isFavoriteExpr,      // favorite
                         myCompletionCountExpr,
                         favoriteCountExpr,
-                        member.nickname
+                        member.id,           // creatorId
+                        member.nickname,     // creatorNickname
+                        isMineExpr           // isMine
                 ))
                 .from(opu)
                 .leftJoin(opu.category, category)
