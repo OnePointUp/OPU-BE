@@ -9,34 +9,44 @@ public class OpuSummaryResponse {
     private final Long id;
     private final String emoji;
     private final String title;
+    private final Long categoryId;
     private final String categoryName;
     private final Integer requiredMinutes;
     private final String description;
     private final Boolean favorite;          // 내가 찜했는지
     private final Long myCompletionCount;    // 내가 완료한 횟수
     private final Long favoriteCount;        // 전체 찜 수
-    private final String authorNickname;     // 작성자 닉네임
+    private final Long creatorId;
+    private final String creatorNickname;     // 작성자 닉네임
+    private final Boolean isMine;
 
     @QueryProjection
     public OpuSummaryResponse(Long id,
                               String emoji,
                               String title,
+                              Long categoryId,
                               String categoryName,
                               Integer requiredMinutes,
                               String description,
                               Boolean favorite,
                               Long myCompletionCount,
                               Long favoriteCount,
-                              String authorNickname) {
+                              Long creatorId,
+                              String creatorNickname,
+                              Boolean isMine
+    ) {
         this.id = id;
         this.emoji = emoji;
         this.title = title;
+        this.categoryId = categoryId;
         this.categoryName = categoryName;
         this.requiredMinutes = requiredMinutes;
         this.description = description;
         this.favorite = favorite != null ? favorite : Boolean.FALSE;
         this.myCompletionCount = myCompletionCount != null ? myCompletionCount : 0L;
         this.favoriteCount = favoriteCount != null ? favoriteCount : 0L;
-        this.authorNickname = authorNickname;
+        this.creatorId = creatorId;
+        this.creatorNickname = creatorNickname;
+        this.isMine = isMine;
     }
 }
