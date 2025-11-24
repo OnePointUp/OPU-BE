@@ -1,9 +1,12 @@
 package com.opu.opube.feature.opu.query.service;
 
+import com.opu.opube.common.dto.PageResponse;
 import com.opu.opube.exception.BusinessException;
 import com.opu.opube.exception.ErrorCode;
 import com.opu.opube.feature.opu.command.domain.aggregate.Opu;
+import com.opu.opube.feature.opu.query.dto.request.OpuListFilterRequest;
 import com.opu.opube.feature.opu.query.dto.response.OpuCountSummaryResponse;
+import com.opu.opube.feature.opu.query.dto.response.OpuSummaryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,5 +33,15 @@ public class OpuQueryService {
     public Opu getOpu(Long opuId) {
         return opuQueryRepository.getOpu(opuId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.OPU_NOT_FOUND));
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<OpuSummaryResponse> getOpuList(
+            Long loginMemberId,
+            OpuListFilterRequest filter,
+            int page,
+            int size
+    ) {
+        return opuQueryRepository.findOpuList(loginMemberId, filter, page, size);
     }
 }
