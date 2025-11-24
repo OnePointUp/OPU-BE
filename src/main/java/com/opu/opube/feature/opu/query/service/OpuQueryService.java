@@ -44,4 +44,14 @@ public class OpuQueryService {
     ) {
         return opuQueryRepository.findOpuList(loginMemberId, filter, page, size);
     }
+
+    @Transactional(readOnly = true)
+    public PageResponse<OpuSummaryResponse> getMyOpuList(
+            Long loginMemberId,
+            OpuListFilterRequest filter,
+            int page,
+            int size
+    ) {
+        return opuQueryRepository.findMyOpuList(loginMemberId, filter, page, size);
+    }
 }

@@ -22,4 +22,11 @@ public interface OpuQueryRepository {
             int page,
             int size
     );
+
+    PageResponse<OpuSummaryResponse> findMyOpuList(
+            Long loginMemberId,
+            OpuListFilterRequest filter,
+            int page,
+            int size
+    );
 }
