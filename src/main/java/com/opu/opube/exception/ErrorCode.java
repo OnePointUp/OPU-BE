@@ -50,7 +50,7 @@ public enum ErrorCode {
     TODO_NOT_FOUND("04001", "해당 TODO를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     TODO_FORBIDDEN("04002", "해당 TODO에 접근 권한이 없습니다.", HttpStatus.FORBIDDEN),
     OPU_TODO_CANNOT_BE_MODIFIED("04003", "OPU로 생성된 TODO는 수정할 수 없습니다.", HttpStatus.BAD_REQUEST),
-
+    MEMBER_OPU_EVENT_NOT_FOUND("04004","해당 멤버별 OPU 이벤트를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     ;
 
 
