@@ -2,6 +2,7 @@ package com.opu.opube.feature.todo.command.application.controller;
 
 import com.opu.opube.common.dto.ApiResponse;
 import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
+import com.opu.opube.feature.todo.command.application.dto.request.OpuTodoCreateDto;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoCreateDto;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoStatusUpdateDto;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoUpdateDto;
@@ -16,13 +17,13 @@ import com.opu.opube.feature.todo.command.application.service.TodoCommandService
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/todo")
+@RequestMapping("/api/v1")
 @Validated
 public class TodoCommandController {
 
     private final TodoCommandService todoCommandService;
 
-    @PostMapping
+    @PostMapping("/todo")
     public ResponseEntity<ApiResponse<Long>> createTodo(
             @AuthenticationPrincipal MemberPrincipal principal,
             @Valid @RequestBody TodoCreateDto todoCreateDto
@@ -32,7 +33,18 @@ public class TodoCommandController {
         return ResponseEntity.ok(ApiResponse.success(todoId));
     }
 
-    @PatchMapping("{todoId}")
+    @PostMapping("/opu/{opuId}/todo")
+    public ResponseEntity<ApiResponse<Long>> createTodoByOpuId(
+            @AuthenticationPrincipal MemberPrincipal principal,
+            @PathVariable Long opuId,
+            @Valid @RequestParam OpuTodoCreateDto opuTodoCreateDto
+    ) {
+        Long memberId = principal.getMemberId();
+        Long todoId = todoCommandService.createTodoByOpu(memberId, opuId, opuTodoCreateDto);
+        return ResponseEntity.ok(ApiResponse.success(todoId));
+    }
+
+    @PatchMapping("/todo/{todoId}")
     public ResponseEntity<ApiResponse<Void>> updateTodo(
             @AuthenticationPrincipal MemberPrincipal principal,
             @PathVariable Long todoId,
@@ -43,7 +55,7 @@ public class TodoCommandController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    @PatchMapping("/{todoId}/status")
+    @PatchMapping("/todo/{todoId}/status")
     public ResponseEntity<ApiResponse<Void>> updateTodo(
             @AuthenticationPrincipal MemberPrincipal principal,
             @PathVariable Long todoId,
@@ -54,7 +66,7 @@ public class TodoCommandController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    @PatchMapping("/{todoId}/order")
+    @PatchMapping("/todo/{todoId}/order")
     public ResponseEntity<ApiResponse<Void>> reorderTodo(
             @AuthenticationPrincipal MemberPrincipal principal,
             @PathVariable Long todoId,
@@ -65,7 +77,7 @@ public class TodoCommandController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    @DeleteMapping("{todoId}")
+    @DeleteMapping("/todo/{todoId}")
     public ResponseEntity<ApiResponse<Void>> deleteTodo(
             @AuthenticationPrincipal MemberPrincipal principal,
             @PathVariable Long todoId

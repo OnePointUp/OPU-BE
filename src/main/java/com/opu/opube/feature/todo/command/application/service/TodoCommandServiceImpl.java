@@ -6,6 +6,9 @@ import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.member.query.service.MemberQueryService;
 import com.opu.opube.feature.opu.command.application.service.MemberOpuCounterService;
 import com.opu.opube.feature.opu.command.application.service.MemberOpuEventService;
+import com.opu.opube.feature.opu.command.domain.aggregate.Opu;
+import com.opu.opube.feature.opu.query.service.OpuQueryService;
+import com.opu.opube.feature.todo.command.application.dto.request.OpuTodoCreateDto;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoCreateDto;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoStatusUpdateDto;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoUpdateDto;
@@ -26,6 +29,7 @@ public class TodoCommandServiceImpl implements TodoCommandService {
     private final MemberQueryService memberQueryService;
     private final MemberOpuCounterService memberOpuCounterService;
     private final MemberOpuEventService memberOpuEventService;
+    private final OpuQueryService opuQueryService;
 
     @Override
     @Transactional
@@ -35,10 +39,23 @@ public class TodoCommandServiceImpl implements TodoCommandService {
         Integer maxOrder = todoRepository.findMaxSortOrderByMemberIdAndDate(memberId, todoCreateDto.getScheduledDate());
         int newOrder = (maxOrder != null ? maxOrder : -1) + 1;
 
-        // todo : opu 추가, opuEventServiceImpl 추가, routine 추가
-
         Todo todo = Todo.toEntity(todoCreateDto, member, newOrder);
         Todo savedTodo = todoRepository.save(todo);
+        return savedTodo.getId();
+    }
+
+    @Override
+    public Long createTodoByOpu(Long memberId, Long opuId, OpuTodoCreateDto opuTodoCreateDto) {
+        Member member = memberQueryService.getMember(memberId);
+        Opu opu = opuQueryService.getOpu(opuId);
+
+        Integer maxOrder = todoRepository.findMaxSortOrderByMemberIdAndDate(memberId, opuTodoCreateDto.getScheduledDate());
+        int newOrder = (maxOrder != null ? maxOrder : -1) + 1;
+
+        memberOpuEventService.createEvent(member, opu);
+        Todo todo = Todo.toEntity(opu, opuTodoCreateDto, member, newOrder);
+        Todo savedTodo = todoRepository.save(todo);
+
         return savedTodo.getId();
     }
 
@@ -83,7 +100,7 @@ public class TodoCommandServiceImpl implements TodoCommandService {
         // opu 인 todos 완료 시
         if (todo.getOpu() != null) {
             memberOpuCounterService.completeTodo(member, todo.getOpu());
-            memberOpuEventService.completeTodo(member, todo.getOpu());
+            memberOpuEventService.completeEvent(member, todo.getOpu());
         }
 
         // routine 인 todos 완료 시

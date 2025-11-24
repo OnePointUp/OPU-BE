@@ -1,5 +1,8 @@
 package com.opu.opube.feature.opu.query.service;
 
+import com.opu.opube.exception.BusinessException;
+import com.opu.opube.exception.ErrorCode;
+import com.opu.opube.feature.opu.command.domain.aggregate.Opu;
 import com.opu.opube.feature.opu.query.dto.response.OpuCountSummaryResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,5 +25,10 @@ public class OpuQueryService {
                 .favoriteOpuCount(likedCount)
                 .myOpuCount(myCount)
                 .build();
+    }
+
+    public Opu getOpu(Long opuId) {
+        return opuQueryRepository.getOpu(opuId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.OPU_NOT_FOUND));
     }
 }

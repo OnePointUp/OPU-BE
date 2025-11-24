@@ -3,6 +3,7 @@ package com.opu.opube.feature.todo.command.domain.aggregate;
 import com.opu.opube.exception.BusinessException;
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.opu.command.domain.aggregate.Opu;
+import com.opu.opube.feature.todo.command.application.dto.request.OpuTodoCreateDto;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoCreateDto;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoStatusUpdateDto;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoUpdateDto;
@@ -71,6 +72,18 @@ public class Todo {
                 .scheduledTime(todoCreateDto.getScheduledTime())
                 .member(member)
                 .sortOrder(sortOrder)
+                .build();
+    }
+
+    // for opu
+    public static Todo toEntity(Opu opu, OpuTodoCreateDto opuTodoCreateDto, Member member, Integer sortOrder) {
+        return Todo.builder()
+                .title(opu.getTitle())
+                .scheduledDate(opuTodoCreateDto.getScheduledDate())
+                .scheduledTime(opuTodoCreateDto.getScheduledTime())
+                .member(member)
+                .sortOrder(sortOrder)
+                .opu(opu)
                 .build();
     }
 

@@ -1,14 +1,12 @@
 package com.opu.opube.feature.opu.command.domain.aggregate;
 
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
-import com.opu.opube.feature.opu.command.application.dto.request.OpuRegisterDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
@@ -35,6 +33,13 @@ public class MemberOpuEvent {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
+
+    public static MemberOpuEvent toEntity(Member member, Opu opu) {
+        return MemberOpuEvent.builder()
+                .opu(opu)
+                .member(member)
+                .build();
+    }
 
     public void setCompleted() {
         this.completedAt = LocalDateTime.now();
