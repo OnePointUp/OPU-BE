@@ -47,6 +47,13 @@ public class TodoCommandServiceImpl implements TodoCommandService {
             throw new BusinessException(ErrorCode.TODO_FORBIDDEN);
         }
 
+        // opu 인 경우 수정 불가
+        if (todo.getOpu() != null) {
+            throw new BusinessException(ErrorCode.OPU_TODO_CANNOT_BE_MODIFIED);
+        }
+
+        // todo : routine 인 경우
+
         todo.patch(dto.getTitle(), dto.getScheduledDate(), dto.getScheduledTime());
 
     }
