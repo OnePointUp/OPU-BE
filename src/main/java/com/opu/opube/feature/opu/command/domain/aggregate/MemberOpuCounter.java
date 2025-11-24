@@ -26,8 +26,6 @@ public class MemberOpuCounter {
     @Column(nullable = false)
     private Integer totalCompletions = 0;
 
-    private LocalDateTime lastCompletedAt;
-
     @Column(name = "created_at", updatable = false, nullable = false)
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -43,4 +41,15 @@ public class MemberOpuCounter {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "opu_id", nullable = false)
     private Opu opu;
+
+    public static MemberOpuCounter toEntity(Member member, Opu opu) {
+        return MemberOpuCounter.builder()
+                .member(member)
+                .opu(opu)
+                .build();
+    }
+
+    public void addCount() {
+        totalCompletions += 1;
+    }
 }

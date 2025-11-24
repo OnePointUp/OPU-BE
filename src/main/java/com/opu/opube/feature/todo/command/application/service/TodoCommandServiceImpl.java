@@ -4,6 +4,7 @@ import com.opu.opube.exception.BusinessException;
 import com.opu.opube.exception.ErrorCode;
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.member.query.service.MemberQueryService;
+import com.opu.opube.feature.opu.command.application.service.MemberOpuCounterService;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoCreateDto;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoStatusUpdateDto;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoUpdateDto;
@@ -22,6 +23,7 @@ public class TodoCommandServiceImpl implements TodoCommandService {
 
     private final TodoRepository todoRepository;
     private final MemberQueryService memberQueryService;
+    private final MemberOpuCounterService memberOpuCounterService;
 
     @Override
     @Transactional
@@ -73,6 +75,14 @@ public class TodoCommandServiceImpl implements TodoCommandService {
         if (todo.isCompleted() == dto.getCompleted()) {
             return;
         }
+
+        // opu 인 todos 완료 시
+        if (todo.getOpu() != null) {
+            memberOpuCounterService.completeTodo(member, todo.getOpu());
+
+        }
+
+        // routine 인 todos 완료 시
 
         todo.updateStatus(dto);
     }
