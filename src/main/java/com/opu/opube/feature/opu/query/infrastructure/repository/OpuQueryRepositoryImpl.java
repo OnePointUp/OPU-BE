@@ -40,7 +40,6 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
                 .from(favoriteOpu)
                 .where(favoriteOpu.member.id.eq(memberId))
                 .fetchOne();
-
         return count != null ? count : 0L;
     }
 
@@ -54,20 +53,20 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
                         opu.deletedAt.isNull()
                 )
                 .fetchOne();
-
         return count != null ? count : 0L;
     }
 
     @Override
     public Optional<Opu> getOpu(Long opuId) {
-        QOpu qOpu = QOpu.opu;
-
-        return Optional.ofNullable(queryFactory
-                .selectFrom(qOpu)
-                .where(qOpu.id.eq(opuId))
-                .fetchOne());
+        return Optional.ofNullable(
+                queryFactory
+                        .selectFrom(opu)
+                        .where(opu.id.eq(opuId))
+                        .fetchOne()
+        );
     }
 
+    // 공유 Opu 목록 조회
     @Override
     public PageResponse<OpuSummaryResponse> findOpuList(
             Long loginMemberId,
@@ -75,28 +74,70 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
             int page,
             int size
     ) {
-        // 공유 OPU + 삭제 안 된 것
+
+        BooleanBuilder predicate = buildPredicate(loginMemberId, filter);
+        Expression<Long> favoriteCountExpr = buildFavoriteCountExpr();
+        Expression<Long> myCompletionCountExpr = buildMyCompletionCountExpr(loginMemberId);
+        BooleanExpression isFavoriteExpr = buildIsFavoriteExpr(loginMemberId);
+        BooleanExpression isMineExpr = buildIsMineExpr(loginMemberId);
+
+        OrderSpecifier<?> orderSpecifier = buildOrderSpecifier(filter.getSort(),
+                favoriteCountExpr, myCompletionCountExpr);
+
+        List<OpuSummaryResponse> content = queryFactory
+                .select(new QOpuSummaryResponse(
+                        opu.id,
+                        opu.emoji,
+                        opu.title,
+                        opu.category.id,
+                        category.name,
+                        opu.requiredMinutes,
+                        opu.description,
+                        isFavoriteExpr,
+                        myCompletionCountExpr,
+                        favoriteCountExpr,
+                        member.id,
+                        member.nickname,
+                        isMineExpr
+                ))
+                .from(opu)
+                .leftJoin(opu.category, category)
+                .leftJoin(opu.member, member)
+                .where(predicate)
+                .orderBy(orderSpecifier)
+                .offset((long) page * size)
+                .limit(size)
+                .fetch();
+
+        Long total = queryFactory
+                .select(opu.count())
+                .from(opu)
+                .where(predicate)
+                .fetchOne();
+
+        return PageResponse.from(content, (total == null ? 0 : total), page, size);
+    }
+
+
+    // 조건
+    private BooleanBuilder buildPredicate(Long loginMemberId, OpuListFilterRequest filter) {
         BooleanBuilder predicate = new BooleanBuilder()
                 .and(opu.isShared.isTrue())
                 .and(opu.deletedAt.isNull());
 
-        // 카테고리 필터
         if (filter.getCategoryIds() != null && !filter.getCategoryIds().isEmpty()) {
             predicate.and(opu.category.id.in(filter.getCategoryIds()));
         }
 
-        // 소요시간 필터
         if (filter.getRequiredMinutes() != null && !filter.getRequiredMinutes().isEmpty()) {
             predicate.and(opu.requiredMinutes.in(filter.getRequiredMinutes()));
         }
 
-        // 검색어 필터 (제목)
         if (filter.getSearch() != null && !filter.getSearch().isBlank()) {
             String keyword = "%" + filter.getSearch().trim() + "%";
             predicate.and(opu.title.likeIgnoreCase(keyword));
         }
 
-        // "찜한 OPU만 보기" 필터
         if (Boolean.TRUE.equals(filter.getFavoriteOnly()) && loginMemberId != null) {
             predicate.and(
                     JPAExpressions
@@ -110,7 +151,6 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
             );
         }
 
-        // 차단한 OPU 제외
         if (loginMemberId != null) {
             predicate.and(
                     JPAExpressions
@@ -124,95 +164,69 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
             );
         }
 
-        // 이 OPU를 찜한 전체 사용자 수
-        Expression<Long> favoriteCountExpr =
-                JPAExpressions
-                        .select(favoriteOpu.count())
-                        .from(favoriteOpu)
-                        .where(favoriteOpu.opu.id.eq(opu.id));
+        return predicate;
+    }
 
-        // 로그인한 사용자가 이 OPU를 완료한 횟수
-        Expression<Long> myCompletionCountExpr =
-                (loginMemberId == null)
-                        ? Expressions.constant(0L)
-                        : JPAExpressions
-                        .select(opuCounter.totalCompletions.longValue())
-                        .from(opuCounter)
-                        .where(
-                                opuCounter.member.id.eq(loginMemberId),
-                                opuCounter.opu.id.eq(opu.id)
-                        );
 
-        // 로그인한 사용자가 찜했는지 여부
-        BooleanExpression isFavoriteExpr =
-                (loginMemberId == null)
-                        ? Expressions.FALSE
-                        : JPAExpressions
-                        .selectOne()
-                        .from(favoriteOpu)
-                        .where(
-                                favoriteOpu.member.id.eq(loginMemberId),
-                                favoriteOpu.opu.id.eq(opu.id)
-                        )
-                        .exists();
+    // 찜한 사용자 수
+    private Expression<Long> buildFavoriteCountExpr() {
+        return JPAExpressions
+                .select(favoriteOpu.count())
+                .from(favoriteOpu)
+                .where(favoriteOpu.opu.id.eq(opu.id));
+    }
 
-        // 이 OPU가 내 것인지 여부
-        BooleanExpression isMineExpr =
-                (loginMemberId == null)
-                        ? Expressions.FALSE
-                        : opu.member.id.eq(loginMemberId);
 
-        // 정렬
-        String sort = (filter.getSort() == null) ? "newest" : filter.getSort();
-        OrderSpecifier<?> orderSpecifier;
+    // 완료 횟수
+    private Expression<Long> buildMyCompletionCountExpr(Long loginMemberId) {
+        if (loginMemberId == null) return Expressions.constant(0L);
 
-        switch (sort) {
-            case "name_asc" ->               // 이름(제목) 오름차순
-                    orderSpecifier = opu.title.asc();
-            case "completion" ->             // 완료 많은 순
-                    orderSpecifier = new OrderSpecifier<>(Order.DESC, myCompletionCountExpr);
-            case "favorite" ->               // 찜 많은 순
-                    orderSpecifier = new OrderSpecifier<>(Order.DESC, favoriteCountExpr);
-            case "newest"->
-                    orderSpecifier = opu.createdAt.desc();
-            default ->                       // 최신순(기본값)
-                    orderSpecifier = opu.createdAt.desc();
-        }
+        return JPAExpressions
+                .select(opuCounter.totalCompletions.longValue())
+                .from(opuCounter)
+                .where(
+                        opuCounter.member.id.eq(loginMemberId),
+                        opuCounter.opu.id.eq(opu.id)
+                );
+    }
 
-        List<OpuSummaryResponse> content = queryFactory
-                .select(new QOpuSummaryResponse(
-                        opu.id,
-                        opu.emoji,
-                        opu.title,
-                        opu.category.id,     // categoryId
-                        category.name,       // categoryName
-                        opu.requiredMinutes,
-                        opu.description,
-                        isFavoriteExpr,      // favorite
-                        myCompletionCountExpr,
-                        favoriteCountExpr,
-                        member.id,           // creatorId
-                        member.nickname,     // creatorNickname
-                        isMineExpr           // isMine
-                ))
-                .from(opu)
-                .leftJoin(opu.category, category)
-                .leftJoin(opu.member, member)
-                .where(predicate)
-                .orderBy(orderSpecifier)
-                .offset((long) page * size)
-                .limit(size)
-                .fetch();
 
-        // 전체 개수
-        Long total = queryFactory
-                .select(opu.count())
-                .from(opu)
-                .where(predicate)
-                .fetchOne();
+    // 찜 여부
+    private BooleanExpression buildIsFavoriteExpr(Long loginMemberId) {
+        if (loginMemberId == null) return Expressions.FALSE;
 
-        long totalElements = (total != null) ? total : 0L;
+        return JPAExpressions
+                .selectOne()
+                .from(favoriteOpu)
+                .where(
+                        favoriteOpu.member.id.eq(loginMemberId),
+                        favoriteOpu.opu.id.eq(opu.id)
+                )
+                .exists();
+    }
 
-        return PageResponse.from(content, totalElements, page, size);
+
+    // 내 OPU 여부
+    private BooleanExpression buildIsMineExpr(Long loginMemberId) {
+        if (loginMemberId == null) return Expressions.FALSE;
+        return opu.member.id.eq(loginMemberId);
+    }
+
+
+    // 정렬
+    private OrderSpecifier<?> buildOrderSpecifier(
+            String sort,
+            Expression<Long> favoriteCountExpr,
+            Expression<Long> myCompletionCountExpr
+    ) {
+        if (sort == null) sort = "newest";
+
+        return switch (sort) {
+            case "name_asc" -> opu.title.asc();
+            case "completion" -> new OrderSpecifier<>(Order.DESC, myCompletionCountExpr);
+            case "favorite" -> new OrderSpecifier<>(Order.DESC, favoriteCountExpr);
+            case "newest" -> opu.createdAt.desc();
+            default -> opu.createdAt.desc();
+        };
     }
 }
