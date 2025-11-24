@@ -4,6 +4,7 @@ import com.opu.opube.common.dto.PageResponse;
 import com.opu.opube.feature.member.command.domain.aggregate.QMember;
 import com.opu.opube.feature.opu.command.domain.aggregate.*;
 import com.opu.opube.feature.opu.query.dto.request.OpuListFilterRequest;
+import com.opu.opube.feature.opu.query.dto.request.OpuSortOption;
 import com.opu.opube.feature.opu.query.dto.response.OpuSummaryResponse;
 import com.opu.opube.feature.opu.query.dto.response.QOpuSummaryResponse;
 import com.querydsl.core.BooleanBuilder;
@@ -215,18 +216,19 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
 
     // 정렬
     private OrderSpecifier<?> buildOrderSpecifier(
-            String sort,
+            OpuSortOption sortOption,
             Expression<Long> favoriteCountExpr,
             Expression<Long> myCompletionCountExpr
     ) {
-        if (sort == null) sort = "newest";
+        if (sortOption == null) {
+            sortOption = OpuSortOption.NEWEST;
+        }
 
-        return switch (sort) {
-            case "name_asc" -> opu.title.asc();
-            case "completion" -> new OrderSpecifier<>(Order.DESC, myCompletionCountExpr);
-            case "favorite" -> new OrderSpecifier<>(Order.DESC, favoriteCountExpr);
-            case "newest" -> opu.createdAt.desc();
-            default -> opu.createdAt.desc();
+        return switch (sortOption) {
+            case NAME_ASC -> opu.title.asc();
+            case COMPLETION -> new OrderSpecifier<>(Order.DESC, myCompletionCountExpr);
+            case FAVORITE -> new OrderSpecifier<>(Order.DESC, favoriteCountExpr);
+            case NEWEST -> opu.createdAt.desc();
         };
     }
 }
