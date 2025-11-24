@@ -1,6 +1,8 @@
 package com.opu.opube.feature.opu.query.infrastructure.repository;
 
 import java.util.List;
+import java.util.Optional;
+
 import com.opu.opube.feature.opu.command.domain.aggregate.Opu;
 
 public interface OpuQueryRepository {
@@ -9,4 +11,6 @@ public interface OpuQueryRepository {
 
     // 만든 OPU수
     long countMyOpuByMemberId(Long memberId);
+
+    Optional<Opu> getOpu(Long opuId);
 }

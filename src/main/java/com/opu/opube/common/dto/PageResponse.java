@@ -46,5 +46,20 @@ public class PageResponse<T> {
     }
 
     /* QueryDSL 사용 방법 */
+    public static <T> PageResponse<T> from(List<T> content, long totalElements, int page, int size) {
+        int totalPages = (int) Math.ceil((double) totalElements / size);
+        boolean hasNext = page < totalPages - 1;
+        boolean hasPrevious = page > 0;
+
+        return PageResponse.<T>builder()
+                .totalElements(totalElements)
+                .totalPages(totalPages)
+                .currentPage(page)
+                .pageSize(size)
+                .content(content)
+                .hasNext(hasNext)
+                .hasPrevious(hasPrevious)
+                .build();
+    }
 }
 

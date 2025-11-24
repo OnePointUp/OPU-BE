@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 import com.opu.opube.feature.opu.command.domain.aggregate.Opu;
 import com.opu.opube.feature.opu.command.domain.aggregate.QOpu;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -36,5 +37,15 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
                         opu.deletedAt.isNull()
                 )
                 .fetchOne();
+    }
+
+    @Override
+    public Optional<Opu> getOpu(Long opuId) {
+        QOpu qOpu = QOpu.opu;
+
+        return Optional.ofNullable(queryFactory
+                .selectFrom(qOpu)
+                .where(qOpu.id.eq(opuId))
+                .fetchOne());
     }
 }

@@ -1,7 +1,12 @@
 package com.opu.opube.feature.todo.command.domain.aggregate;
 
+import com.opu.opube.exception.BusinessException;
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.opu.command.domain.aggregate.Opu;
+import com.opu.opube.feature.todo.command.application.dto.request.OpuTodoCreateDto;
+import com.opu.opube.feature.todo.command.application.dto.request.TodoCreateDto;
+import com.opu.opube.feature.todo.command.application.dto.request.TodoStatusUpdateDto;
+import com.opu.opube.feature.todo.command.application.dto.request.TodoUpdateDto;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -44,6 +49,11 @@ public class Todo {
     @Column(name = "scheduled_time")
     private LocalTime scheduledTime;
 
+    @Setter
+    @Column(name = "sort_order")
+    private Integer sortOrder;
+
+    @Builder.Default
     @Column(name = "is_completed", nullable = false)
     private boolean completed = false;
 
@@ -55,7 +65,40 @@ public class Todo {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public void markCompleted() { this.completed = true; }
-    public void markUncompleted() { this.completed = false; }
-    public void updateTitle(String t) { if (t != null) this.title = t; }
+    public static Todo toEntity(TodoCreateDto todoCreateDto, Member member, Integer sortOrder) {
+        return Todo.builder()
+                .title(todoCreateDto.getTitle())
+                .scheduledDate(todoCreateDto.getScheduledDate())
+                .scheduledTime(todoCreateDto.getScheduledTime())
+                .member(member)
+                .sortOrder(sortOrder)
+                .build();
+    }
+
+    // for opu
+    public static Todo toEntity(Opu opu, OpuTodoCreateDto opuTodoCreateDto, Member member, Integer sortOrder) {
+        return Todo.builder()
+                .title(opu.getTitle())
+                .scheduledDate(opuTodoCreateDto.getScheduledDate())
+                .scheduledTime(opuTodoCreateDto.getScheduledTime())
+                .member(member)
+                .sortOrder(sortOrder)
+                .opu(opu)
+                .build();
+    }
+
+    public void patch(String title, LocalDate scheduledDate, LocalTime scheduledTime) {
+        if (title != null) this.title = title;
+        if (scheduledDate != null) this.scheduledDate = scheduledDate;
+        if (scheduledDate != null) this.scheduledTime = scheduledTime;
+    }
+
+    public boolean isOwnedBy(Member member) {
+        return this.member != null && member != null
+                && this.member.getId().equals(member.getId());
+    }
+
+    public void updateStatus(TodoStatusUpdateDto dto) {
+        this.completed = dto.getCompleted();
+    }
 }
