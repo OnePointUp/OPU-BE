@@ -24,7 +24,7 @@ public class OpuQueryController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        Long loginMemberId = (principal != null) ? principal.getMemberId() : null;
+        Long loginMemberId = principal.getMemberId();
 
         PageResponse<OpuSummaryResponse> result =
                 opuQueryService.getOpuList(loginMemberId, filter, page, size);
