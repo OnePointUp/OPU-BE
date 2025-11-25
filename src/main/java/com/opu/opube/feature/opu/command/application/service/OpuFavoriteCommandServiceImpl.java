@@ -2,6 +2,8 @@ package com.opu.opube.feature.opu.command.application.service;
 
 import com.opu.opube.exception.BusinessException;
 import com.opu.opube.exception.ErrorCode;
+import com.opu.opube.feature.member.command.domain.aggregate.Member;
+import com.opu.opube.feature.member.query.service.MemberQueryService;
 import com.opu.opube.feature.opu.command.domain.aggregate.FavoriteOpu;
 import com.opu.opube.feature.opu.command.domain.aggregate.Opu;
 import com.opu.opube.feature.opu.command.domain.repository.FavoriteOpuRepository;
@@ -14,12 +16,13 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class OpuFavoriteCommandServiceImpl implements OpuFavoriteCommandService {
 
+    private final MemberQueryService memberQueryService;
     private final FavoriteOpuRepository favoriteOpuRepository;
     private final OpuRepository opuRepository;
 
     @Transactional
     public void addFavorite(Long memberId, Long opuId) {
-
+        Member member = memberQueryService.getMember(memberId);
         Opu opu = opuRepository.findById(opuId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.OPU_NOT_FOUND));
 
@@ -28,7 +31,7 @@ public class OpuFavoriteCommandServiceImpl implements OpuFavoriteCommandService 
         }
 
         FavoriteOpu favorite = FavoriteOpu.builder()
-                .member(opu.getMember() != null ? opu.getMember() : null)
+                .member(member)
                 .opu(opu)
                 .build();
 
