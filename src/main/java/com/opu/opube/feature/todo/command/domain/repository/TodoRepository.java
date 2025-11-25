@@ -35,4 +35,8 @@ public interface TodoRepository extends JpaRepository<Todo, Long> {
             @Param("end") int end,
             @Param("delta") int delta
     );
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Todo t SET t.opu = null WHERE t.opu.id = :opuId")
+    void clearOpuFromTodos(@Param("opuId") Long opuId);
 }

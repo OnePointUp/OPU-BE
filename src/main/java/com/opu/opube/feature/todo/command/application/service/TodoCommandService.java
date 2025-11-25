@@ -17,5 +17,7 @@ public interface TodoCommandService {
     void reorderTodo(Long memberId, int newOrder, Long todoId);
 
     Long createTodoByOpu(Long memberId, Long opuId, OpuTodoCreateDto opuTodoCreateDto);
+
+    void clearOpuFromTodos(Long opuId);
     // command methods here
 }
