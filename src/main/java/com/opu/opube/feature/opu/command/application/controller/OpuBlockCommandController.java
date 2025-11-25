@@ -28,10 +28,10 @@ public class OpuBlockCommandController {
     // 차단 해제
     @DeleteMapping("/{opuId}/block")
     public ApiResponse<Void> unblockOpu(
-            @AuthenticationPrincipal MemberPrincipal principal,
+            @AuthenticationPrincipal(expression = "memberId") Long memberId,
             @PathVariable Long opuId
     ) {
-        Long memberId = principal.getMemberId();
+
         opuBlockCommandService.unblockOpu(memberId, opuId);
         return ApiResponse.success(null);
     }
