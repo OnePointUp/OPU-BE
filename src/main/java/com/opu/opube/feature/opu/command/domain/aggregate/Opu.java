@@ -56,6 +56,14 @@ public class Opu {
     @JoinColumn(name = "member_id")
     private Member member;
 
+    public void share() {
+        this.isShared = true;
+    }
+
+    public void unshare() {
+        this.isShared = false;
+    }
+
     public static Opu toEntity(OpuRegisterDto dto, Member member, OpuCategory category) {
         return Opu.builder()
                 .title(dto.getTitle())
