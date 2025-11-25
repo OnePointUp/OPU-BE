@@ -102,9 +102,6 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
             int page,
             int size
     ) {
-        if (loginMemberId == null) {
-            return PageResponse.from(List.of(), 0L, page, size);
-        }
 
         BooleanBuilder predicate = buildFavoriteOpuPredicate(loginMemberId, filter);
         return findOpuPage(loginMemberId, filter.getSort(), predicate, page, size);
@@ -265,10 +262,7 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
         // 공개 OPU OR (내가 만든 비공개 OPU)
         predicate.and(
                 opu.isShared.isTrue()
-                        .or(
-                                opu.isShared.isFalse()
-                                        .and(opu.member.id.eq(loginMemberId))
-                        )
+                        .or(opu.member.id.eq(loginMemberId))
         );
 
         // 내가 차단한 OPU 제외
