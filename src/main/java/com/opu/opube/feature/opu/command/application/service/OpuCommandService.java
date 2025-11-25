@@ -4,5 +4,8 @@ import com.opu.opube.feature.opu.command.application.dto.request.OpuRegisterDto;
 
 public interface OpuCommandService {
     Long registerOpu(OpuRegisterDto dto, Long memberId);
-    // command methods here
+
+    void shareOpu(Long memberId, Long opuId);
+
+    void unshareOpu(Long memberId, Long opuId);
 }
