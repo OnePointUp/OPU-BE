@@ -60,13 +60,9 @@ public class OpuCommandServiceImpl implements OpuCommandService {
     }
 
     @Override
+    @Transactional
     public void deleteOpu(Long memberId, Long opuId) {
-        Opu opu = opuRepository.findById(opuId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.OPU_NOT_FOUND));
-
-        if (!opu.getMember().getId().equals(memberId)) {
-            throw new BusinessException(ErrorCode.FORBIDDEN_OPU_ACCESS);
-        }
+        Opu opu = findOpuAndCheckOwnership(opuId, memberId);
 
         if (opu.isDeleted()) {
             return;

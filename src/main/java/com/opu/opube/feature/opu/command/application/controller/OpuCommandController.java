@@ -50,10 +50,9 @@ public class OpuCommandController {
 
     @DeleteMapping("/{opuId}")
     public ResponseEntity<ApiResponse<Void>> deleteOpu(
-            @AuthenticationPrincipal MemberPrincipal principal,
+            @AuthenticationPrincipal(expression = "memberId") Long memberId,
             @PathVariable Long opuId
     ) {
-        Long memberId = principal.getMemberId();
         opuCommandService.deleteOpu(memberId, opuId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
