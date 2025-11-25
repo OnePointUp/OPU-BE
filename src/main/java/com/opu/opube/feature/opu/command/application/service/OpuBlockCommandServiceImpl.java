@@ -6,7 +6,7 @@ import com.opu.opube.feature.opu.command.domain.aggregate.BlockedOpu;
 import com.opu.opube.feature.opu.command.domain.aggregate.Opu;
 import com.opu.opube.feature.opu.command.domain.repository.BlockedOpuRepository;
 import com.opu.opube.feature.opu.command.domain.repository.OpuRepository;
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
