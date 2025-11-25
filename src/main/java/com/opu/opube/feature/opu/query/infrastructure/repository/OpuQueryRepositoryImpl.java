@@ -39,7 +39,7 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
         Long count = queryFactory
                 .select(favoriteOpu.id.count())
                 .from(favoriteOpu)
-                .where(favoriteOpu.member.id.eq(memberId))
+                .where(favoriteOpu.memberId.eq(memberId))
                 .fetchOne();
         return count != null ? count : 0L;
     }
@@ -213,7 +213,7 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
                             .selectOne()
                             .from(favoriteOpu)
                             .where(
-                                    favoriteOpu.member.id.eq(loginMemberId),
+                                    favoriteOpu.memberId.eq(loginMemberId),
                                     favoriteOpu.opu.id.eq(opu.id)
                             )
                             .exists()
@@ -227,7 +227,7 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
                             .selectOne()
                             .from(blockedOpu)
                             .where(
-                                    blockedOpu.member.id.eq(loginMemberId),
+                                    blockedOpu.memberId.eq(loginMemberId),
                                     blockedOpu.opu.id.eq(opu.id)
                             )
                             .notExists()
@@ -252,7 +252,7 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
                             .selectOne()
                             .from(favoriteOpu)
                             .where(
-                                    favoriteOpu.member.id.eq(loginMemberId),
+                                    favoriteOpu.memberId.eq(loginMemberId),
                                     favoriteOpu.opu.id.eq(opu.id)
                             )
                             .exists()
@@ -293,7 +293,7 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
                 .selectOne()
                 .from(favoriteOpu)
                 .where(
-                        favoriteOpu.member.id.eq(loginMemberId),
+                        favoriteOpu.memberId.eq(loginMemberId),
                         favoriteOpu.opu.id.eq(opu.id)
                 )
                 .exists();
