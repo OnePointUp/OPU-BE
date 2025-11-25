@@ -8,4 +8,6 @@ public interface OpuCommandService {
     void shareOpu(Long memberId, Long opuId);
 
     void unshareOpu(Long memberId, Long opuId);
+
+    void deleteOpu(Long memberId, Long opuId);
 }

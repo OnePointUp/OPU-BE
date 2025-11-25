@@ -47,4 +47,14 @@ public class OpuCommandController {
         opuCommandService.unshareOpu(memberId, opuId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
+
+    @DeleteMapping("/{opuId}")
+    public ResponseEntity<ApiResponse<Void>> deleteOpu(
+            @AuthenticationPrincipal MemberPrincipal principal,
+            @PathVariable Long opuId
+    ) {
+        Long memberId = principal.getMemberId();
+        opuCommandService.deleteOpu(memberId, opuId);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
 }
