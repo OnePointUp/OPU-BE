@@ -46,4 +46,19 @@ public class OpuQueryController {
 
         return ApiResponse.success(result);
     }
+
+    @GetMapping("/favorites")
+    public ApiResponse<PageResponse<OpuSummaryResponse>> getFavoriteOpus(
+            @AuthenticationPrincipal MemberPrincipal principal,
+            @ModelAttribute OpuListFilterRequest filter,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Long loginMemberId = principal.getMemberId();
+
+        PageResponse<OpuSummaryResponse> result =
+                opuQueryService.getFavoriteOpuList(loginMemberId, filter, page, size);
+
+        return ApiResponse.success(result);
+    }
 }

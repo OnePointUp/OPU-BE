@@ -54,4 +54,20 @@ public class OpuQueryService {
     ) {
         return opuQueryRepository.findMyOpuList(loginMemberId, filter, page, size);
     }
+
+    @Transactional(readOnly = true)
+    public PageResponse<OpuSummaryResponse> getFavoriteOpuList(
+            Long loginMemberId,
+            OpuListFilterRequest filter,
+            int page,
+            int size
+    ) {
+        if (loginMemberId == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED_USER);
+        }
+
+        return opuQueryRepository.findFavoriteOpuList(loginMemberId, filter, page, size);
+    }
+
+
 }
