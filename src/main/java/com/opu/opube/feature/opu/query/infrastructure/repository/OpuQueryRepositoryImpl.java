@@ -102,9 +102,6 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
             int page,
             int size
     ) {
-        if (loginMemberId == null) {
-            return PageResponse.from(List.of(), 0L, page, size);
-        }
 
         BooleanBuilder predicate = buildFavoriteOpuPredicate(loginMemberId, filter);
         return findOpuPage(loginMemberId, filter.getSort(), predicate, page, size);
