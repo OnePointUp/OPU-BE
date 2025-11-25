@@ -38,35 +38,25 @@ public class OpuCommandServiceImpl implements OpuCommandService {
     @Override
     @Transactional
     public void shareOpu(Long memberId, Long opuId) {
-        Opu opu = opuRepository.findById(opuId)
-                .orElseThrow(() -> new BusinessException(ErrorCode.OPU_NOT_FOUND));
-
-        if (!opu.getMember().getId().equals(memberId)) {
-            throw new BusinessException(ErrorCode.FORBIDDEN_OPU_ACCESS);
-        }
-
-        if (Boolean.TRUE.equals(opu.getIsShared())) {
-            return;
-        }
-
+        Opu opu = findOpuAndCheckOwnership(opuId, memberId);
         opu.share();
     }
 
     @Override
     @Transactional
     public void unshareOpu(Long memberId, Long opuId) {
+        Opu opu = findOpuAndCheckOwnership(opuId, memberId);
+        opu.unshare();
+    }
+
+    private Opu findOpuAndCheckOwnership(Long opuId, Long memberId) {
         Opu opu = opuRepository.findById(opuId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.OPU_NOT_FOUND));
 
         if (!opu.getMember().getId().equals(memberId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN_OPU_ACCESS);
         }
-
-        if (Boolean.FALSE.equals(opu.getIsShared())) {
-            return;
-        }
-
-        opu.unshare();
+        return opu;
     }
 
     @Override
