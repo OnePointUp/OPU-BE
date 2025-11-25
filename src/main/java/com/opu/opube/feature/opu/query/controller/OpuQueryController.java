@@ -24,10 +24,25 @@ public class OpuQueryController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        Long loginMemberId = (principal != null) ? principal.getMemberId() : null;
+        Long loginMemberId = principal.getMemberId();
 
         PageResponse<OpuSummaryResponse> result =
                 opuQueryService.getOpuList(loginMemberId, filter, page, size);
+
+        return ApiResponse.success(result);
+    }
+
+    @GetMapping("/my")
+    public ApiResponse<PageResponse<OpuSummaryResponse>> getMyOpuList(
+            @AuthenticationPrincipal MemberPrincipal principal,
+            @ModelAttribute OpuListFilterRequest filter,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Long loginMemberId = principal.getMemberId();
+
+        PageResponse<OpuSummaryResponse> result =
+                opuQueryService.getMyOpuList(loginMemberId, filter, page, size);
 
         return ApiResponse.success(result);
     }
