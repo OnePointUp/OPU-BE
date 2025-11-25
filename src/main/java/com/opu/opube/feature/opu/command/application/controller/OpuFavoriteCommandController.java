@@ -17,9 +17,8 @@ public class OpuFavoriteCommandController {
     @PostMapping("/{opuId}/favorite")
     public ApiResponse<Void> favorite(
             @PathVariable Long opuId,
-            @AuthenticationPrincipal MemberPrincipal principal
+            @AuthenticationPrincipal(expression = "memberId") Long memberId
     ) {
-        Long memberId = principal.getMemberId();
         opuFavoriteCommandService.addFavorite(memberId, opuId);
         return ApiResponse.success(null);
     }
