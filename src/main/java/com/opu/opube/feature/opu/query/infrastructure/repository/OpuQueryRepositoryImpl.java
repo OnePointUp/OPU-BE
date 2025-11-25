@@ -34,6 +34,7 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
     private final QMemberOpuCounter opuCounter = QMemberOpuCounter.memberOpuCounter;
     private final QMember member = QMember.member;
 
+
     @Override
     public long countFavoriteOpuByMemberId(Long memberId) {
         Long count = queryFactory
@@ -67,7 +68,7 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
         );
     }
 
-    // 공유 Opu 목록 조회
+
     @Override
     public PageResponse<OpuSummaryResponse> findOpuList(
             Long loginMemberId,
@@ -75,52 +76,10 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
             int page,
             int size
     ) {
-
         BooleanBuilder predicate = buildSharedOpuPredicate(loginMemberId, filter);
-        Expression<Long> favoriteCountExpr = buildFavoriteCountExpr();
-        Expression<Long> myCompletionCountExpr = buildMyCompletionCountExpr(loginMemberId);
-        BooleanExpression isFavoriteExpr = buildIsFavoriteExpr(loginMemberId);
-        BooleanExpression isMineExpr = buildIsMineExpr(loginMemberId);
-
-        OrderSpecifier<?> orderSpecifier = buildOrderSpecifier(filter.getSort(),
-                favoriteCountExpr, myCompletionCountExpr);
-
-        List<OpuSummaryResponse> content = queryFactory
-                .select(new QOpuSummaryResponse(
-                        opu.id,
-                        opu.emoji,
-                        opu.title,
-                        opu.category.id,
-                        category.name,
-                        opu.requiredMinutes,
-                        opu.description,
-                        opu.isShared,
-                        isFavoriteExpr,
-                        myCompletionCountExpr,
-                        favoriteCountExpr,
-                        member.id,
-                        member.nickname,
-                        isMineExpr
-                ))
-                .from(opu)
-                .leftJoin(opu.category, category)
-                .leftJoin(opu.member, member)
-                .where(predicate)
-                .orderBy(orderSpecifier)
-                .offset((long) page * size)
-                .limit(size)
-                .fetch();
-
-        Long total = queryFactory
-                .select(opu.count())
-                .from(opu)
-                .where(predicate)
-                .fetchOne();
-
-        return PageResponse.from(content, (total == null ? 0 : total), page, size);
+        return findOpuPage(loginMemberId, filter.getSort(), predicate, page, size);
     }
 
-    // 내 Opu 목록 조회
     @Override
     public PageResponse<OpuSummaryResponse> findMyOpuList(
             Long loginMemberId,
@@ -128,56 +87,12 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
             int page,
             int size
     ) {
-
         if (loginMemberId == null) {
             return PageResponse.from(List.of(), 0L, page, size);
         }
 
         BooleanBuilder predicate = buildMyOpuPredicate(loginMemberId, filter);
-        Expression<Long> favoriteCountExpr = buildFavoriteCountExpr();
-        Expression<Long> myCompletionCountExpr = buildMyCompletionCountExpr(loginMemberId);
-        BooleanExpression isFavoriteExpr = buildIsFavoriteExpr(loginMemberId);
-        BooleanExpression isMineExpr = Expressions.TRUE;
-
-        OrderSpecifier<?> orderSpecifier = buildOrderSpecifier(
-                filter.getSort(),
-                favoriteCountExpr,
-                myCompletionCountExpr
-        );
-
-        List<OpuSummaryResponse> content = queryFactory
-                .select(new QOpuSummaryResponse(
-                        opu.id,
-                        opu.emoji,
-                        opu.title,
-                        opu.category.id,
-                        category.name,
-                        opu.requiredMinutes,
-                        opu.description,
-                        opu.isShared,
-                        isFavoriteExpr,
-                        myCompletionCountExpr,
-                        favoriteCountExpr,
-                        member.id,
-                        member.nickname,
-                        isMineExpr
-                ))
-                .from(opu)
-                .leftJoin(opu.category, category)
-                .leftJoin(opu.member, member)
-                .where(predicate)
-                .orderBy(orderSpecifier)
-                .offset((long) page * size)
-                .limit(size)
-                .fetch();
-
-        Long total = queryFactory
-                .select(opu.count())
-                .from(opu)
-                .where(predicate)
-                .fetchOne();
-
-        return PageResponse.from(content, (total == null ? 0 : total), page, size);
+        return findOpuPage(loginMemberId, filter.getSort(), predicate, page, size);
     }
 
     @Override
@@ -191,53 +106,26 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
             return PageResponse.from(List.of(), 0L, page, size);
         }
 
-        BooleanBuilder predicate = new BooleanBuilder()
-                .and(opu.deletedAt.isNull());
+        BooleanBuilder predicate = buildFavoriteOpuPredicate(loginMemberId, filter);
+        return findOpuPage(loginMemberId, filter.getSort(), predicate, page, size);
+    }
 
-        // 공통 필터(category, requiredMinutes, search)
-        applyCommonFilters(predicate, filter);
 
-        // 내가 찜한 OPU만
-        predicate.and(
-                JPAExpressions
-                        .selectOne()
-                        .from(favoriteOpu)
-                        .where(
-                                favoriteOpu.memberId.eq(loginMemberId),
-                                favoriteOpu.opu.id.eq(opu.id)
-                        )
-                        .exists()
-        );
-
-        // 공개 OPU OR (내가 만든 비공개 OPU)
-        predicate.and(
-                opu.isShared.isTrue()
-                        .or(
-                                opu.isShared.isFalse()
-                                        .and(opu.member.id.eq(loginMemberId))
-                        )
-        );
-
-        // 내가 차단한 OPU 제외
-        predicate.and(
-                JPAExpressions
-                        .selectOne()
-                        .from(blockedOpu)
-                        .where(
-                                blockedOpu.memberId.eq(loginMemberId),
-                                blockedOpu.opu.id.eq(opu.id)
-                        )
-                        .notExists()
-        );
-
-        // 공통 계산용 Expression
+    private PageResponse<OpuSummaryResponse> findOpuPage(
+            Long loginMemberId,
+            OpuSortOption sortOption,
+            BooleanBuilder predicate,
+            int page,
+            int size
+    ) {
+        // 공통 Expression
         Expression<Long> favoriteCountExpr = buildFavoriteCountExpr();
         Expression<Long> myCompletionCountExpr = buildMyCompletionCountExpr(loginMemberId);
         BooleanExpression isFavoriteExpr = buildIsFavoriteExpr(loginMemberId);
         BooleanExpression isMineExpr = buildIsMineExpr(loginMemberId);
 
         OrderSpecifier<?> orderSpecifier =
-                buildOrderSpecifier(filter.getSort(), favoriteCountExpr, myCompletionCountExpr);
+                buildOrderSpecifier(sortOption, favoriteCountExpr, myCompletionCountExpr);
 
         List<OpuSummaryResponse> content = queryFactory
                 .select(new QOpuSummaryResponse(
@@ -290,7 +178,7 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
         }
     }
 
-    // 조건
+
     private BooleanBuilder buildSharedOpuPredicate(Long loginMemberId, OpuListFilterRequest filter) {
         BooleanBuilder predicate = new BooleanBuilder()
                 .and(opu.isShared.isTrue())
@@ -339,7 +227,7 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
         applyCommonFilters(predicate, filter);
 
         // 내 OPU이면서, 찜한 OPU만 보기
-        if (Boolean.TRUE.equals(filter.getFavoriteOnly()) && loginMemberId != null) {
+        if (Boolean.TRUE.equals(filter.getFavoriteOnly())) {
             predicate.and(
                     JPAExpressions
                             .selectOne()
@@ -355,6 +243,49 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
         return predicate;
     }
 
+    private BooleanBuilder buildFavoriteOpuPredicate(Long loginMemberId, OpuListFilterRequest filter) {
+        BooleanBuilder predicate = new BooleanBuilder()
+                .and(opu.deletedAt.isNull());
+
+        // 공통 필터 적용
+        applyCommonFilters(predicate, filter);
+
+        // 내가 찜한 OPU만
+        predicate.and(
+                JPAExpressions
+                        .selectOne()
+                        .from(favoriteOpu)
+                        .where(
+                                favoriteOpu.memberId.eq(loginMemberId),
+                                favoriteOpu.opu.id.eq(opu.id)
+                        )
+                        .exists()
+        );
+
+        // 공개 OPU OR (내가 만든 비공개 OPU)
+        predicate.and(
+                opu.isShared.isTrue()
+                        .or(
+                                opu.isShared.isFalse()
+                                        .and(opu.member.id.eq(loginMemberId))
+                        )
+        );
+
+        // 내가 차단한 OPU 제외
+        predicate.and(
+                JPAExpressions
+                        .selectOne()
+                        .from(blockedOpu)
+                        .where(
+                                blockedOpu.memberId.eq(loginMemberId),
+                                blockedOpu.opu.id.eq(opu.id)
+                        )
+                        .notExists()
+        );
+
+        return predicate;
+    }
+
     // 찜한 사용자 수
     private Expression<Long> buildFavoriteCountExpr() {
         return JPAExpressions
@@ -363,8 +294,7 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
                 .where(favoriteOpu.opu.id.eq(opu.id));
     }
 
-
-    // 완료 횟수
+    // 로그인한 사용자의 완료 횟수
     private Expression<Long> buildMyCompletionCountExpr(Long loginMemberId) {
         if (loginMemberId == null) return Expressions.constant(0L);
 
@@ -377,8 +307,7 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
                 );
     }
 
-
-    // 찜 여부
+    // 로그인한 사용자가 찜했는지 여부
     private BooleanExpression buildIsFavoriteExpr(Long loginMemberId) {
         if (loginMemberId == null) return Expressions.FALSE;
 
@@ -392,15 +321,13 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
                 .exists();
     }
 
-
-    // 내 OPU 여부
+    // 이 OPU가 내 것인지 여부
     private BooleanExpression buildIsMineExpr(Long loginMemberId) {
         if (loginMemberId == null) return Expressions.FALSE;
         return opu.member.id.eq(loginMemberId);
     }
 
-
-    // 정렬
+    //  정렬
     private OrderSpecifier<?> buildOrderSpecifier(
             OpuSortOption sortOption,
             Expression<Long> favoriteCountExpr,
