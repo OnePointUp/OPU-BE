@@ -17,10 +17,10 @@ public class OpuBlockCommandController {
     // 차단
     @PostMapping("/{opuId}/block")
     public ApiResponse<Void> blockOpu(
-            @AuthenticationPrincipal MemberPrincipal principal,
+            @AuthenticationPrincipal(expression = "memberId") Long memberId,
             @PathVariable Long opuId
     ) {
-        Long memberId = principal.getMemberId();
+
         opuBlockCommandService.blockOpu(memberId, opuId);
         return ApiResponse.success(null);
     }
