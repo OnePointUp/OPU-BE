@@ -27,9 +27,8 @@ public class OpuFavoriteCommandController {
     @DeleteMapping("/{opuId}/favorite")
     public ApiResponse<Void> unfavorite(
             @PathVariable Long opuId,
-            @AuthenticationPrincipal MemberPrincipal principal
+            @AuthenticationPrincipal(expression = "memberId") Long memberId
     ) {
-        Long memberId = principal.getMemberId();
         opuFavoriteCommandService.removeFavorite(memberId, opuId);
         return ApiResponse.success(null);
     }
