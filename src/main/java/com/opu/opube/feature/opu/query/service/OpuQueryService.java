@@ -5,6 +5,7 @@ import com.opu.opube.exception.BusinessException;
 import com.opu.opube.exception.ErrorCode;
 import com.opu.opube.feature.opu.command.domain.aggregate.Opu;
 import com.opu.opube.feature.opu.query.dto.request.OpuListFilterRequest;
+import com.opu.opube.feature.opu.query.dto.response.BlockedOpuSummaryResponse;
 import com.opu.opube.feature.opu.query.dto.response.OpuCountSummaryResponse;
 import com.opu.opube.feature.opu.query.dto.response.OpuSummaryResponse;
 import lombok.RequiredArgsConstructor;
@@ -69,5 +70,13 @@ public class OpuQueryService {
         return opuQueryRepository.findFavoriteOpuList(loginMemberId, filter, page, size);
     }
 
-
+    @Transactional(readOnly = true)
+    public PageResponse<BlockedOpuSummaryResponse> getBlockedOpuList(
+            Long loginMemberId,
+            OpuListFilterRequest filter,
+            int page,
+            int size
+    ) {
+        return opuQueryRepository.findBlockedOpuList(loginMemberId, filter, page, size);
+    }
 }
