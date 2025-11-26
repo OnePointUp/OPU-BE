@@ -154,6 +154,7 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
                 .select(blockedOpu.count())
                 .from(blockedOpu)
                 .join(blockedOpu.opu, opu)
+                .leftJoin(opu.category, category)
                 .where(predicate)
                 .fetchOne();
 
