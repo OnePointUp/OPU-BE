@@ -11,7 +11,7 @@ import com.opu.opube.feature.opu.command.application.service.OpuCommandService;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/opu")
+@RequestMapping("/api/v1/opus")
 public class OpuCommandController {
 
     private final OpuCommandService opuCommandService;
@@ -21,7 +21,7 @@ public class OpuCommandController {
             @AuthenticationPrincipal MemberPrincipal memberPrincipal,
             @RequestBody OpuRegisterDto dto
             ) {
-        Long memberId = 1L; //memberPrincipal.getMemberId();
+        Long memberId = memberPrincipal.getMemberId();
         Long opuId = opuCommandService.registerOpu(dto, memberId);
 
         return ResponseEntity.ok(ApiResponse.success(opuId));
