@@ -244,8 +244,8 @@ public class AuthService {
         );
 
         String resetUrl = frontendBaseUrl + "/reset-password?token=" + token;
-
-        String html = buildPasswordResetHtml(member.getNickname(), resetUrl);
+        String iconUrl = "https://" + cloudfrontDomain + "/icon/icon.png";
+        String html = buildPasswordResetHtml(member.getNickname(), resetUrl, iconUrl);
 
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -581,16 +581,16 @@ public class AuthService {
 """.formatted(iconUrl, nickname, verifyUrl);
     }
 
-    private String buildPasswordResetHtml(String nickname, String resetUrl) {
+    private String buildPasswordResetHtml(String nickname, String resetUrl, String iconUrl) {
         return """
 <html>
 <body style="margin:0; padding:0; background:#f8f9fc; font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;">
   <div style="max-width:480px; margin:40px auto; background:#fff; border-radius:12px; padding:32px 24px;
               box-shadow:0 4px 12px rgba(0,0,0,0.06);">
 
-    <h2 style="margin:0 0 8px; font-size:22px; color:#1A1C1F; text-align:center;">
-      비밀번호 재설정 안내
-    </h2>
+    <img src="%s" alt="OPU Icon"
+      style="width:144px; height:144px; border-radius:16px; display:block; margin:0 auto 16px;" />
+
 
     <p style="font-size:15px; color:#555; text-align:center; margin-bottom:24px; line-height:1.5;">
       <span style="font-weight:700; color:#B8DD7C;">%s</span> 님, 비밀번호 재설정 요청이 접수되었습니다.<br/>
@@ -618,6 +618,6 @@ public class AuthService {
   </div>
 </body>
 </html>
-""".formatted(nickname, resetUrl);
+""".formatted(iconUrl, nickname, resetUrl);
     }
 }
