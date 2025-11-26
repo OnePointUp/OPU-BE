@@ -32,4 +32,28 @@ public class OpuCommandServiceImpl implements OpuCommandService {
         Opu savedOpu = opuRepository.save(opu);
         return savedOpu.getId();
     }
+
+    @Override
+    @Transactional
+    public void shareOpu(Long memberId, Long opuId) {
+        Opu opu = findOpuAndCheckOwnership(opuId, memberId);
+        opu.share();
+    }
+
+    @Override
+    @Transactional
+    public void unshareOpu(Long memberId, Long opuId) {
+        Opu opu = findOpuAndCheckOwnership(opuId, memberId);
+        opu.unshare();
+    }
+
+    private Opu findOpuAndCheckOwnership(Long opuId, Long memberId) {
+        Opu opu = opuRepository.findById(opuId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.OPU_NOT_FOUND));
+
+        if (!opu.getMember().getId().equals(memberId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_OPU_ACCESS);
+        }
+        return opu;
+    }
 }
