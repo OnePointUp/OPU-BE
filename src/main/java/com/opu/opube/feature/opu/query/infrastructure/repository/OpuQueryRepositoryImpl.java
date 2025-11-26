@@ -5,7 +5,9 @@ import com.opu.opube.feature.member.command.domain.aggregate.QMember;
 import com.opu.opube.feature.opu.command.domain.aggregate.*;
 import com.opu.opube.feature.opu.query.dto.request.OpuListFilterRequest;
 import com.opu.opube.feature.opu.query.dto.request.OpuSortOption;
+import com.opu.opube.feature.opu.query.dto.response.BlockedOpuSummaryResponse;
 import com.opu.opube.feature.opu.query.dto.response.OpuSummaryResponse;
+import com.opu.opube.feature.opu.query.dto.response.QBlockedOpuSummaryResponse;
 import com.opu.opube.feature.opu.query.dto.response.QOpuSummaryResponse;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Expression;
@@ -105,6 +107,57 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
 
         BooleanBuilder predicate = buildFavoriteOpuPredicate(loginMemberId, filter);
         return findOpuPage(loginMemberId, filter.getSort(), predicate, page, size);
+    }
+
+    @Override
+    public PageResponse<BlockedOpuSummaryResponse> findBlockedOpuList(
+            Long loginMemberId,
+            OpuListFilterRequest filter,
+            int page,
+            int size
+    ) {
+        if (loginMemberId == null) {
+            return PageResponse.from(List.of(), 0L, page, size);
+        }
+
+        BooleanBuilder predicate = new BooleanBuilder()
+                .and(blockedOpu.memberId.eq(loginMemberId))
+                .and(opu.deletedAt.isNull());
+
+        applyCommonFilters(predicate, filter);
+
+        predicate.and(
+                opu.isShared.isTrue()
+                        .or(opu.member.id.eq(loginMemberId))
+        );
+
+        List<BlockedOpuSummaryResponse> content = queryFactory
+                .select(new QBlockedOpuSummaryResponse(
+                        opu.id,
+                        opu.emoji,
+                        opu.title,
+                        opu.category.id,
+                        category.name,
+                        opu.requiredMinutes,
+                        blockedOpu.createdAt   // ← LocalDateTime 그대로 주입
+                ))
+                .from(blockedOpu)
+                .join(blockedOpu.opu, opu)
+                .leftJoin(opu.category, category)
+                .where(predicate)
+                .orderBy(blockedOpu.createdAt.desc())   // ← 최신 차단 순
+                .offset((long) page * size)
+                .limit(size)
+                .fetch();
+
+        Long total = queryFactory
+                .select(blockedOpu.count())
+                .from(blockedOpu)
+                .join(blockedOpu.opu, opu)
+                .where(predicate)
+                .fetchOne();
+
+        return PageResponse.from(content, (total == null ? 0 : total), page, size);
     }
 
 
@@ -280,6 +333,7 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
         return predicate;
     }
 
+
     // 찜한 사용자 수
     private Expression<Long> buildFavoriteCountExpr() {
         return JPAExpressions
@@ -314,6 +368,7 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
                 )
                 .exists();
     }
+
 
     // 이 OPU가 내 것인지 여부
     private BooleanExpression buildIsMineExpr(Long loginMemberId) {
