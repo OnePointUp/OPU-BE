@@ -603,7 +603,7 @@ public class AuthService {
        style="display:block; width:100%%; background:#B8DD7C; color:#fff;
               text-decoration:none; padding:14px 0; border-radius:8px;
               font-size:16px; font-weight:600; text-align:center;">
-      비밀번호 재설정 페이지로 이동
+      비밀번호 재설정
     </a>
 
     <p style="font-size:12px; color:#999; text-align:center; margin-top:16px;">
