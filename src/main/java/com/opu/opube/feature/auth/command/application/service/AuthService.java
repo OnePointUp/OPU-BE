@@ -50,6 +50,11 @@ public class AuthService {
     @Value("${aws.s3.cloudfront-domain}")
     private String cloudfrontDomain;
 
+    private String getIconUrl() {
+        final String ICON_PATH = "/icon/icon.png";
+        return "https://" + cloudfrontDomain + ICON_PATH;
+    }
+
     @Transactional
     public Long register(RegisterRequest req, String backendBaseUrl) {
 
@@ -81,9 +86,8 @@ public class AuthService {
         );
 
         String verifyUrl = backendBaseUrl + "/api/v1/auth/verify?token=" + token;
-        String iconUrl = "https://" + cloudfrontDomain + "/icon/icon.png";
 
-        String html = buildVerificationHtml(saved.getNickname(), verifyUrl, iconUrl);
+        String html = buildVerificationHtml(saved.getNickname(), verifyUrl, getIconUrl());
 
         // 트랜잭션 커밋 후 메일 발송
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
@@ -244,8 +248,7 @@ public class AuthService {
         );
 
         String resetUrl = frontendBaseUrl + "/reset-password?token=" + token;
-        String iconUrl = "https://" + cloudfrontDomain + "/icon/icon.png";
-        String html = buildPasswordResetHtml(member.getNickname(), resetUrl, iconUrl);
+        String html = buildPasswordResetHtml(member.getNickname(), resetUrl, getIconUrl());
 
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -484,8 +487,7 @@ public class AuthService {
         );
 
         String verifyUrl = backendBaseUrl + "/api/v1/auth/verify?token=" + token;
-        String iconUrl = "https://" + cloudfrontDomain + "/icon/icon.png";
-        String html = buildVerificationHtml(member.getNickname(), verifyUrl, iconUrl);
+        String html = buildVerificationHtml(member.getNickname(), verifyUrl, getIconUrl());
 
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -546,9 +548,9 @@ public class AuthService {
     private String buildVerificationHtml(String nickname, String verifyUrl, String iconUrl) {
         return """
 <html>
-<body style="margin:0; padding:0; background:#f8f9fc; 
+<body style="margin:0; padding:0; background:#f8f9fc;
              font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;">
-  <div style="max-width:480px; margin:40px auto; background:#fff; border-radius:12px; 
+  <div style="max-width:480px; margin:40px auto; background:#fff; border-radius:12px;
               padding:32px 24px; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
 
     <img src="%s" alt="OPU Icon"
