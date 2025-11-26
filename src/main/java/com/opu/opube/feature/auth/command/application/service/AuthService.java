@@ -16,6 +16,7 @@ import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.member.command.domain.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -46,6 +47,8 @@ public class AuthService {
     private final KakaoOAuthProperties kakaoProps;
     private final WebClient webClient;
 
+    @Value("${aws.s3.cloudfront-domain}")
+    private String cloudfrontDomain;
 
     @Transactional
     public Long register(RegisterRequest req, String backendBaseUrl) {
@@ -78,7 +81,9 @@ public class AuthService {
         );
 
         String verifyUrl = backendBaseUrl + "/api/v1/auth/verify?token=" + token;
-        String html = buildVerificationHtml(saved.getNickname(), verifyUrl);
+        String iconUrl = "https://" + cloudfrontDomain + "/icon/icon.png";
+
+        String html = buildVerificationHtml(saved.getNickname(), verifyUrl, iconUrl);
 
         // 트랜잭션 커밋 후 메일 발송
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
@@ -479,7 +484,8 @@ public class AuthService {
         );
 
         String verifyUrl = backendBaseUrl + "/api/v1/auth/verify?token=" + token;
-        String html = buildVerificationHtml(member.getNickname(), verifyUrl);
+        String iconUrl = "https://" + cloudfrontDomain + "/icon/icon.png";
+        String html = buildVerificationHtml(member.getNickname(), verifyUrl, iconUrl);
 
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -537,16 +543,17 @@ public class AuthService {
         refreshTokenService.delete(memberId);
     }
 
-    private String buildVerificationHtml(String nickname, String verifyUrl) {
+    private String buildVerificationHtml(String nickname, String verifyUrl, String iconUrl) {
         return """
 <html>
-<body style="margin:0; padding:0; background:#f8f9fc; font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;">
-  <div style="max-width:480px; margin:40px auto; background:#fff; border-radius:12px; padding:32px 24px;
-              box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+<body style="margin:0; padding:0; background:#f8f9fc; 
+             font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;">
+  <div style="max-width:480px; margin:40px auto; background:#fff; border-radius:12px; 
+              padding:32px 24px; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
 
-    <h2 style="margin:0 0 8px; font-size:22px; color:#1A1C1F; text-align:center;">
-      앱 아이콘
-    </h2>
+    <img src="%s" alt="OPU Icon"
+         style="width:144px; height:144px; border-radius:16px; display:block; margin:0 auto 16px;" />
+
 
     <p style="font-size:15px; color:#555; text-align:center; margin-bottom:24px; line-height:1.5;">
       <span style="font-weight:700; color:#B8DD7C;">%s</span> 님, 환영합니다! 🍀<br/>
@@ -563,7 +570,7 @@ public class AuthService {
 
     <hr style="border:none; border-top:1px solid #eee; margin:24px 0;" />
 
-    <p style="font-size:12px; color:#aaa; text-align:center; margin:0%%;">
+    <p style="font-size:12px; color:#aaa; text-align:center; margin:0;">
       본 메일은 발신 전용입니다.<br/>
       © 2025 OPU. All rights reserved.
     </p>
@@ -571,7 +578,7 @@ public class AuthService {
   </div>
 </body>
 </html>
-""".formatted(nickname, verifyUrl);
+""".formatted(iconUrl, nickname, verifyUrl);
     }
 
     private String buildPasswordResetHtml(String nickname, String resetUrl) {
