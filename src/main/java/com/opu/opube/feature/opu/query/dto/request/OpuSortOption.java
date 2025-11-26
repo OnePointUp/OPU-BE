@@ -17,7 +17,7 @@ public enum OpuSortOption {
 
     public static OpuSortOption from(String code) {
         if (code == null || code.isBlank()) {
-            return NEWEST;
+            return null;
         }
 
         for (OpuSortOption option : values()) {
@@ -26,6 +26,6 @@ public enum OpuSortOption {
             }
         }
 
-        return NEWEST;
+        return null;
     }
 }
