@@ -44,6 +44,7 @@ public class Opu {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -66,6 +67,14 @@ public class Opu {
             return;
         }
         this.isShared = false;
+    }
+
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    public boolean isDeleted() {
+        return deletedAt != null;
     }
 
     public static Opu toEntity(OpuRegisterDto dto, Member member, OpuCategory category) {
