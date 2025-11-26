@@ -189,6 +189,8 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
                 .select(favoriteOpu.count())
                 .from(favoriteOpu)
                 .join(favoriteOpu.opu, opu)
+                .leftJoin(opu.category, category)
+                .leftJoin(opu.member, member)
                 .where(predicate)
                 .fetchOne();
 
