@@ -16,6 +16,7 @@ import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.member.command.domain.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -46,6 +47,13 @@ public class AuthService {
     private final KakaoOAuthProperties kakaoProps;
     private final WebClient webClient;
 
+    @Value("${aws.s3.cloudfront-domain}")
+    private String cloudfrontDomain;
+
+    private String getIconUrl() {
+        final String ICON_PATH = "/icon/icon.png";
+        return "https://" + cloudfrontDomain + ICON_PATH;
+    }
 
     @Transactional
     public Long register(RegisterRequest req, String backendBaseUrl) {
@@ -78,7 +86,8 @@ public class AuthService {
         );
 
         String verifyUrl = backendBaseUrl + "/api/v1/auth/verify?token=" + token;
-        String html = buildVerificationHtml(saved.getNickname(), verifyUrl);
+
+        String html = buildVerificationHtml(saved.getNickname(), verifyUrl, getIconUrl());
 
         // 트랜잭션 커밋 후 메일 발송
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
@@ -239,8 +248,7 @@ public class AuthService {
         );
 
         String resetUrl = frontendBaseUrl + "/reset-password?token=" + token;
-
-        String html = buildPasswordResetHtml(member.getNickname(), resetUrl);
+        String html = buildPasswordResetHtml(member.getNickname(), resetUrl, getIconUrl());
 
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -479,7 +487,7 @@ public class AuthService {
         );
 
         String verifyUrl = backendBaseUrl + "/api/v1/auth/verify?token=" + token;
-        String html = buildVerificationHtml(member.getNickname(), verifyUrl);
+        String html = buildVerificationHtml(member.getNickname(), verifyUrl, getIconUrl());
 
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -537,16 +545,17 @@ public class AuthService {
         refreshTokenService.delete(memberId);
     }
 
-    private String buildVerificationHtml(String nickname, String verifyUrl) {
+    private String buildVerificationHtml(String nickname, String verifyUrl, String iconUrl) {
         return """
 <html>
-<body style="margin:0; padding:0; background:#f8f9fc; font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;">
-  <div style="max-width:480px; margin:40px auto; background:#fff; border-radius:12px; padding:32px 24px;
-              box-shadow:0 4px 12px rgba(0,0,0,0.06);">
+<body style="margin:0; padding:0; background:#f8f9fc;
+             font-family:'Apple SD Gothic Neo','Noto Sans KR',sans-serif;">
+  <div style="max-width:480px; margin:40px auto; background:#fff; border-radius:12px;
+              padding:32px 24px; box-shadow:0 4px 12px rgba(0,0,0,0.06);">
 
-    <h2 style="margin:0 0 8px; font-size:22px; color:#1A1C1F; text-align:center;">
-      앱 아이콘
-    </h2>
+    <img src="%s" alt="OPU Icon"
+         style="width:144px; height:144px; border-radius:16px; display:block; margin:0 auto 16px;" />
+
 
     <p style="font-size:15px; color:#555; text-align:center; margin-bottom:24px; line-height:1.5;">
       <span style="font-weight:700; color:#B8DD7C;">%s</span> 님, 환영합니다! 🍀<br/>
@@ -563,7 +572,7 @@ public class AuthService {
 
     <hr style="border:none; border-top:1px solid #eee; margin:24px 0;" />
 
-    <p style="font-size:12px; color:#aaa; text-align:center; margin:0%%;">
+    <p style="font-size:12px; color:#aaa; text-align:center; margin:0;">
       본 메일은 발신 전용입니다.<br/>
       © 2025 OPU. All rights reserved.
     </p>
@@ -571,19 +580,19 @@ public class AuthService {
   </div>
 </body>
 </html>
-""".formatted(nickname, verifyUrl);
+""".formatted(iconUrl, nickname, verifyUrl);
     }
 
-    private String buildPasswordResetHtml(String nickname, String resetUrl) {
+    private String buildPasswordResetHtml(String nickname, String resetUrl, String iconUrl) {
         return """
 <html>
 <body style="margin:0; padding:0; background:#f8f9fc; font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;">
   <div style="max-width:480px; margin:40px auto; background:#fff; border-radius:12px; padding:32px 24px;
               box-shadow:0 4px 12px rgba(0,0,0,0.06);">
 
-    <h2 style="margin:0 0 8px; font-size:22px; color:#1A1C1F; text-align:center;">
-      비밀번호 재설정 안내
-    </h2>
+    <img src="%s" alt="OPU Icon"
+      style="width:144px; height:144px; border-radius:16px; display:block; margin:0 auto 16px;" />
+
 
     <p style="font-size:15px; color:#555; text-align:center; margin-bottom:24px; line-height:1.5;">
       <span style="font-weight:700; color:#B8DD7C;">%s</span> 님, 비밀번호 재설정 요청이 접수되었습니다.<br/>
@@ -594,7 +603,7 @@ public class AuthService {
        style="display:block; width:100%%; background:#B8DD7C; color:#fff;
               text-decoration:none; padding:14px 0; border-radius:8px;
               font-size:16px; font-weight:600; text-align:center;">
-      비밀번호 재설정 페이지로 이동
+      비밀번호 재설정
     </a>
 
     <p style="font-size:12px; color:#999; text-align:center; margin-top:16px;">
@@ -611,6 +620,6 @@ public class AuthService {
   </div>
 </body>
 </html>
-""".formatted(nickname, resetUrl);
+""".formatted(iconUrl, nickname, resetUrl);
     }
 }
