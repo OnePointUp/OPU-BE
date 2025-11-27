@@ -6,11 +6,9 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.annotations.UuidGenerator;
 
 @Entity
 @Getter
@@ -46,6 +44,7 @@ public class Opu {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -55,6 +54,28 @@ public class Opu {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id")
     private Member member;
+
+    public void share() {
+        if (Boolean.TRUE.equals(this.isShared)) {
+            return;
+        }
+        this.isShared = true;
+    }
+
+    public void unshare() {
+        if (Boolean.FALSE.equals(this.isShared)) {
+            return;
+        }
+        this.isShared = false;
+    }
+
+    public void delete() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    public boolean isDeleted() {
+        return deletedAt != null;
+    }
 
     public static Opu toEntity(OpuRegisterDto dto, Member member, OpuCategory category) {
         return Opu.builder()

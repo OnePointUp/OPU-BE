@@ -4,6 +4,7 @@ import com.opu.opube.common.dto.ApiResponse;
 import com.opu.opube.common.dto.PageResponse;
 import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
 import com.opu.opube.feature.opu.query.dto.request.OpuListFilterRequest;
+import com.opu.opube.feature.opu.query.dto.response.BlockedOpuSummaryResponse;
 import com.opu.opube.feature.opu.query.dto.response.OpuSummaryResponse;
 import com.opu.opube.feature.opu.query.service.OpuQueryService;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +44,36 @@ public class OpuQueryController {
 
         PageResponse<OpuSummaryResponse> result =
                 opuQueryService.getMyOpuList(loginMemberId, filter, page, size);
+
+        return ApiResponse.success(result);
+    }
+
+    @GetMapping("/favorites")
+    public ApiResponse<PageResponse<OpuSummaryResponse>> getFavoriteOpus(
+            @AuthenticationPrincipal MemberPrincipal principal,
+            @ModelAttribute OpuListFilterRequest filter,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Long loginMemberId = principal.getMemberId();
+
+        PageResponse<OpuSummaryResponse> result =
+                opuQueryService.getFavoriteOpuList(loginMemberId, filter, page, size);
+
+        return ApiResponse.success(result);
+    }
+
+    @GetMapping("/blocked")
+    public ApiResponse<PageResponse<BlockedOpuSummaryResponse>> getBlockedOpus(
+            @AuthenticationPrincipal MemberPrincipal principal,
+            @ModelAttribute OpuListFilterRequest filter,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        Long loginMemberId = principal.getMemberId();
+
+        PageResponse<BlockedOpuSummaryResponse> result =
+                opuQueryService.getBlockedOpuList(loginMemberId, filter, page, size);
 
         return ApiResponse.success(result);
     }

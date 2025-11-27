@@ -324,4 +324,10 @@ public class TodoCommandServiceImpl implements TodoCommandService {
 
         todo.setSortOrder(newOrder);
     }
+
+    @Override
+    @Transactional
+    public void clearOpuFromTodos(Long opuId) {
+        todoRepository.clearOpuFromTodos(opuId);
+    }
 }

@@ -22,5 +22,7 @@ public interface TodoCommandService {
     Long createTodoByOpu(Long memberId, Long opuId, OpuTodoCreateDto opuTodoCreateDto);
 
     void createTodoByRoutine(Member member, Routine routine, RoutineSchedule routineSchedule);
+
+    void clearOpuFromTodos(Long opuId);
     // command methods here
 }

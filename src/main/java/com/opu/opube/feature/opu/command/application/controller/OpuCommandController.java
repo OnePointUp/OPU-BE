@@ -11,7 +11,7 @@ import com.opu.opube.feature.opu.command.application.service.OpuCommandService;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/opu")
+@RequestMapping("/api/v1/opus")
 public class OpuCommandController {
 
     private final OpuCommandService opuCommandService;
@@ -21,9 +21,39 @@ public class OpuCommandController {
             @AuthenticationPrincipal MemberPrincipal memberPrincipal,
             @RequestBody OpuRegisterDto dto
             ) {
-        Long memberId = 1L; //memberPrincipal.getMemberId();
+        Long memberId = memberPrincipal.getMemberId();
         Long opuId = opuCommandService.registerOpu(dto, memberId);
 
         return ResponseEntity.ok(ApiResponse.success(opuId));
+    }
+
+
+    // 공개 처리
+    @PatchMapping("/{opuId}/share")
+    public ResponseEntity<ApiResponse<Void>> shareOpu(
+            @AuthenticationPrincipal(expression = "memberId") Long memberId,
+            @PathVariable Long opuId
+    ) {
+        opuCommandService.shareOpu(memberId, opuId);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    // 비공개 처리
+    @PatchMapping("/{opuId}/unshare")
+    public ResponseEntity<ApiResponse<Void>> unshareOpu(
+            @AuthenticationPrincipal(expression = "memberId") Long memberId,
+            @PathVariable Long opuId
+    ) {
+        opuCommandService.unshareOpu(memberId, opuId);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @DeleteMapping("/{opuId}")
+    public ResponseEntity<ApiResponse<Void>> deleteOpu(
+            @AuthenticationPrincipal(expression = "memberId") Long memberId,
+            @PathVariable Long opuId
+    ) {
+        opuCommandService.deleteOpu(memberId, opuId);
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 }
