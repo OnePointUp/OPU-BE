@@ -15,15 +15,15 @@ import com.opu.opube.feature.todo.command.application.dto.request.TodoUpdateDto;
 import com.opu.opube.feature.todo.command.domain.aggregate.Routine;
 import com.opu.opube.feature.todo.command.domain.aggregate.RoutineSchedule;
 import com.opu.opube.feature.todo.command.domain.aggregate.Todo;
+import com.opu.opube.feature.todo.command.domain.repository.TodoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.opu.opube.feature.todo.command.domain.repository.TodoRepository;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.YearMonth;
-import java.time.temporal.WeekFields;
+import java.time.temporal.IsoFields;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -83,7 +83,7 @@ public class TodoCommandServiceImpl implements TodoCommandService {
             case MONTHLY -> createMonthlyTodo(member, routine, schedule);
             case YEARLY -> createYearlyTodo(member, routine, schedule);
             default -> throw new BusinessException(ErrorCode.UNSUPPORTED_FREQUENCY);
-        };
+        }
     }
 
     // 매일 Todo
@@ -113,6 +113,16 @@ public class TodoCommandServiceImpl implements TodoCommandService {
         }
     }
 
+    private int getSundayStartWeek(LocalDate date) {
+        // 0 = Sunday, 1 = Monday ... 6 = Saturday
+        int dow = date.getDayOfWeek().getValue() % 7;
+
+        // date - dow = Sunday of this week
+        LocalDate sunday = date.minusDays(dow);
+
+        return sunday.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+    }
+
     // 2주마다 Todo
     private void createBiWeeklyTodo(Member member, Routine routine, RoutineSchedule schedule) {
         LocalDate start = routine.getStartDate();
@@ -121,13 +131,13 @@ public class TodoCommandServiceImpl implements TodoCommandService {
         Set<Integer> targetWeekDays = parseWeekDays(schedule.getWeekDays()); // 0~6 (Sun=0)
 
         // 기준 주차 (ISO Week 기준)
-        int baseWeekParity = start.get(WeekFields.ISO.weekOfYear()) % 2;
+        int baseWeekParity = getSundayStartWeek(start) % 2;
 
         LocalDate current = start;
 
         while (!current.isAfter(end)) {
 
-            int currentWeekParity = current.get(WeekFields.ISO.weekOfYear()) % 2;
+            int currentWeekParity = getSundayStartWeek(current) % 2;
             int dow = current.getDayOfWeek().getValue() % 7; // Sunday=0 매핑 유지
 
             boolean isTargetDay = targetWeekDays.contains(dow);
