@@ -31,6 +31,9 @@ public class Routine {
     @Column(name = "title", length = 100, nullable = false)
     private String title;
 
+    @Column(length = 8)
+    private String color;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "frequency", nullable = false, length = 16)
     private Frequency frequency;
@@ -63,6 +66,7 @@ public class Routine {
                 .startDate(dto.getStartDate())
                 .endDate(dto.getEndDate())
                 .alarmTime(dto.getAlarmTime())
+                .color(dto.getColor())
                 .member(member)
                 .build();
     }

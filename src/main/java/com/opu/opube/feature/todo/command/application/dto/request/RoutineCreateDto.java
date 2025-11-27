@@ -14,6 +14,7 @@ import java.time.LocalTime;
 public class RoutineCreateDto {
     @NotNull()
     String title;
+    String color;
     @NotNull()
     Frequency frequency;
     LocalDate startDate = LocalDate.now();
