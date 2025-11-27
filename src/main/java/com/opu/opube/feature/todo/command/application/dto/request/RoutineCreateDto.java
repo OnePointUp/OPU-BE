@@ -1,5 +1,6 @@
 package com.opu.opube.feature.todo.command.application.dto.request;
 
+import com.opu.opube.feature.todo.command.application.dto.validator.RoutineConstraint;
 import com.opu.opube.feature.todo.command.domain.aggregate.Frequency;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -9,6 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 
 @Getter
+@RoutineConstraint
 public class RoutineCreateDto {
     @NotNull()
     String title;
