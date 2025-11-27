@@ -31,7 +31,7 @@ public class RoutineCommandController {
         return ResponseEntity.ok(ApiResponse.success(routineId));
     }
 
-    @PatchMapping("/{routineId}")
+/*    @PatchMapping("/{routineId}")
     public ResponseEntity<ApiResponse<Void>> updateRoutine(
             @AuthenticationPrincipal MemberPrincipal principal,
             @PathVariable Long routineId,
@@ -50,5 +50,5 @@ public class RoutineCommandController {
         Long memberId = principal.getMemberId();
         routineCommandService.deleteRoutine(memberId, routineId);
         return ResponseEntity.ok(ApiResponse.success(null));
-    }
+    }*/
 }
