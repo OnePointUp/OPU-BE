@@ -155,10 +155,16 @@ public class TodoCommandServiceImpl implements TodoCommandService {
     private void createMonthlyTodo(Member member, Routine routine, RoutineSchedule schedule) {
         LocalDate start = routine.getStartDate();
         LocalDate end = routine.getEndDate();
-        Set<Integer> monthDays = parseMonthDays(schedule.getMonthDays(), start);
 
         LocalDate date = start;
+        int currentMonth = -1;
+        Set<Integer> monthDays = new HashSet<>();
         while (!date.isAfter(end)) {
+            if (date.getMonthValue() != currentMonth) {
+                monthDays = parseMonthDays(schedule.getMonthDays(), date);
+                currentMonth = date.getMonthValue();
+            }
+
             if (monthDays.contains(date.getDayOfMonth())) {
                 saveTodo(member, routine, date, routine.getAlarmTime());
             }
