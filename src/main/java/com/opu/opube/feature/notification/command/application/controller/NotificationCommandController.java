@@ -7,9 +7,6 @@ import com.opu.opube.feature.notification.command.application.service.Notificati
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -108,23 +105,9 @@ public class NotificationCommandController {
     )
     @PatchMapping("/settings/{code}")
     public ResponseEntity<ApiResponse<Void>> updateSetting(
-            @AuthenticationPrincipal
-            @Parameter(hidden = true) MemberPrincipal principal,
-
-            @Parameter(
-                    description = "알림 타입 코드 (예: FOLLOW, COMMENT, TODO_REMINDER)",
-                    example = "TODO_REMINDER"
-            )
+            @AuthenticationPrincipal MemberPrincipal principal,
             @PathVariable String code,
-
-            @RequestBody(
-                    description = "알림 활성/비활성 설정 요청 바디",
-                    required = true,
-                    content = @Content(
-                            schema = @Schema(implementation = NotificationSettingRequest.class)
-                    )
-            )
-            @org.springframework.web.bind.annotation.RequestBody NotificationSettingRequest request
+            @RequestBody NotificationSettingRequest request
     ) {
         Long memberId = principal.getMemberId();
         notificationCommandService.updateSetting(memberId, code, request.getEnabled());
