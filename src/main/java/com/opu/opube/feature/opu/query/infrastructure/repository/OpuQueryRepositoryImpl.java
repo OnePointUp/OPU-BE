@@ -20,6 +20,7 @@ import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -294,6 +295,145 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
                 .fetchOne();
 
         return PageResponse.from(content, total == null ? 0L : total, page, size);
+    }
+
+    @Override
+    public Optional<OpuSummaryResponse> pickRandomOpuFromAll(
+            Long loginMemberId,
+            Integer requiredMinutes,
+            Long excludeOpuId
+    ) {
+        BooleanBuilder predicate = new BooleanBuilder()
+                .and(opu.isShared.isTrue())
+                .and(opu.deletedAt.isNull());
+
+        // requiredMinutes 필터 (null이면 전체)
+        if (requiredMinutes != null) {
+            predicate.and(opu.requiredMinutes.eq(requiredMinutes));
+        }
+
+        // 직전에 뽑힌 OPU 제외 (옵션)
+        if (excludeOpuId != null) {
+            predicate.and(opu.id.ne(excludeOpuId));
+        }
+
+        // 차단된 OPU 제외
+        if (loginMemberId != null) {
+            predicate.and(
+                    JPAExpressions
+                            .selectOne()
+                            .from(blockedOpu)
+                            .where(
+                                    blockedOpu.memberId.eq(loginMemberId),
+                                    blockedOpu.opu.id.eq(opu.id)
+                            )
+                            .notExists()
+            );
+        }
+
+        OpuExpressions expr = buildOpuExpressions(loginMemberId);
+        NumberExpression<Double> random = Expressions.numberTemplate(Double.class, "RAND()");
+
+        OpuSummaryResponse result = queryFactory
+                .select(new QOpuSummaryResponse(
+                        opu.id,
+                        opu.emoji,
+                        opu.title,
+                        opu.category.id,
+                        category.name,
+                        opu.requiredMinutes,
+                        opu.description,
+                        opu.isShared,
+                        expr.isFavorite,
+                        expr.myCompletionCount,
+                        expr.favoriteCount,
+                        member.id,
+                        member.nickname,
+                        expr.isMine
+                ))
+                .from(opu)
+                .leftJoin(opu.category, category)
+                .leftJoin(opu.member, member)
+                .where(predicate)
+                .orderBy(random.asc())
+                .limit(1)
+                .fetchOne();
+
+        return Optional.ofNullable(result);
+    }
+
+    @Override
+    public Optional<OpuSummaryResponse> pickRandomOpuFromFavorite(
+            Long loginMemberId,
+            Integer requiredMinutes,
+            Long excludeOpuId
+    ) {
+        if (loginMemberId == null) {
+            return Optional.empty();
+        }
+
+        BooleanBuilder predicate = new BooleanBuilder()
+                .and(favoriteOpu.memberId.eq(loginMemberId))
+                .and(opu.deletedAt.isNull());
+
+        // requiredMinutes 필터
+        if (requiredMinutes != null) {
+            predicate.and(opu.requiredMinutes.eq(requiredMinutes));
+        }
+
+        // 직전에 뽑힌 OPU 제외 (옵션)
+        if (excludeOpuId != null) {
+            predicate.and(opu.id.ne(excludeOpuId));
+        }
+
+        // 공유된 OPU + 내 OPU 허용
+        predicate.and(
+                opu.isShared.isTrue()
+                        .or(opu.member.id.eq(loginMemberId))
+        );
+
+        // 차단된 OPU 제외
+        predicate.and(
+                JPAExpressions
+                        .selectOne()
+                        .from(blockedOpu)
+                        .where(
+                                blockedOpu.memberId.eq(loginMemberId),
+                                blockedOpu.opu.id.eq(opu.id)
+                        )
+                        .notExists()
+        );
+
+        OpuExpressions expr = buildOpuExpressions(loginMemberId);
+        NumberExpression<Double> random = Expressions.numberTemplate(Double.class, "RAND()");
+
+        OpuSummaryResponse result = queryFactory
+                .select(new QOpuSummaryResponse(
+                        opu.id,
+                        opu.emoji,
+                        opu.title,
+                        opu.category.id,
+                        category.name,
+                        opu.requiredMinutes,
+                        opu.description,
+                        opu.isShared,
+                        expr.isFavorite,
+                        expr.myCompletionCount,
+                        expr.favoriteCount,
+                        member.id,
+                        member.nickname,
+                        expr.isMine
+                ))
+                .from(favoriteOpu)
+                .join(favoriteOpu.opu, opu)
+                .leftJoin(opu.category, category)
+                .leftJoin(opu.member, member)
+                .where(predicate)
+                .orderBy(random.asc())
+                .limit(1)
+                .fetchOne();
+
+        return Optional.ofNullable(result);
     }
 
 

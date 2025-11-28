@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.opu.opube.feature.opu.query.infrastructure.repository.OpuQueryRepository;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -78,5 +80,23 @@ public class OpuQueryService {
             int size
     ) {
         return opuQueryRepository.findBlockedOpuList(loginMemberId, filter, page, size);
+    }
+
+
+    public OpuSummaryResponse pickRandomOpu(
+            Long memberId,
+            boolean fromFavorite,
+            Integer requiredMinutes,
+            Long excludeOpuId
+    ) {
+        return (fromFavorite
+                ? opuQueryRepository.pickRandomOpuFromFavorite(memberId, requiredMinutes, excludeOpuId)
+                : opuQueryRepository.pickRandomOpuFromAll(memberId, requiredMinutes, excludeOpuId)
+        ).orElseThrow(() ->
+                new BusinessException(
+                        ErrorCode.OPU_NOT_FOUND,
+                        "조건에 맞는 OPU를 찾을 수 없습니다."
+                )
+        );
     }
 }
