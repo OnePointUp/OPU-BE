@@ -16,9 +16,6 @@ import com.opu.opube.feature.opu.query.infrastructure.repository.OpuQueryReposit
 
 import java.util.Optional;
 
-import static com.opu.opube.feature.opu.query.dto.request.OpuRandomSource.ALL;
-import static com.opu.opube.feature.opu.query.dto.request.OpuRandomSource.FAVORITE;
-
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
