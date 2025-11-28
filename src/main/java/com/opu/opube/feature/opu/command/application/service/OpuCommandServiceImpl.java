@@ -27,7 +27,7 @@ public class OpuCommandServiceImpl implements OpuCommandService {
     @Override
     public Long registerOpu(OpuRegisterDto dto, Long memberId) {
         Member member = memberQueryService.getMember(memberId);
-        OpuCategory category = opuCategoryRepository.getOpuCategoryById(dto.categoryId)
+        OpuCategory category = opuCategoryRepository.getOpuCategoryById(dto.getCategoryId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.OPU_CATEGORY_NOT_FOUND));
 
         Opu opu = Opu.toEntity(dto, member, category);
