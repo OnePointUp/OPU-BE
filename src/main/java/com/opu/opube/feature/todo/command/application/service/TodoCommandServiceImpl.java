@@ -249,8 +249,8 @@ public class TodoCommandServiceImpl implements TodoCommandService {
             throw new BusinessException(ErrorCode.TODO_FORBIDDEN);
         }
 
-        // opu 인 경우 수정 불가
-        if (todo.getOpu() != null) {
+        // opu 인 경우 title 수정 불가
+        if (todo.getOpu() != null && dto.getTitle() != null) {
             throw new BusinessException(ErrorCode.OPU_TODO_CANNOT_BE_MODIFIED);
         }
 
