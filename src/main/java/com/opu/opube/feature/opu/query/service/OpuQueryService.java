@@ -5,6 +5,7 @@ import com.opu.opube.exception.BusinessException;
 import com.opu.opube.exception.ErrorCode;
 import com.opu.opube.feature.opu.command.domain.aggregate.Opu;
 import com.opu.opube.feature.opu.query.dto.request.OpuListFilterRequest;
+import com.opu.opube.feature.opu.query.dto.request.OpuRandomSource;
 import com.opu.opube.feature.opu.query.dto.response.BlockedOpuSummaryResponse;
 import com.opu.opube.feature.opu.query.dto.response.OpuCountSummaryResponse;
 import com.opu.opube.feature.opu.query.dto.response.OpuSummaryResponse;
@@ -14,6 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.opu.opube.feature.opu.query.infrastructure.repository.OpuQueryRepository;
 
 import java.util.Optional;
+
+import static com.opu.opube.feature.opu.query.dto.request.OpuRandomSource.ALL;
+import static com.opu.opube.feature.opu.query.dto.request.OpuRandomSource.FAVORITE;
 
 @Service
 @RequiredArgsConstructor
@@ -85,18 +89,17 @@ public class OpuQueryService {
 
     public OpuSummaryResponse pickRandomOpu(
             Long memberId,
-            boolean fromFavorite,
+            OpuRandomSource source,
             Integer requiredMinutes,
             Long excludeOpuId
     ) {
-        return (fromFavorite
-                ? opuQueryRepository.pickRandomOpuFromFavorite(memberId, requiredMinutes, excludeOpuId)
-                : opuQueryRepository.pickRandomOpuFromAll(memberId, requiredMinutes, excludeOpuId)
-        ).orElseThrow(() ->
-                new BusinessException(
-                        ErrorCode.OPU_NOT_FOUND,
-                        "조건에 맞는 OPU를 찾을 수 없습니다."
-                )
-        );
+        Optional<OpuSummaryResponse> optional = switch (source) {
+            case FAVORITE -> opuQueryRepository
+                    .pickRandomOpuFromFavorite(memberId, requiredMinutes, excludeOpuId);
+            case ALL -> opuQueryRepository
+                    .pickRandomOpuFromAll(memberId, requiredMinutes, excludeOpuId);
+        };
+
+        return optional.orElseThrow(() -> new BusinessException(ErrorCode.OPU_NOT_FOUND));
     }
 }
