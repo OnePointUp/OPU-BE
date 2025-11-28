@@ -21,7 +21,7 @@ import java.util.List;
 @RequestMapping("/api/v1/notifications/settings")
 @RequiredArgsConstructor
 @Tag(
-        name = "Notification Setting Query API",
+        name = "Notification - Setting Query",
         description = "알림 설정 조회 관련 API"
 )
 public class NotificationSettingQueryController {

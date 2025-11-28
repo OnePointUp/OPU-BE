@@ -21,8 +21,8 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/notifications")
 @Tag(
-        name = "Notification Query API",
-        description = "알림 조회(목록, 안 읽은 알림 개수) 관련 API"
+        name = "Notification - Query",
+        description = "알림 조회 관련 API"
 )
 public class NotificationQueryController {
 

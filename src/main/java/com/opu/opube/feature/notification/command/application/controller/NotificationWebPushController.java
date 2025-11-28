@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/notifications/push")
 @RequiredArgsConstructor
 @Tag(
-        name = "알림 - Web Push",
+        name = "Notification - Web Push",
         description = "브라우저 WebPush 구독/해제 및 테스트 발송 API"
 )
 public class NotificationWebPushController {

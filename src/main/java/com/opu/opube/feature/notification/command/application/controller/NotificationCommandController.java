@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/notifications")
 @Tag(
-        name = "알림 - Command",
+        name = "Notification - Command",
         description = "알림 읽음 처리 및 알림 설정 변경 API"
 )
 public class NotificationCommandController {
