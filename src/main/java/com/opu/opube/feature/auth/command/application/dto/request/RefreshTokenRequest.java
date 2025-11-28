@@ -11,9 +11,9 @@ import lombok.NoArgsConstructor;
 public class RefreshTokenRequest {
 
     @Schema(
-            description = "현재 보유 중인 유효한 Refresh Token",
+            description = "현재 보유 중인 유효한 리프레시 토큰",
             example = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
     )
-    @NotBlank(message = "Refresh Token은 필수입니다.")
+    @NotBlank(message = "리프레시 토큰은 필수입니다.")
     private String refreshToken;
 }
