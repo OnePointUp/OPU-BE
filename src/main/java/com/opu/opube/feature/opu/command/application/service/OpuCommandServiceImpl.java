@@ -85,19 +85,12 @@ public class OpuCommandServiceImpl implements OpuCommandService {
 
         List<Opu> candidates = opuRepository.findSharedByRequiredMinutes(minutes);
 
-        for (Opu o : candidates) {
-            if (excludeOpuId != null && o.getId().equals(excludeOpuId)) {
-                continue; // 자기 자신은 건너뜀
-            }
+        boolean isDuplicate = candidates.stream()
+                .filter(o -> !(excludeOpuId != null && o.getId().equals(excludeOpuId))) // 자기 자신은 건너뜀
+                .anyMatch(o -> normalizeTitle(o.getTitle()).equals(normalizedInput));
 
-            String normalizedExisting = normalizeTitle(o.getTitle());
-
-            if (normalizedExisting.equals(normalizedInput)) {
-                throw new BusinessException(
-                        ErrorCode.DUPLICATE_OPU,
-                        "이미 유사한 OPU가 존재합니다."
-                );
-            }
+        if (isDuplicate) {
+            throw new BusinessException(ErrorCode.DUPLICATE_OPU);
         }
     }
 
