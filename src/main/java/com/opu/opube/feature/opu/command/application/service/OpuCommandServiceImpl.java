@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.opu.opube.feature.opu.command.domain.repository.OpuRepository;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -26,6 +28,8 @@ public class OpuCommandServiceImpl implements OpuCommandService {
 
     @Override
     public Long registerOpu(OpuRegisterDto dto, Long memberId) {
+        validateDuplicatePublicOpuOnRegister(dto);
+
         Member member = memberQueryService.getMember(memberId);
         OpuCategory category = opuCategoryRepository.getOpuCategoryById(dto.getCategoryId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.OPU_CATEGORY_NOT_FOUND));
@@ -39,6 +43,7 @@ public class OpuCommandServiceImpl implements OpuCommandService {
     @Transactional
     public void shareOpu(Long memberId, Long opuId) {
         Opu opu = findOpuAndCheckOwnership(opuId, memberId);
+        validateDuplicatePublicOpuOnShare(opu);
         opu.share();
     }
 
@@ -71,5 +76,65 @@ public class OpuCommandServiceImpl implements OpuCommandService {
         opu.delete();
 
         todoCommandService.clearOpuFromTodos(opuId);
+    }
+
+
+
+    private void validateDuplicatePublicOpuCore(String title, Integer minutes, Long excludeOpuId) {
+        String normalizedInput = normalizeTitle(title);
+
+        List<Opu> candidates = opuRepository.findSharedByRequiredMinutes(minutes);
+
+        for (Opu o : candidates) {
+            if (excludeOpuId != null && o.getId().equals(excludeOpuId)) {
+                continue; // 자기 자신은 건너뜀
+            }
+
+            String normalizedExisting = normalizeTitle(o.getTitle());
+
+            if (normalizedExisting.equals(normalizedInput)) {
+                throw new BusinessException(
+                        ErrorCode.DUPLICATE_OPU,
+                        "이미 유사한 OPU가 존재합니다."
+                );
+            }
+        }
+    }
+
+    private void validateDuplicatePublicOpuOnRegister(OpuRegisterDto dto) {
+        if (!Boolean.TRUE.equals(dto.getIsShared())) {
+            return;
+        }
+        validateDuplicatePublicOpuCore(dto.getTitle(), dto.getRequiredMinutes(), null);
+    }
+
+    private void validateDuplicatePublicOpuOnShare(Opu opu) {
+        if (Boolean.TRUE.equals(opu.getIsShared())) {
+            return;
+        }
+
+        validateDuplicatePublicOpuCore(
+                opu.getTitle(),
+                opu.getRequiredMinutes(),
+                opu.getId()
+        );
+    }
+
+    private String normalizeTitle(String title) {
+        if (title == null) return null;
+
+        String t = title.trim();
+
+        // 1) 이모지 제거 (유니코드 범위)
+        t = t.replaceAll("[\\p{So}\\p{Cn}]", "");
+
+        // 2) 특수문자 제거 (문자, 숫자, 공백만 허용)
+        t = t.replaceAll("[^\\p{L}\\p{N} ]+", "");
+
+        // 3) 공백 제거
+        t = t.replace(" ", "");
+
+        // 4) lower-case 정규화
+        return t.toLowerCase();
     }
 }
