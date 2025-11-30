@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 
@@ -37,6 +38,13 @@ public class AuthController {
 
     @Value("${app.frontend-base-url}")
     private String frontendBaseUrl;   // ← 여기로 설정값 주입
+
+    private static final String SIGNUP_EMAIL_CONFIRMED_PATH = "/signup/email-confirmed";
+    private static final String SIGNUP_EMAIL_FAILED_PATH    = "/signup/email-failed";
+
+    private static final String REASON_PARAM   = "reason";
+    private static final String REASON_EXPIRED = "expired";
+    private static final String REASON_INVALID = "invalid";
 
     String backendBaseUrl = "http://localhost:8080";
 
@@ -115,6 +123,24 @@ public class AuthController {
 
 
     // 이메일 인증
+    @Operation(
+            summary = "이메일 인증 링크 처리",
+            description = """
+                    이메일에 포함된 인증 토큰을 검증하고 결과에 따라 프론트엔드로 리다이렉트합니다.
+
+                    - 성공: 302 Redirect → `{frontendBaseUrl}/signup/email-confirmed`
+                    - 실패:
+                      - 토큰 만료: `{frontendBaseUrl}/signup/email-failed?reason=expired`
+                      - 잘못된/변조된 토큰, 존재하지 않는 회원 등: `{frontendBaseUrl}/signup/email-failed?reason=invalid`
+                    """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "302",
+                    description = "프론트엔드 이메일 인증 결과 페이지로 리다이렉트 (응답 본문 없음)"
+            )
+    })
+
     @GetMapping("/verify")
     public void verify(
             @RequestParam("token") String token,
@@ -123,18 +149,31 @@ public class AuthController {
 
         try {
             authService.verifyEmail(token);
-            response.sendRedirect(frontendBaseUrl + "/signup/email-confirmed");
+
+            String redirectUrl = UriComponentsBuilder
+                    .fromHttpUrl(frontendBaseUrl)
+                    .path(SIGNUP_EMAIL_CONFIRMED_PATH)
+                    .build()
+                    .toUriString();
+
+            response.sendRedirect(redirectUrl);
 
         } catch (BusinessException ex) {
 
             String reason = switch (ex.getErrorCode()) {
-                case EMAIL_VERIFY_TOKEN_EXPIRED -> "expired";
-                case INVALID_EMAIL_VERIFY_TOKEN -> "invalid";
-                case MEMBER_NOT_FOUND -> "invalid";
-                default -> "invalid";
+                case EMAIL_VERIFY_TOKEN_EXPIRED -> REASON_EXPIRED;
+                case INVALID_EMAIL_VERIFY_TOKEN, MEMBER_NOT_FOUND -> REASON_INVALID;
+                default -> REASON_INVALID;
             };
 
-            response.sendRedirect(frontendBaseUrl + "/signup/email-failed?reason=" + reason);
+            String redirectUrl = UriComponentsBuilder
+                    .fromHttpUrl(frontendBaseUrl)
+                    .path(SIGNUP_EMAIL_FAILED_PATH)
+                    .queryParam(REASON_PARAM, reason)
+                    .build()
+                    .toUriString();
+
+            response.sendRedirect(redirectUrl);
         }
     }
 
