@@ -1,6 +1,7 @@
 package com.opu.opube.feature.member.query.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -39,4 +40,11 @@ public class MemberSummaryResponse {
             example = "4"
     )
     private final long myOpuCount;
+
+    @Schema(
+            description = "프로필 소개글 (최대 100자)",
+            example = "꾸준히 성장하는 백엔드 개발자입니다!"
+    )
+    @Size(max = 100, message = "Bio는 최대 100자까지 입력 가능합니다.")
+    private final String bio;
 }
