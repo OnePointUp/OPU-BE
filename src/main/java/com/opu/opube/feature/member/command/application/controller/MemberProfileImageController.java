@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
         description = "회원 프로필 이미지 업로드(Presigned URL) 관련 API"
 )
 @RestController
-@RequestMapping("/api/v1/users/me")
+@RequestMapping("/api/v1/members/me")
 @RequiredArgsConstructor
 public class MemberProfileImageController {
 
