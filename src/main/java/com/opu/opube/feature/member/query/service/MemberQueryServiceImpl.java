@@ -48,6 +48,7 @@ public class MemberQueryServiceImpl implements MemberQueryService {
                 .profileImageUrl(member.getProfileImageUrl())
                 .favoriteOpuCount(opuSummary.getFavoriteOpuCount())
                 .myOpuCount(opuSummary.getMyOpuCount())
+                .bio(member.getBio())
                 .build();
     }
 }
