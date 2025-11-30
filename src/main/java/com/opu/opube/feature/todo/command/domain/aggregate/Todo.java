@@ -87,6 +87,18 @@ public class Todo {
                 .build();
     }
 
+    // for routine
+    public static Todo toEntity(Member member, Routine routine, LocalDate date, LocalTime time, Integer sortOrder) {
+        return Todo.builder()
+                .title(routine.getTitle())
+                .scheduledDate(date)
+                .scheduledTime(time)
+                .member(member)
+                .sortOrder(sortOrder)
+                .routine(routine)
+                .build();
+    }
+
     public void patch(String title, LocalDate scheduledDate, LocalTime scheduledTime) {
         if (title != null) this.title = title;
         if (scheduledDate != null) this.scheduledDate = scheduledDate;

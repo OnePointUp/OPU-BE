@@ -1,0 +1,2 @@
+ALTER TABLE routine
+    ADD COLUMN color VARCHAR(32);

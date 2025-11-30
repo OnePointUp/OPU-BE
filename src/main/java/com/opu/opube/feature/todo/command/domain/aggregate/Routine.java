@@ -1,6 +1,7 @@
 package com.opu.opube.feature.todo.command.domain.aggregate;
 
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
+import com.opu.opube.feature.todo.command.application.dto.request.RoutineCreateDto;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -30,6 +31,9 @@ public class Routine {
     @Column(name = "title", length = 100, nullable = false)
     private String title;
 
+    @Column(length = 8)
+    private String color;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "frequency", nullable = false, length = 16)
     private Frequency frequency;
@@ -37,12 +41,13 @@ public class Routine {
     @Column(name = "start_date", nullable = false)
     private LocalDate startDate;
 
-    @Column(name = "end_date")
+    @Column(name = "end_date", nullable = false)
     private LocalDate endDate;
 
     @Column(name = "alarm_time")
     private LocalTime alarmTime;
 
+    @Builder.Default
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
@@ -53,6 +58,18 @@ public class Routine {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    public static Routine toEntity(RoutineCreateDto dto, Member member) {
+        return Routine.builder()
+                .title(dto.getTitle())
+                .frequency(dto.getFrequency())
+                .startDate(dto.getStartDate())
+                .endDate(dto.getEndDate())
+                .alarmTime(dto.getAlarmTime())
+                .color(dto.getColor())
+                .member(member)
+                .build();
+    }
 
     // 상태 조작 메서드
     public void activate() { this.active = true; }
