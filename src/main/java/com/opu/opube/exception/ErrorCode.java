@@ -47,6 +47,7 @@ public enum ErrorCode {
     OPU_NOT_FOUND("03002", "해당 OPU를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     MEMBER_OPU_EVENT_NOT_FOUND("03003","해당 멤버별 OPU 이벤트를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     FORBIDDEN_OPU_ACCESS("03004", "해당 OPU에 대한 권한이 없습니다.", HttpStatus.FORBIDDEN),
+    DUPLICATE_OPU("03005", "이미 유사한 OPU가 존재합니다.", HttpStatus.CONFLICT),
 
     // TODO
     TODO_NOT_FOUND("04001", "해당 TODO를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),

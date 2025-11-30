@@ -3,6 +3,7 @@ package com.opu.opube.feature.opu.command.application.controller;
 import com.opu.opube.common.dto.ApiResponse;
 import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
 import com.opu.opube.feature.opu.command.application.dto.request.OpuRegisterDto;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -19,7 +20,7 @@ public class OpuCommandController {
     @PostMapping()
     public ResponseEntity<ApiResponse<Long>> createOpu(
             @AuthenticationPrincipal MemberPrincipal memberPrincipal,
-            @RequestBody OpuRegisterDto dto
+            @Valid @RequestBody OpuRegisterDto dto
             ) {
         Long memberId = memberPrincipal.getMemberId();
         Long opuId = opuCommandService.registerOpu(dto, memberId);
