@@ -1,6 +1,7 @@
 package com.opu.opube.feature.auth.command.application.controller;
 
 import com.opu.opube.common.dto.ApiResponse;
+import com.opu.opube.exception.BusinessException;
 import com.opu.opube.feature.auth.command.application.dto.request.*;
 import com.opu.opube.feature.auth.command.application.dto.response.KakaoLoginResponse;
 import com.opu.opube.feature.auth.command.application.dto.response.RegisterResponse;
@@ -13,6 +14,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +22,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
 
 @Tag(
         name = "Auth",
@@ -111,34 +115,27 @@ public class AuthController {
 
 
     // 이메일 인증
-    @Operation(
-            summary = "이메일 인증",
-            description = """
-                    회원가입 시 발급된 이메일 인증 토큰으로 계정을 활성화합니다.
-                    인증 링크는 이메일 본문에 포함된 URL로 전송됩니다.
-                    """
-    )
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200",
-                    description = "이메일 인증 성공",
-                    content = @Content(schema = @Schema(implementation = String.class))
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401",
-                    description = "유효하지 않거나 만료된 이메일 인증 토큰",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "404",
-                    description = "토큰에 해당하는 회원이 존재하지 않는 경우",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
-            )
-    })
     @GetMapping("/verify")
-    public ResponseEntity<ApiResponse<String>> verify(@RequestParam("token") String token) {
-        authService.verifyEmail(token);
-        return ResponseEntity.ok(ApiResponse.success("이메일 인증이 완료되었습니다."));
+    public void verify(
+            @RequestParam("token") String token,
+            HttpServletResponse response
+    ) throws IOException {
+
+        try {
+            authService.verifyEmail(token);
+            response.sendRedirect(frontendBaseUrl + "/signup/email-confirmed");
+
+        } catch (BusinessException ex) {
+
+            String reason = switch (ex.getErrorCode()) {
+                case EMAIL_VERIFY_TOKEN_EXPIRED -> "expired";
+                case INVALID_EMAIL_VERIFY_TOKEN -> "invalid";
+                case MEMBER_NOT_FOUND -> "invalid";
+                default -> "invalid";
+            };
+
+            response.sendRedirect(frontendBaseUrl + "/signup/email-failed?reason=" + reason);
+        }
     }
 
     // 토큰 재발급
