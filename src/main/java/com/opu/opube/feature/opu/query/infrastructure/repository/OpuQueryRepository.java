@@ -44,4 +44,17 @@ public interface OpuQueryRepository {
             int page,
             int size
     );
+
+    Optional<OpuSummaryResponse> pickRandomOpuFromAll(
+            Long loginMemberId,
+            Integer requiredMinutes,
+            Long excludeOpuId
+    );
+
+    Optional<OpuSummaryResponse> pickRandomOpuFromFavorite(
+            Long loginMemberId,
+            Integer requiredMinutes,
+            Long excludeOpuId
+    );
+
 }

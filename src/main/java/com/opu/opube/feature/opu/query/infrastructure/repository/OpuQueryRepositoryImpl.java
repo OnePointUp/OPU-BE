@@ -20,6 +20,7 @@ import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -296,6 +297,129 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
         return PageResponse.from(content, total == null ? 0L : total, page, size);
     }
 
+    @Override
+    public Optional<OpuSummaryResponse> pickRandomOpuFromAll(
+            Long loginMemberId,
+            Integer requiredMinutes,
+            Long excludeOpuId
+    ) {
+        BooleanBuilder predicate = new BooleanBuilder()
+                .and(opu.isShared.isTrue())
+                .and(opu.deletedAt.isNull());
+
+        // 공통 필터 (requiredMinutes, excludeOpuId)
+        applyRandomFilters(predicate, requiredMinutes, excludeOpuId);
+
+        // 차단된 OPU 제외
+        excludeBlockedOpu(predicate, loginMemberId);
+
+        OpuExpressions expr = buildOpuExpressions(loginMemberId);
+
+        OpuSummaryResponse result = queryFactory
+                .select(buildRandomProjection(expr))
+                .from(opu)
+                .leftJoin(opu.category, category)
+                .leftJoin(opu.member, member)
+                .where(predicate)
+                .orderBy(randomExpr().asc())
+                .limit(1)
+                .fetchOne();
+
+        return Optional.ofNullable(result);
+    }
+
+    @Override
+    public Optional<OpuSummaryResponse> pickRandomOpuFromFavorite(
+            Long loginMemberId,
+            Integer requiredMinutes,
+            Long excludeOpuId
+    ) {
+        if (loginMemberId == null) {
+            return Optional.empty();
+        }
+
+        BooleanBuilder predicate = new BooleanBuilder()
+                .and(favoriteOpu.memberId.eq(loginMemberId))
+                .and(opu.deletedAt.isNull());
+
+        // 공통 필터 (requiredMinutes, excludeOpuId)
+        applyRandomFilters(predicate, requiredMinutes, excludeOpuId);
+
+        // 공유된 OPU + 내 OPU 허용
+        predicate.and(
+                opu.isShared.isTrue()
+                        .or(opu.member.id.eq(loginMemberId))
+        );
+
+        // 차단된 OPU 제외
+        excludeBlockedOpu(predicate, loginMemberId);
+
+        OpuExpressions expr = buildOpuExpressions(loginMemberId);
+
+        OpuSummaryResponse result = queryFactory
+                .select(buildRandomProjection(expr))
+                .from(favoriteOpu)
+                .join(favoriteOpu.opu, opu)
+                .leftJoin(opu.category, category)
+                .leftJoin(opu.member, member)
+                .where(predicate)
+                .orderBy(randomExpr().asc())
+                .limit(1)
+                .fetchOne();
+
+        return Optional.ofNullable(result);
+    }
+
+    private NumberExpression<Double> randomExpr() {
+        return Expressions.numberTemplate(Double.class, "RAND()");
+    }
+
+    private void applyRandomFilters(BooleanBuilder predicate,
+                                    Integer requiredMinutes,
+                                    Long excludeOpuId) {
+        if (requiredMinutes != null) {
+            predicate.and(opu.requiredMinutes.eq(requiredMinutes));
+        }
+        if (excludeOpuId != null) {
+            predicate.and(opu.id.ne(excludeOpuId));
+        }
+    }
+
+    private void excludeBlockedOpu(BooleanBuilder predicate, Long loginMemberId) {
+        if (loginMemberId == null) {
+            return;
+        }
+
+        predicate.and(
+                JPAExpressions
+                        .selectOne()
+                        .from(blockedOpu)
+                        .where(
+                                blockedOpu.memberId.eq(loginMemberId),
+                                blockedOpu.opu.id.eq(opu.id)
+                        )
+                        .notExists()
+        );
+    }
+
+    private QOpuSummaryResponse buildRandomProjection(OpuExpressions expr) {
+        return new QOpuSummaryResponse(
+                opu.id,
+                opu.emoji,
+                opu.title,
+                opu.category.id,
+                category.name,
+                opu.requiredMinutes,
+                opu.description,
+                opu.isShared,
+                expr.isFavorite,
+                expr.myCompletionCount,
+                expr.favoriteCount,
+                member.id,
+                member.nickname,
+                expr.isMine
+        );
+    }
 
     private void applyCommonFilters(BooleanBuilder predicate, OpuListFilterRequest filter) {
         if (filter.getCategoryIds() != null && !filter.getCategoryIds().isEmpty()) {
