@@ -30,6 +30,9 @@ public class Member {
     @Column(name = "nickname", length = 50, nullable = false)
     private String nickname;
 
+    @Column(name = "nickname_tag", length = 10)
+    private String nicknameTag;
+
     @Column(name = "profile_image_url", length = 512)
     private String profileImageUrl;
 
@@ -48,6 +51,9 @@ public class Member {
 
     @Column(name = "is_email_verified", nullable = false)
     private boolean emailVerified = false;
+
+    @Column(name = "web_push_agreed", nullable = false)
+    private Boolean webPushAgreed = false;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -123,5 +129,8 @@ public class Member {
 
     public void updatePasswordResetIssuedAt(LocalDateTime issuedAt) {
         this.passwordResetIssuedAt = issuedAt;
+    }
+    public void changeWebPushAgreed(boolean agreed) {
+        this.webPushAgreed = agreed;
     }
 }
