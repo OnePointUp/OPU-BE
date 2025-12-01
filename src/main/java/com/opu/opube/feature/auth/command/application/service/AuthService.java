@@ -32,6 +32,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 @RequiredArgsConstructor
@@ -58,12 +59,30 @@ public class AuthService {
         return "https://" + cloudfrontDomain + ICON_PATH;
     }
 
+    private String generateNicknameTag(String nickname) {
+        for (int i = 0; i < 5; i++) {
+            int num = ThreadLocalRandom.current().nextInt(1000, 10000);
+            String tag = String.valueOf(num);
+            boolean exists = memberRepository.existsByNicknameAndNicknameTag(nickname, tag);
+            if (!exists) {
+                return tag;
+            }
+        }
+        throw new BusinessException(
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                "닉네임 태그 생성에 실패했습니다."
+        );
+    }
+
     @Transactional
     public Long register(RegisterRequest req, String backendBaseUrl) {
 
         // 비밀번호 규칙 검증 (8자 이상, 영문/숫자/특수문자 포함)
         validatePasswordRule(req.getPassword());
         validateNickname(req.getNickname());
+
+        String nicknameTag = generateNicknameTag(req.getNickname());
+        boolean webPushAgreed = Boolean.TRUE.equals(req.getWebPushAgreed());
 
         if (memberRepository.existsByEmail(req.getEmail())) {
             throw new BusinessException(ErrorCode.DUPLICATE_EMAIL, "이미 가입된 이메일이 존재합니다.");
@@ -73,9 +92,11 @@ public class AuthService {
                 .email(req.getEmail())
                 .password(passwordEncoder.encode(req.getPassword()))
                 .nickname(req.getNickname())
+                .nicknameTag(nicknameTag)
                 .authorization(Authorization.MEMBER)
                 .authProvider("local")
                 .emailVerified(false)
+                .webPushAgreed(webPushAgreed)
                 .profileImageUrl(req.getProfileImageUrl())
                 .build();
 
@@ -375,6 +396,9 @@ public class AuthService {
 
         validateNickname(req.getNickname());
 
+        String nicknameTag = generateNicknameTag(req.getNickname());
+        boolean webPushAgreed = Boolean.TRUE.equals(req.getWebPushAgreed());
+
         // 이미 가입된 providerId이면 예외
         if (memberRepository.findByAuthProviderAndProviderId("kakao", providerId).isPresent()) {
             throw new BusinessException(ErrorCode.DUPLICATE_PROVIDER_MEMBER, "이미 가입된 카카오 계정입니다.");
@@ -384,10 +408,12 @@ public class AuthService {
                 .email(null)
                 .password(null)
                 .nickname(req.getNickname())
+                .nicknameTag(nicknameTag)
                 .authorization(Authorization.MEMBER)
                 .authProvider("kakao")
                 .providerId(providerId)
-                .emailVerified(true) // 소셜 로그인은 바로 인증된 것으로 처리
+                .emailVerified(true)
+                .webPushAgreed(webPushAgreed)
                 .profileImageUrl(req.getProfileImageUrl())
                 .build();
 
