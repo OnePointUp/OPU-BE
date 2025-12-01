@@ -29,4 +29,10 @@ public class KakaoRegisterRequest {
             example = "https://d1234.cloudfront.net/profile/sample.png"
     )
     private String profileImageUrl;
+
+    @Schema(
+            description = "웹 푸시 알림 동의",
+            example = "true"
+    )
+    private Boolean webPushAgreed;
 }

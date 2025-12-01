@@ -39,4 +39,10 @@ public class RegisterRequest {
             example = "https://d111.cloudfront.net/profile/abcd.png"
     )
     private String profileImageUrl;
+
+    @Schema(
+            description = "웹 푸시 알림 동의",
+            example = "true"
+    )
+    private Boolean webPushAgreed;
 }
