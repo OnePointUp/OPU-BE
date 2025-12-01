@@ -10,6 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class OpuBlockCommandServiceImpl implements OpuBlockCommandService {
@@ -40,5 +42,15 @@ public class OpuBlockCommandServiceImpl implements OpuBlockCommandService {
     public void unblockOpu(Long memberId, Long opuId) {
         // 존재하지 않아도 그냥 넘어가도록 (멱등성)
         blockedOpuRepository.deleteByMemberIdAndOpuId(memberId, opuId);
+    }
+
+
+    @Override
+    @Transactional
+    public void unblockOpuBulk(Long memberId, List<Long> opuIds) {
+        if (opuIds == null || opuIds.isEmpty()) {
+            return;
+        }
+        blockedOpuRepository.deleteByMemberIdAndOpuIdIn(memberId, opuIds);
     }
 }
