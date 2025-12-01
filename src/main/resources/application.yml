@@ -45,7 +45,7 @@ app:
     password-reset:
       expiration-minutes: 15
     secret: ${JWT_SECRET}
-    access-exp-sec: 900
+    access-exp-sec: 1209600
     refresh-exp-sec: 1209600
 
 
