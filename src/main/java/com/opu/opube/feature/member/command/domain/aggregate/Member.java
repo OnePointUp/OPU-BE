@@ -130,7 +130,7 @@ public class Member {
     public void updatePasswordResetIssuedAt(LocalDateTime issuedAt) {
         this.passwordResetIssuedAt = issuedAt;
     }
-    public void changeWebPushAgreed(boolean agreed) {
+    public void updateWebPushAgreed(boolean agreed) {
         this.webPushAgreed = agreed;
     }
     public boolean isWebPushAgreed() {
