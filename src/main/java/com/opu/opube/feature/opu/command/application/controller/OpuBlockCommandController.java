@@ -1,7 +1,7 @@
 package com.opu.opube.feature.opu.command.application.controller;
 
 import com.opu.opube.common.dto.ApiResponse;
-import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
+import com.opu.opube.feature.opu.command.application.dto.request.OpuBlockBulkRequest;
 import com.opu.opube.feature.opu.command.application.service.OpuBlockCommandService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -33,6 +33,16 @@ public class OpuBlockCommandController {
     ) {
 
         opuBlockCommandService.unblockOpu(memberId, opuId);
+        return ApiResponse.success(null);
+    }
+
+    // 다중 차단 해제
+    @DeleteMapping("/blocks")
+    public ApiResponse<Void> unblockOpuBulk(
+            @AuthenticationPrincipal(expression = "memberId") Long memberId,
+            @RequestBody OpuBlockBulkRequest request
+    ) {
+        opuBlockCommandService.unblockOpuBulk(memberId, request.getOpuIds());
         return ApiResponse.success(null);
     }
 }
