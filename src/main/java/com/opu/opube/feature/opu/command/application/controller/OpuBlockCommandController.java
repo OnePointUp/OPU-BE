@@ -37,7 +37,7 @@ public class OpuBlockCommandController {
     }
 
     // 다중 차단 해제
-    @DeleteMapping("/block/bulk")
+    @DeleteMapping("/blocks")
     public ApiResponse<Void> unblockOpuBulk(
             @AuthenticationPrincipal(expression = "memberId") Long memberId,
             @RequestBody OpuBlockBulkRequest request
