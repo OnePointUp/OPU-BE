@@ -38,6 +38,9 @@ import java.util.Date;
 @Slf4j
 public class AuthService {
 
+    private static final int NICKNAME_MIN_LENGTH = 2;
+    private static final int NICKNAME_MAX_LENGTH = 20;
+
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtEmailTokenProvider emailTokenProvider;
@@ -60,6 +63,7 @@ public class AuthService {
 
         // 비밀번호 규칙 검증 (8자 이상, 영문/숫자/특수문자 포함)
         validatePasswordRule(req.getPassword());
+        validateNickname(req.getNickname());
 
         if (memberRepository.existsByEmail(req.getEmail())) {
             throw new BusinessException(ErrorCode.DUPLICATE_EMAIL, "이미 가입된 이메일이 존재합니다.");
@@ -369,6 +373,8 @@ public class AuthService {
     public TokenResponse kakaoRegister(KakaoRegisterRequest req) {
         String providerId = req.getProviderId();
 
+        validateNickname(req.getNickname());
+
         // 이미 가입된 providerId이면 예외
         if (memberRepository.findByAuthProviderAndProviderId("kakao", providerId).isPresent()) {
             throw new BusinessException(ErrorCode.DUPLICATE_PROVIDER_MEMBER, "이미 가입된 카카오 계정입니다.");
@@ -638,6 +644,14 @@ public class AuthService {
                     ErrorCode.INVALID_PASSWORD,
                     "비밀번호는 8자 이상이며, 영문자/숫자/특수문자를 각각 최소 1개 이상 포함해야 합니다."
             );
+        }
+    }
+
+    private void validateNickname(String nickname) {
+        if (nickname == null ||
+                nickname.length() < NICKNAME_MIN_LENGTH ||
+                nickname.length() > NICKNAME_MAX_LENGTH) {
+            throw new BusinessException(ErrorCode.INVALID_NICKNAME_LENGTH);
         }
     }
 }
