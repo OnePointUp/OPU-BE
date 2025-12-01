@@ -58,6 +58,9 @@ public class AuthService {
     @Transactional
     public Long register(RegisterRequest req, String backendBaseUrl) {
 
+        // 비밀번호 규칙 검증 (8자 이상, 영문/숫자/특수문자 포함)
+        validatePasswordRule(req.getPassword());
+
         if (memberRepository.existsByEmail(req.getEmail())) {
             throw new BusinessException(ErrorCode.DUPLICATE_EMAIL, "이미 가입된 이메일이 존재합니다.");
         }
@@ -86,7 +89,6 @@ public class AuthService {
         );
 
         String verifyUrl = backendBaseUrl + "/api/v1/auth/verify?token=" + token;
-
         String html = buildVerificationHtml(saved.getNickname(), verifyUrl, getIconUrl());
 
         // 트랜잭션 커밋 후 메일 발송
@@ -621,5 +623,21 @@ public class AuthService {
 </body>
 </html>
 """.formatted(iconUrl, nickname, resetUrl);
+    }
+
+    private void validatePasswordRule(String password) {
+        if (password == null) {
+            throw new BusinessException(ErrorCode.INVALID_PASSWORD, "비밀번호를 입력해주세요.");
+        }
+
+        // 8자 이상 + 영문 + 숫자 + 특수문자
+        String regex = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[!@#$%^&*]).{8,}$";
+
+        if (!password.matches(regex)) {
+            throw new BusinessException(
+                    ErrorCode.INVALID_PASSWORD,
+                    "비밀번호는 8자 이상이며, 영문자/숫자/특수문자를 각각 최소 1개 이상 포함해야 합니다."
+            );
+        }
     }
 }
