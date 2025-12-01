@@ -1,6 +1,7 @@
 package com.opu.opube.feature.auth.command.application.controller;
 
 import com.opu.opube.common.dto.ApiResponse;
+import com.opu.opube.exception.BusinessException;
 import com.opu.opube.feature.auth.command.application.dto.request.*;
 import com.opu.opube.feature.auth.command.application.dto.response.KakaoLoginResponse;
 import com.opu.opube.feature.auth.command.application.dto.response.RegisterResponse;
@@ -13,6 +14,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +22,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.io.IOException;
 
 @Tag(
         name = "Auth",
@@ -33,6 +38,13 @@ public class AuthController {
 
     @Value("${app.frontend-base-url}")
     private String frontendBaseUrl;   // ← 여기로 설정값 주입
+
+    private static final String SIGNUP_EMAIL_CONFIRMED_PATH = "/signup/email-confirmed";
+    private static final String SIGNUP_EMAIL_FAILED_PATH    = "/signup/email-failed";
+
+    private static final String REASON_PARAM   = "reason";
+    private static final String REASON_EXPIRED = "expired";
+    private static final String REASON_INVALID = "invalid";
 
     String backendBaseUrl = "http://localhost:8080";
 
@@ -112,33 +124,57 @@ public class AuthController {
 
     // 이메일 인증
     @Operation(
-            summary = "이메일 인증",
+            summary = "이메일 인증 링크 처리",
             description = """
-                    회원가입 시 발급된 이메일 인증 토큰으로 계정을 활성화합니다.
-                    인증 링크는 이메일 본문에 포함된 URL로 전송됩니다.
+                    이메일에 포함된 인증 토큰을 검증하고 결과에 따라 프론트엔드로 리다이렉트합니다.
+
+                    - 성공: 302 Redirect → `{frontendBaseUrl}/signup/email-confirmed`
+                    - 실패:
+                      - 토큰 만료: `{frontendBaseUrl}/signup/email-failed?reason=expired`
+                      - 잘못된/변조된 토큰, 존재하지 않는 회원 등: `{frontendBaseUrl}/signup/email-failed?reason=invalid`
                     """
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "200",
-                    description = "이메일 인증 성공",
-                    content = @Content(schema = @Schema(implementation = String.class))
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "401",
-                    description = "유효하지 않거나 만료된 이메일 인증 토큰",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "404",
-                    description = "토큰에 해당하는 회원이 존재하지 않는 경우",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
+                    responseCode = "302",
+                    description = "프론트엔드 이메일 인증 결과 페이지로 리다이렉트 (응답 본문 없음)"
             )
     })
+
     @GetMapping("/verify")
-    public ResponseEntity<ApiResponse<String>> verify(@RequestParam("token") String token) {
-        authService.verifyEmail(token);
-        return ResponseEntity.ok(ApiResponse.success("이메일 인증이 완료되었습니다."));
+    public void verify(
+            @RequestParam("token") String token,
+            HttpServletResponse response
+    ) throws IOException {
+
+        try {
+            authService.verifyEmail(token);
+
+            String redirectUrl = UriComponentsBuilder
+                    .fromHttpUrl(frontendBaseUrl)
+                    .path(SIGNUP_EMAIL_CONFIRMED_PATH)
+                    .build()
+                    .toUriString();
+
+            response.sendRedirect(redirectUrl);
+
+        } catch (BusinessException ex) {
+
+            String reason = switch (ex.getErrorCode()) {
+                case EMAIL_VERIFY_TOKEN_EXPIRED -> REASON_EXPIRED;
+                case INVALID_EMAIL_VERIFY_TOKEN, MEMBER_NOT_FOUND -> REASON_INVALID;
+                default -> REASON_INVALID;
+            };
+
+            String redirectUrl = UriComponentsBuilder
+                    .fromHttpUrl(frontendBaseUrl)
+                    .path(SIGNUP_EMAIL_FAILED_PATH)
+                    .queryParam(REASON_PARAM, reason)
+                    .build()
+                    .toUriString();
+
+            response.sendRedirect(redirectUrl);
+        }
     }
 
     // 토큰 재발급
