@@ -310,7 +310,6 @@ public class AuthService {
             );
         }
 
-        // 토큰에서 memberId, iat 추출
         Long memberId = emailTokenProvider.parseMemberIdFromToken(token);
         Date issuedAt = emailTokenProvider.getIssuedAt(token);
 
@@ -319,7 +318,6 @@ public class AuthService {
                         ErrorCode.MEMBER_NOT_FOUND
                 ));
 
-        // 가장 최근에 발급된 토큰인지 체크
         if (member.getPasswordResetIssuedAt() != null) {
             LocalDateTime tokenIat =
                     issuedAt.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
@@ -331,16 +329,14 @@ public class AuthService {
             }
         }
 
-        // 비밀번호 규칙
         String rawPassword = req.getNewPassword();
-        if (rawPassword == null || rawPassword.length() < 8) {
-            throw new BusinessException(ErrorCode.INVALID_PASSWORD, "비밀번호는 8자 이상이어야 합니다.");
-        }
+        validatePasswordRule(rawPassword);
 
         member.changePassword(passwordEncoder.encode(rawPassword));
         member.updatePasswordResetIssuedAt(LocalDateTime.now());
         refreshTokenService.delete(member.getId());
     }
+
 
     //카카오 로그인
     @Transactional(readOnly = true)
@@ -553,9 +549,7 @@ public class AuthService {
             throw new BusinessException(ErrorCode.INVALID_PASSWORD, "기존 비밀번호가 일치하지 않습니다.");
         }
 
-        if (req.getNewPassword().length() < 8) {
-            throw new BusinessException(ErrorCode.INVALID_PASSWORD, "비밀번호는 8자 이상이어야 합니다.");
-        }
+        validatePasswordRule(req.getNewPassword());
 
         member.changePassword(passwordEncoder.encode(req.getNewPassword()));
         refreshTokenService.delete(memberId);
@@ -667,8 +661,7 @@ public class AuthService {
 
         if (!password.matches(regex)) {
             throw new BusinessException(
-                    ErrorCode.INVALID_PASSWORD,
-                    "비밀번호는 8자 이상이며, 영문자/숫자/특수문자를 각각 최소 1개 이상 포함해야 합니다."
+                    ErrorCode.INVALID_PASSWORD_FORMAT
             );
         }
     }
