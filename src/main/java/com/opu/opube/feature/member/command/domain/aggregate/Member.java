@@ -133,4 +133,7 @@ public class Member {
     public void changeWebPushAgreed(boolean agreed) {
         this.webPushAgreed = agreed;
     }
+    public boolean isWebPushAgreed() {
+        return this.webPushAgreed;
+    }
 }
