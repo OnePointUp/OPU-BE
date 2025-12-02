@@ -139,6 +139,9 @@ public class Member {
 
     public void updateNicknameAndTag(String newNickname, String newTag) {
         if (newNickname != null && !newNickname.isBlank()) {
+            if (newNickname.length() < 2 || newNickname.length() > 20) {
+                throw new BusinessException(ErrorCode.INVALID_NICKNAME_LENGTH);
+            }
             this.nickname = newNickname;
         }
         if (newTag != null && !newTag.isBlank()) {
@@ -147,6 +150,9 @@ public class Member {
     }
 
     public void updateProfile(String bio, String profileImageUrl) {
+        if (bio != null && bio.length() > 100) {
+            throw new BusinessException(ErrorCode.INVALID_BIO_LENGTH);
+        }
         this.bio = bio;
         this.profileImageUrl = profileImageUrl;
     }
