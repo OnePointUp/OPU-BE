@@ -5,7 +5,7 @@ import com.opu.opube.feature.todo.command.domain.aggregate.Frequency;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
-public class RoutineValidator implements ConstraintValidator<RoutineConstraint, RoutineCreateDto> {
+public class RoutineCreateValidator implements ConstraintValidator<RoutineCreateConstraint, RoutineCreateDto> {
 
     @Override
     public boolean isValid(RoutineCreateDto dto, ConstraintValidatorContext context) {

@@ -10,8 +10,8 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-@Constraint(validatedBy = RoutineValidator.class)
-public @interface RoutineConstraint {
+@Constraint(validatedBy = RoutineUpdateValidator.class)
+public @interface RoutineUpdateConstraint {
     String message() default "루틴 설정이 잘못되었습니다.";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
