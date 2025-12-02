@@ -673,4 +673,13 @@ public class AuthService {
             throw new BusinessException(ErrorCode.INVALID_NICKNAME_LENGTH);
         }
     }
+
+    @Transactional(readOnly = true)
+    public boolean isEmailVerified(String email) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "회원 정보를 찾을 수 없습니다."));
+
+        return member.isEmailVerified();
+    }
 }
