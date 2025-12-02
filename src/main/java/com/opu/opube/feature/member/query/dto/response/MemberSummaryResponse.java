@@ -17,6 +17,12 @@ public class MemberSummaryResponse {
     private final String nickname;
 
     @Schema(
+            description = "닉네임 태그",
+            example = "1234"
+    )
+    private final String nicknameTag;
+
+    @Schema(
             description = "프로필 이미지 URL",
             example = "https://cdn.opu.app/users/101/profile_172000111.png",
             nullable = true
