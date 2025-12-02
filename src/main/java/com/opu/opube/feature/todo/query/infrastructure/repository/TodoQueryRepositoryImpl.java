@@ -32,7 +32,8 @@ public class TodoQueryRepositoryImpl implements TodoQueryRepository {
                 .select(todo.count())
                 .from(todo)
                 .where(todo.member.id.eq(memberId)
-                        .and(todo.scheduledDate.eq(date)))
+                        .and(todo.scheduledDate.eq(date))
+                        .and(todo.deletedAt.isNull()))
                 .fetchOne();
 
         long totalCount = total != null ? total : 0L;
@@ -40,7 +41,8 @@ public class TodoQueryRepositoryImpl implements TodoQueryRepository {
         List<TodoResponseDto> content = queryFactory
                 .selectFrom(todo)
                 .where(todo.member.id.eq(memberId)
-                        .and(todo.scheduledDate.eq(date)))
+                        .and(todo.scheduledDate.eq(date))
+                        .and(todo.deletedAt.isNull()))
                 .orderBy(todo.sortOrder.asc())
                 .offset((long) page * size)
                 .limit(size)
@@ -73,7 +75,8 @@ public class TodoQueryRepositoryImpl implements TodoQueryRepository {
                 ))
                 .from(todo)
                 .where(todo.member.id.eq(memberId)
-                        .and(todo.scheduledDate.between(startDate, endDate)))
+                        .and(todo.scheduledDate.between(startDate, endDate))
+                        .and(todo.deletedAt.isNull()))
                 .groupBy(todo.scheduledDate)
                 .orderBy(todo.scheduledDate.asc())
                 .fetch();
