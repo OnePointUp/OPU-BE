@@ -18,6 +18,11 @@ public class MemberCommandServiceImpl implements MemberCommandService {
 
     private static final int NICKNAME_MIN_LENGTH = 2;
     private static final int NICKNAME_MAX_LENGTH = 20;
+
+    private static final int TAG_MIN = 1000;
+    private static final int TAG_MAX = 10000;   // upper bound (exclusive)
+    private static final int TAG_GENERATE_ATTEMPTS = 5;
+
     private final MemberRepository memberRepository;
 
     @Override
@@ -74,14 +79,16 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     }
 
     private String generateNicknameTag(String nickname) {
-        for (int i = 0; i < 5; i++) {
-            int num = ThreadLocalRandom.current().nextInt(1000, 10000); // 1000~9999
+        for (int i = 0; i < TAG_GENERATE_ATTEMPTS; i++) {
+            int num = ThreadLocalRandom.current().nextInt(TAG_MIN, TAG_MAX);
             String tag = String.valueOf(num);
+
             boolean exists = memberRepository.existsByNicknameAndNicknameTag(nickname, tag);
             if (!exists) {
                 return tag;
             }
         }
+
         throw new BusinessException(
                 ErrorCode.INTERNAL_SERVER_ERROR,
                 "닉네임 태그 생성에 실패했습니다."
