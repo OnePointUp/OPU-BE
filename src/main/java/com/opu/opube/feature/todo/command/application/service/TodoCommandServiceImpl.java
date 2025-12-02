@@ -13,7 +13,6 @@ import com.opu.opube.feature.todo.command.application.dto.request.TodoCreateDto;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoStatusUpdateDto;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoUpdateDto;
 import com.opu.opube.feature.todo.command.domain.aggregate.Routine;
-import com.opu.opube.feature.todo.command.domain.aggregate.RoutineSchedule;
 import com.opu.opube.feature.todo.command.domain.aggregate.Todo;
 import com.opu.opube.feature.todo.command.domain.repository.TodoRepository;
 import lombok.RequiredArgsConstructor;
@@ -75,13 +74,13 @@ public class TodoCommandServiceImpl implements TodoCommandService {
     }
 
     @Override
-    public void createTodoByRoutine(Member member, Routine routine, RoutineSchedule schedule) {
+    public void createTodoByRoutine(Member member, Routine routine) {
         switch (routine.getFrequency()) {
             case DAILY -> createDailyTodo(member, routine);
-            case WEEKLY -> createWeeklyTodo(member, routine, schedule);
-            case BIWEEKLY -> createBiWeeklyTodo(member, routine, schedule);
-            case MONTHLY -> createMonthlyTodo(member, routine, schedule);
-            case YEARLY -> createYearlyTodo(member, routine, schedule);
+            case WEEKLY -> createWeeklyTodo(member, routine);
+            case BIWEEKLY -> createBiWeeklyTodo(member, routine);
+            case MONTHLY -> createMonthlyTodo(member, routine);
+            case YEARLY -> createYearlyTodo(member, routine);
             default -> throw new BusinessException(ErrorCode.UNSUPPORTED_FREQUENCY);
         }
     }
@@ -99,10 +98,10 @@ public class TodoCommandServiceImpl implements TodoCommandService {
     }
 
     // 매주 Todo
-    private void createWeeklyTodo(Member member, Routine routine, RoutineSchedule schedule) {
+    private void createWeeklyTodo(Member member, Routine routine) {
         LocalDate start = routine.getStartDate();
         LocalDate end = routine.getEndDate();
-        Set<Integer> daysOfWeek = parseWeekDays(schedule.getWeekDays()); // 0~6
+        Set<Integer> daysOfWeek = parseWeekDays(routine.getWeekDays()); // 0~6
 
         LocalDate date = start;
         while (!date.isAfter(end)) {
@@ -124,11 +123,11 @@ public class TodoCommandServiceImpl implements TodoCommandService {
     }
 
     // 2주마다 Todo
-    private void createBiWeeklyTodo(Member member, Routine routine, RoutineSchedule schedule) {
+    private void createBiWeeklyTodo(Member member, Routine routine) {
         LocalDate start = routine.getStartDate();
         LocalDate end = routine.getEndDate();
 
-        Set<Integer> targetWeekDays = parseWeekDays(schedule.getWeekDays()); // 0~6 (Sun=0)
+        Set<Integer> targetWeekDays = parseWeekDays(routine.getWeekDays()); // 0~6 (Sun=0)
 
         // 기준 주차 (ISO Week 기준)
         int baseWeekParity = getSundayStartWeek(start) % 2;
@@ -152,7 +151,7 @@ public class TodoCommandServiceImpl implements TodoCommandService {
     }
 
     // 월별 Todo
-    private void createMonthlyTodo(Member member, Routine routine, RoutineSchedule schedule) {
+    private void createMonthlyTodo(Member member, Routine routine) {
         LocalDate start = routine.getStartDate();
         LocalDate end = routine.getEndDate();
 
@@ -161,7 +160,7 @@ public class TodoCommandServiceImpl implements TodoCommandService {
         Set<Integer> monthDays = new HashSet<>();
         while (!date.isAfter(end)) {
             if (date.getMonthValue() != currentMonth) {
-                monthDays = parseMonthDays(schedule.getMonthDays(), date);
+                monthDays = parseMonthDays(routine.getMonthDays(), date);
                 currentMonth = date.getMonthValue();
             }
 
@@ -173,10 +172,10 @@ public class TodoCommandServiceImpl implements TodoCommandService {
     }
 
     // 년별 Todo
-    private void createYearlyTodo(Member member, Routine routine, RoutineSchedule schedule) {
+    private void createYearlyTodo(Member member, Routine routine) {
         LocalDate start = routine.getStartDate();
         LocalDate end = routine.getEndDate();
-        Set<LocalDate> yearDays = parseYearDays(schedule.getDays(), start.getYear(), end.getYear());
+        Set<LocalDate> yearDays = parseYearDays(routine.getDays(), start.getYear(), end.getYear());
 
         for (LocalDate date : yearDays) {
             if (!date.isBefore(start) && !date.isAfter(end)) {

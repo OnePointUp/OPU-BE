@@ -6,7 +6,6 @@ import com.opu.opube.feature.todo.command.application.dto.request.TodoCreateDto;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoStatusUpdateDto;
 import com.opu.opube.feature.todo.command.application.dto.request.TodoUpdateDto;
 import com.opu.opube.feature.todo.command.domain.aggregate.Routine;
-import com.opu.opube.feature.todo.command.domain.aggregate.RoutineSchedule;
 
 public interface TodoCommandService {
     Long createTodo(Long memberId, TodoCreateDto todoCreateDto);
@@ -21,7 +20,7 @@ public interface TodoCommandService {
 
     Long createTodoByOpu(Long memberId, Long opuId, OpuTodoCreateDto opuTodoCreateDto);
 
-    void createTodoByRoutine(Member member, Routine routine, RoutineSchedule routineSchedule);
+    void createTodoByRoutine(Member member, Routine routine);
 
     void clearOpuFromTodos(Long opuId);
     // command methods here

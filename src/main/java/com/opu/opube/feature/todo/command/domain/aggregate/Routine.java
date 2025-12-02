@@ -3,13 +3,16 @@ package com.opu.opube.feature.todo.command.domain.aggregate;
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.todo.command.application.dto.request.RoutineCreateDto;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Entity
 @Table(name = "routine")
@@ -51,6 +54,15 @@ public class Routine {
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
+    @Column(name = "week_days", length = 64)
+    private String weekDays; // "0,1,2,3,4,5,6"
+
+    @Column(name = "month_days", columnDefinition = "TEXT")
+    private String monthDays; // "1,10,31,L"
+
+    @Column(name = "days", columnDefinition = "TEXT")
+    private String days; // "1-10,2-20"
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -68,6 +80,9 @@ public class Routine {
                 .alarmTime(dto.getAlarmTime())
                 .color(dto.getColor())
                 .member(member)
+                .weekDays(dto.getWeekDays())
+                .monthDays(dto.getMonthDays())
+                .days(dto.getYearDays())
                 .build();
     }
 
