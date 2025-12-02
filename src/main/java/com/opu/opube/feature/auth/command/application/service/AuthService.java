@@ -33,6 +33,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -41,6 +42,8 @@ public class AuthService {
 
     private static final int NICKNAME_MIN_LENGTH = 2;
     private static final int NICKNAME_MAX_LENGTH = 20;
+    private static final Pattern PASSWORD_PATTERN =
+            Pattern.compile("^(?=.*[A-Za-z])(?=.*\\d)(?=.*[!@#$%^&*]).{8,}$");
 
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
@@ -656,13 +659,8 @@ public class AuthService {
             throw new BusinessException(ErrorCode.INVALID_PASSWORD, "비밀번호를 입력해주세요.");
         }
 
-        // 8자 이상 + 영문 + 숫자 + 특수문자
-        String regex = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[!@#$%^&*]).{8,}$";
-
-        if (!password.matches(regex)) {
-            throw new BusinessException(
-                    ErrorCode.INVALID_PASSWORD_FORMAT
-            );
+        if (!PASSWORD_PATTERN.matcher(password).matches()) {
+            throw new BusinessException(ErrorCode.INVALID_PASSWORD_FORMAT);
         }
     }
 
