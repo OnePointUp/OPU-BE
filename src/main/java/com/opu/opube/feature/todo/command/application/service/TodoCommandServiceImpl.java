@@ -23,10 +23,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.YearMonth;
 import java.time.temporal.IsoFields;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -328,5 +325,27 @@ public class TodoCommandServiceImpl implements TodoCommandService {
     @Transactional
     public void clearOpuFromTodos(Long opuId) {
         todoRepository.clearOpuFromTodos(opuId);
+    }
+
+    @Override
+    public void updateTodoByRoutine(Long routineId, String title, LocalTime alarmTime) {
+        todoRepository.updateTodoByRoutine(routineId, title, alarmTime);
+    }
+
+    @Override
+    public void deleteUncompletedTodoByRoutine(Long routineId) {
+        todoRepository.findByRoutine_IdAndDeletedAtIsNullAndCompletedFalse(routineId)
+                .forEach(Todo::softDelete);
+    }
+
+    @Override
+    public void deleteTodoByRoutine(Long routineId) {
+        todoRepository.findByRoutine_IdAndDeletedAtIsNull(routineId)
+                .forEach(Todo::softDelete);
+    }
+
+    @Override
+    public void unlinkToRoutine(Long routineId) {
+        todoRepository.unlinkToRoutine(routineId);
     }
 }

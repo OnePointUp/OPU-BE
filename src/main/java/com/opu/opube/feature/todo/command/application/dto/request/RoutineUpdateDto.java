@@ -4,11 +4,14 @@ import com.opu.opube.feature.todo.command.application.dto.validator.RoutineUpdat
 import com.opu.opube.feature.todo.command.domain.aggregate.Frequency;
 import lombok.Getter;
 
+import java.time.LocalTime;
+
 @Getter
 @RoutineUpdateConstraint
 public class RoutineUpdateDto {
     String title;
     String color;
+    LocalTime alarmTime;
     Frequency frequency;
     String weekDays;
     String monthDays;

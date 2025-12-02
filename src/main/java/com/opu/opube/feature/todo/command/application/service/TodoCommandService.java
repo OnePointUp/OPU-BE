@@ -7,6 +7,8 @@ import com.opu.opube.feature.todo.command.application.dto.request.TodoStatusUpda
 import com.opu.opube.feature.todo.command.application.dto.request.TodoUpdateDto;
 import com.opu.opube.feature.todo.command.domain.aggregate.Routine;
 
+import java.time.LocalTime;
+
 public interface TodoCommandService {
     Long createTodo(Long memberId, TodoCreateDto todoCreateDto);
 
@@ -23,5 +25,13 @@ public interface TodoCommandService {
     void createTodoByRoutine(Member member, Routine routine);
 
     void clearOpuFromTodos(Long opuId);
+
+    void updateTodoByRoutine(Long routineId, String title, LocalTime alarmTime);
+
+    void deleteUncompletedTodoByRoutine(Long routineId);
+
+    void deleteTodoByRoutine(Long routineId);
+
+    void unlinkToRoutine(Long routineId);
     // command methods here
 }

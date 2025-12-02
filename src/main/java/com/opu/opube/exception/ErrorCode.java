@@ -54,6 +54,9 @@ public enum ErrorCode {
     OPU_TODO_CANNOT_BE_MODIFIED("04003", "OPU로 생성된 TODO는 수정할 수 없습니다.", HttpStatus.BAD_REQUEST),
     UNSUPPORTED_FREQUENCY("04004", "지원하지 않는 반복 주기 타입입니다.", HttpStatus.BAD_REQUEST),
 
+    ROUTINE_NOT_FOUND("04005", "해당 ROUTINE을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    ROUTINE_FORBIDDEN("04006", "해당 ROUTINE에 접근 권한이 없습니다.", HttpStatus.FORBIDDEN),
+
     ;
 
 

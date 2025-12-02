@@ -2,6 +2,7 @@ package com.opu.opube.feature.todo.command.domain.aggregate;
 
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.todo.command.application.dto.request.RoutineCreateDto;
+import com.opu.opube.feature.todo.command.application.dto.request.RoutineUpdateDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -90,4 +91,33 @@ public class Routine {
     public void activate() { this.active = true; }
     public void deactivate() { this.active = false; }
     public void updateAlarmTime(LocalTime t) { this.alarmTime = t; }
+
+    public void update(RoutineUpdateDto dto) {
+        if (dto.getTitle() != null) this.title = dto.getTitle();
+        if (dto.getColor() != null) this.color = dto.getColor();
+        if (dto.getAlarmTime() != null) this.alarmTime = dto.getAlarmTime();
+
+        boolean isFrequencyChanged = dto.getFrequency() != null
+                && dto.getFrequency() != this.frequency;
+        if (isFrequencyChanged) {
+            // 기존 패턴 초기화
+            this.weekDays = null;
+            this.monthDays = null;
+            this.days = null;
+
+            // frequency 변경 반영
+            this.frequency = dto.getFrequency();
+
+            // DTO 값 입력
+            if (dto.getWeekDays() != null) this.weekDays = dto.getWeekDays();
+            if (dto.getMonthDays() != null) this.monthDays = dto.getMonthDays();
+            if (dto.getDays() != null) this.days = dto.getDays();
+            return;
+        }
+
+        // frequency는 변경되지 않았지만 패턴만 변경하려는 경우 (PATCH)
+        if (dto.getWeekDays() != null) this.weekDays = dto.getWeekDays();
+        if (dto.getMonthDays() != null) this.monthDays = dto.getMonthDays();
+        if (dto.getDays() != null) this.days = dto.getDays();
+    }
 }
