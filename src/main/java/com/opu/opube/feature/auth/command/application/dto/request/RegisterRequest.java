@@ -35,12 +35,6 @@ public class RegisterRequest {
     private String nickname;
 
     @Schema(
-            description = "프로필 이미지 URL (선택)",
-            example = "https://d111.cloudfront.net/profile/abcd.png"
-    )
-    private String profileImageUrl;
-
-    @Schema(
             description = "웹 푸시 알림 동의",
             example = "true"
     )
