@@ -30,4 +30,14 @@ public class MemberCommandServiceImpl implements MemberCommandService {
 
         return MemberProfileResponse.from(member);
     }
+
+    @Override
+    @Transactional
+    public void updateWebPushAgreement(Long memberId, Boolean agreed) {
+
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+        member.updateWebPushAgreed(Boolean.TRUE.equals(agreed));
+    }
 }

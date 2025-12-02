@@ -3,6 +3,7 @@ package com.opu.opube.feature.member.command.application.controller;
 import com.opu.opube.common.dto.ApiResponse;
 import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
 import com.opu.opube.feature.member.command.application.dto.request.UpdateMemberProfileRequest;
+import com.opu.opube.feature.member.command.application.dto.request.WebPushAgreeRequest;
 import com.opu.opube.feature.member.command.application.dto.response.MemberProfileResponse;
 import com.opu.opube.feature.member.command.application.service.MemberCommandService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -61,5 +62,28 @@ public class MemberCommandController {
         Long memberId = principal.getMemberId();
         MemberProfileResponse res = memberCommandService.updateProfile(memberId, req);
         return ResponseEntity.ok(ApiResponse.success(res));
+    }
+
+
+    @Operation(
+            summary = "웹 푸시 허용 여부 수중",
+            description = """
+                    웹 푸시 허용 여부를 수정합니다.
+                    """
+            ,
+            security = @SecurityRequirement(name = "BearerAuth")
+    )
+    @PatchMapping("/webpush-agree")
+    public ApiResponse<Void> updateWebPushAgreement(
+            @AuthenticationPrincipal MemberPrincipal principal,
+            @RequestBody WebPushAgreeRequest req
+    ) {
+
+        memberCommandService.updateWebPushAgreement(
+                principal.getMemberId(),
+                req.getAgreed()
+        );
+
+        return ApiResponse.success(null);
     }
 }

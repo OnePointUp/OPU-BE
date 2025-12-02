@@ -3,6 +3,7 @@ package com.opu.opube.feature.auth.command.application.controller;
 import com.opu.opube.common.dto.ApiResponse;
 import com.opu.opube.exception.BusinessException;
 import com.opu.opube.feature.auth.command.application.dto.request.*;
+import com.opu.opube.feature.auth.command.application.dto.response.EmailVerifyStatusResponse;
 import com.opu.opube.feature.auth.command.application.dto.response.KakaoLoginResponse;
 import com.opu.opube.feature.auth.command.application.dto.response.RegisterResponse;
 import com.opu.opube.feature.auth.command.application.dto.response.TokenResponse;
@@ -433,5 +434,37 @@ public class AuthController {
     ) {
         authService.logout(principal.getMemberId());
         return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @Operation(
+            summary = "이메일 인증 상태 조회",
+            description = """
+                이메일 기반 계정의 이메일 인증 여부를 조회합니다.
+                true = 인증 완료, false = 미인증
+                """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = EmailVerifyStatusResponse.class))
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "가입되지 않은 이메일",
+                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
+            )
+    })
+    @GetMapping("/verify/status")
+    public ResponseEntity<ApiResponse<EmailVerifyStatusResponse>> getEmailVerifyStatus(
+            @RequestParam String email
+    ) {
+        boolean verified = authService.isEmailVerified(email);
+
+        EmailVerifyStatusResponse body = EmailVerifyStatusResponse.builder()
+                .verified(verified)
+                .build();
+
+        return ResponseEntity.ok(ApiResponse.success(body));
     }
 }

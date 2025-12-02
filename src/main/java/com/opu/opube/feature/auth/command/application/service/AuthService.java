@@ -32,11 +32,18 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class AuthService {
+
+    private static final int NICKNAME_MIN_LENGTH = 2;
+    private static final int NICKNAME_MAX_LENGTH = 20;
+    private static final Pattern PASSWORD_PATTERN =
+            Pattern.compile("^(?=.*[A-Za-z])(?=.*\\d)(?=.*[!@#$%^&*]).{8,}$");
 
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
@@ -55,8 +62,30 @@ public class AuthService {
         return "https://" + cloudfrontDomain + ICON_PATH;
     }
 
+    private String generateNicknameTag(String nickname) {
+        for (int i = 0; i < 5; i++) {
+            int num = ThreadLocalRandom.current().nextInt(1000, 10000);
+            String tag = String.valueOf(num);
+            boolean exists = memberRepository.existsByNicknameAndNicknameTag(nickname, tag);
+            if (!exists) {
+                return tag;
+            }
+        }
+        throw new BusinessException(
+                ErrorCode.INTERNAL_SERVER_ERROR,
+                "닉네임 태그 생성에 실패했습니다."
+        );
+    }
+
     @Transactional
     public Long register(RegisterRequest req, String backendBaseUrl) {
+
+        // 비밀번호 규칙 검증 (8자 이상, 영문/숫자/특수문자 포함)
+        validatePasswordRule(req.getPassword());
+        validateNickname(req.getNickname());
+
+        String nicknameTag = generateNicknameTag(req.getNickname());
+        boolean webPushAgreed = Boolean.TRUE.equals(req.getWebPushAgreed());
 
         if (memberRepository.existsByEmail(req.getEmail())) {
             throw new BusinessException(ErrorCode.DUPLICATE_EMAIL, "이미 가입된 이메일이 존재합니다.");
@@ -66,9 +95,11 @@ public class AuthService {
                 .email(req.getEmail())
                 .password(passwordEncoder.encode(req.getPassword()))
                 .nickname(req.getNickname())
+                .nicknameTag(nicknameTag)
                 .authorization(Authorization.MEMBER)
                 .authProvider("local")
                 .emailVerified(false)
+                .webPushAgreed(webPushAgreed)
                 .profileImageUrl(req.getProfileImageUrl())
                 .build();
 
@@ -86,7 +117,6 @@ public class AuthService {
         );
 
         String verifyUrl = backendBaseUrl + "/api/v1/auth/verify?token=" + token;
-
         String html = buildVerificationHtml(saved.getNickname(), verifyUrl, getIconUrl());
 
         // 트랜잭션 커밋 후 메일 발송
@@ -283,7 +313,6 @@ public class AuthService {
             );
         }
 
-        // 토큰에서 memberId, iat 추출
         Long memberId = emailTokenProvider.parseMemberIdFromToken(token);
         Date issuedAt = emailTokenProvider.getIssuedAt(token);
 
@@ -292,7 +321,6 @@ public class AuthService {
                         ErrorCode.MEMBER_NOT_FOUND
                 ));
 
-        // 가장 최근에 발급된 토큰인지 체크
         if (member.getPasswordResetIssuedAt() != null) {
             LocalDateTime tokenIat =
                     issuedAt.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
@@ -304,16 +332,14 @@ public class AuthService {
             }
         }
 
-        // 비밀번호 규칙
         String rawPassword = req.getNewPassword();
-        if (rawPassword == null || rawPassword.length() < 8) {
-            throw new BusinessException(ErrorCode.INVALID_PASSWORD, "비밀번호는 8자 이상이어야 합니다.");
-        }
+        validatePasswordRule(rawPassword);
 
         member.changePassword(passwordEncoder.encode(rawPassword));
         member.updatePasswordResetIssuedAt(LocalDateTime.now());
         refreshTokenService.delete(member.getId());
     }
+
 
     //카카오 로그인
     @Transactional(readOnly = true)
@@ -367,6 +393,11 @@ public class AuthService {
     public TokenResponse kakaoRegister(KakaoRegisterRequest req) {
         String providerId = req.getProviderId();
 
+        validateNickname(req.getNickname());
+
+        String nicknameTag = generateNicknameTag(req.getNickname());
+        boolean webPushAgreed = Boolean.TRUE.equals(req.getWebPushAgreed());
+
         // 이미 가입된 providerId이면 예외
         if (memberRepository.findByAuthProviderAndProviderId("kakao", providerId).isPresent()) {
             throw new BusinessException(ErrorCode.DUPLICATE_PROVIDER_MEMBER, "이미 가입된 카카오 계정입니다.");
@@ -376,10 +407,12 @@ public class AuthService {
                 .email(null)
                 .password(null)
                 .nickname(req.getNickname())
+                .nicknameTag(nicknameTag)
                 .authorization(Authorization.MEMBER)
                 .authProvider("kakao")
                 .providerId(providerId)
-                .emailVerified(true) // 소셜 로그인은 바로 인증된 것으로 처리
+                .emailVerified(true)
+                .webPushAgreed(webPushAgreed)
                 .profileImageUrl(req.getProfileImageUrl())
                 .build();
 
@@ -519,9 +552,7 @@ public class AuthService {
             throw new BusinessException(ErrorCode.INVALID_PASSWORD, "기존 비밀번호가 일치하지 않습니다.");
         }
 
-        if (req.getNewPassword().length() < 8) {
-            throw new BusinessException(ErrorCode.INVALID_PASSWORD, "비밀번호는 8자 이상이어야 합니다.");
-        }
+        validatePasswordRule(req.getNewPassword());
 
         member.changePassword(passwordEncoder.encode(req.getNewPassword()));
         refreshTokenService.delete(memberId);
@@ -621,5 +652,32 @@ public class AuthService {
 </body>
 </html>
 """.formatted(iconUrl, nickname, resetUrl);
+    }
+
+    private void validatePasswordRule(String password) {
+        if (password == null) {
+            throw new BusinessException(ErrorCode.INVALID_PASSWORD, "비밀번호를 입력해주세요.");
+        }
+
+        if (!PASSWORD_PATTERN.matcher(password).matches()) {
+            throw new BusinessException(ErrorCode.INVALID_PASSWORD_FORMAT);
+        }
+    }
+
+    private void validateNickname(String nickname) {
+        if (nickname == null ||
+                nickname.length() < NICKNAME_MIN_LENGTH ||
+                nickname.length() > NICKNAME_MAX_LENGTH) {
+            throw new BusinessException(ErrorCode.INVALID_NICKNAME_LENGTH);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isEmailVerified(String email) {
+        Member member = memberRepository.findByEmail(email)
+                .orElseThrow(() ->
+                        new BusinessException(ErrorCode.MEMBER_NOT_FOUND, "회원 정보를 찾을 수 없습니다."));
+
+        return member.isEmailVerified();
     }
 }
