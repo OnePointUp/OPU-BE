@@ -41,14 +41,13 @@ public class RoutineCommandController {
         routineCommandService.updateRoutine(memberId, dto, routineId);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
-/*
+
     @DeleteMapping("/{routineId}")
     public ResponseEntity<ApiResponse<Void>> deleteRoutine(
             @AuthenticationPrincipal MemberPrincipal principal,
             @PathVariable Long routineId
     ) {
-        Long memberId = principal.getMemberId();
-        routineCommandService.deleteRoutine(memberId, routineId);
+        routineCommandService.deleteRoutine(routineId);
         return ResponseEntity.ok(ApiResponse.success(null));
-    }*/
+    }
 }

@@ -65,4 +65,9 @@ public class RoutineCommandServiceImpl implements RoutineCommandService {
         // 업데이트 된 routine 기준으로 todos 새로 생성
         todoCommandService.createTodoByRoutine(member, routine);
     }
+
+    @Override
+    public void deleteRoutine(Long routineId) {
+        routineRepository.deleteById(routineId);
+    }
 }
