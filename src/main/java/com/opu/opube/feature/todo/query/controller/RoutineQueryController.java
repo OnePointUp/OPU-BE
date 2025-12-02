@@ -1,7 +1,9 @@
 package com.opu.opube.feature.todo.query.controller;
 
+import com.opu.opube.common.dto.ApiResponse;
 import com.opu.opube.common.dto.PageResponse;
 import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
+import com.opu.opube.feature.todo.query.dto.response.RoutineDetailResponseDto;
 import com.opu.opube.feature.todo.query.dto.response.RoutineListResponseDto;
 import com.opu.opube.feature.todo.query.service.RoutineQueryService;
 import lombok.RequiredArgsConstructor;
@@ -25,5 +27,15 @@ public class RoutineQueryController {
         Long memberId = memberPrincipal.getMemberId();
         PageResponse<RoutineListResponseDto> routines = routineQueryService.getRoutineList(memberId, page, size);
         return ResponseEntity.ok(routines);
+    }
+
+    @GetMapping("/{routineId}")
+    public ResponseEntity<ApiResponse<RoutineDetailResponseDto>> getRoutineById(
+            @AuthenticationPrincipal MemberPrincipal memberPrincipal,
+            @PathVariable Long routineId
+    ) {
+        Long memberId = memberPrincipal.getMemberId();
+        RoutineDetailResponseDto routine = routineQueryService.getRoutine(memberId, routineId);
+        return ResponseEntity.ok(ApiResponse.success(routine));
     }
 }

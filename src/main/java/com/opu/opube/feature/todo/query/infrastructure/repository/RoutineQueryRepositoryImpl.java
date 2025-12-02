@@ -1,9 +1,12 @@
 package com.opu.opube.feature.todo.query.infrastructure.repository;
 
 import com.opu.opube.common.dto.PageResponse;
+import com.opu.opube.exception.BusinessException;
+import com.opu.opube.exception.ErrorCode;
 import com.opu.opube.feature.todo.command.domain.aggregate.QRoutine;
+import com.opu.opube.feature.todo.command.domain.aggregate.Routine;
+import com.opu.opube.feature.todo.query.dto.response.RoutineDetailResponseDto;
 import com.opu.opube.feature.todo.query.dto.response.RoutineListResponseDto;
-import com.opu.opube.feature.todo.query.dto.response.TodoResponseDto;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -41,5 +44,22 @@ public class RoutineQueryRepositoryImpl implements RoutineQueryRepository {
                 .collect(Collectors.toList());
 
         return PageResponse.from(content, totalCount, page, size);
+    }
+
+    @Override
+    public RoutineDetailResponseDto getRoutine(Long memberId, Long routineId) {
+        QRoutine routine = QRoutine.routine;
+
+        Routine entity = queryFactory
+                .selectFrom(routine)
+                .where(routine.member.id.eq(memberId)
+                        .and(routine.id.eq(routineId)))
+                .fetchOne();
+
+        if (entity == null) {
+            throw new BusinessException(ErrorCode.ROUTINE_NOT_FOUND);
+        }
+
+        return RoutineDetailResponseDto.fromEntity(entity);
     }
 }
