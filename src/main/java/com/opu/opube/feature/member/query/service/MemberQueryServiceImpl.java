@@ -44,6 +44,7 @@ public class MemberQueryServiceImpl implements MemberQueryService {
 
         return MemberSummaryResponse.builder()
                 .nickname(member.getNickname())
+                .nicknameTag(member.getNicknameTag())
                 .email(member.getEmail())
                 .profileImageUrl(member.getProfileImageUrl())
                 .favoriteOpuCount(opuSummary.getFavoriteOpuCount())

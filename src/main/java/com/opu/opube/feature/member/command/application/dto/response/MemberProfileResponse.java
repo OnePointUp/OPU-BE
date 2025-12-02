@@ -29,6 +29,12 @@ public class MemberProfileResponse {
     private String nickname;
 
     @Schema(
+            description = "닉네임 태그",
+            example = "1234"
+    )
+    private String nicknameTag;
+
+    @Schema(
             description = "회원 소개글 (Bio)",
             example = "꾸준히 성장하는 백엔드 개발자입니다.",
             nullable = true
@@ -46,6 +52,7 @@ public class MemberProfileResponse {
                 .id(member.getId())
                 .email(member.getEmail())
                 .nickname(member.getNickname())
+                .nicknameTag(member.getNicknameTag())
                 .bio(member.getBio())
                 .profileImageUrl(member.getProfileImageUrl())
                 .build();
