@@ -147,6 +147,9 @@ public class Member {
     }
 
     public void updateProfile(String bio, String profileImageUrl) {
+        if (bio != null && bio.length() > 100) {
+            throw new BusinessException(ErrorCode.INVALID_BIO_LENGTH);
+        }
         this.bio = bio;
         this.profileImageUrl = profileImageUrl;
     }
