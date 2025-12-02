@@ -299,9 +299,7 @@ public class TodoCommandServiceImpl implements TodoCommandService {
             throw new BusinessException(ErrorCode.TODO_FORBIDDEN);
         }
 
-        // todo 멱등성 관리
-
-        todoRepository.delete(todo);
+        todo.softDelete();
     }
 
     @Override

@@ -65,6 +65,9 @@ public class Todo {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     public static Todo toEntity(TodoCreateDto todoCreateDto, Member member, Integer sortOrder) {
         return Todo.builder()
                 .title(todoCreateDto.getTitle())
@@ -116,5 +119,10 @@ public class Todo {
 
     public void unlinkRoutine() {
         routine = null;
+    }
+
+    public void softDelete() {
+        if (this.deletedAt != null) return;
+        this.deletedAt = LocalDateTime.now();
     }
 }
