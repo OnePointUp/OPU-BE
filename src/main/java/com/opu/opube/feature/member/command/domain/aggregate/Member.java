@@ -136,4 +136,18 @@ public class Member {
     public boolean isWebPushAgreed() {
         return this.webPushAgreed;
     }
+
+    public void updateNicknameAndTag(String newNickname, String newTag) {
+        if (newNickname != null && !newNickname.isBlank()) {
+            this.nickname = newNickname;
+        }
+        if (newTag != null && !newTag.isBlank()) {
+            this.nicknameTag = newTag;
+        }
+    }
+
+    public void updateProfile(String bio, String profileImageUrl) {
+        this.bio = bio;
+        this.profileImageUrl = profileImageUrl;
+    }
 }
