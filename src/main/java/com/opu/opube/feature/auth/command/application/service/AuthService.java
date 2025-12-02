@@ -678,4 +678,35 @@ public class AuthService {
 
         return member.isEmailVerified();
     }
+
+    public void unlinkSocialIfNeeded(Member member) {
+        String provider = member.getAuthProvider();
+        String providerId = member.getProviderId();
+
+        if (providerId == null) {
+            return;
+        }
+
+        if ("kakao".equalsIgnoreCase(provider)) {
+            unlinkKakao(providerId);
+        }
+    }
+
+    private void unlinkKakao(String providerId) {
+        try {
+            webClient.post()
+                    .uri(kakaoProps.getUnlinkUri())
+                    .header(HttpHeaders.AUTHORIZATION, "KakaoAK " + kakaoProps.getAdminKey())
+                    .body(BodyInserters
+                            .fromFormData("target_id_type", "user_id")
+                            .with("target_id", providerId))
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .block();
+
+            log.info("카카오 계정 unlink 성공. providerId={}", providerId);
+        } catch (Exception e) {
+            log.warn("카카오 계정 unlink 실패. providerId={}", providerId, e);
+        }
+    }
 }
