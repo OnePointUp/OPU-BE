@@ -113,4 +113,8 @@ public class Todo {
     public void updateStatus(TodoStatusUpdateDto dto) {
         this.completed = dto.getCompleted();
     }
+
+    public void unlinkRoutine() {
+        routine = null;
+    }
 }

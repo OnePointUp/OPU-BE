@@ -254,7 +254,11 @@ public class TodoCommandServiceImpl implements TodoCommandService {
         }
 
         todo.patch(dto.getTitle(), dto.getScheduledDate(), dto.getScheduledTime());
+        if (todo.getRoutine() != null) {
+            todo.unlinkRoutine();
+        }
 
+        // todo : todo 수정 정책 반영
     }
 
     @Override
