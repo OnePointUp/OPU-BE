@@ -38,7 +38,7 @@ public enum ErrorCode {
     EMAIL_VERIFY_TOKEN_EXPIRED("01023", "이메일 인증 토큰이 만료되었거나 최신 토큰이 아닙니다.", HttpStatus.UNAUTHORIZED),
     PASSWORD_RESET_TOKEN_EXPIRED("01024", "비밀번호 재설정 토큰이 만료되었거나 최신 토큰이 아닙니다.", HttpStatus.UNAUTHORIZED),
     INVALID_PASSWORD_FORMAT("01025", "비밀번호 형식이 유효하지 않습니다.", HttpStatus.BAD_REQUEST),
-
+    MEMBER_WITHDRAWN("01026", "탈퇴한 회원입니다.", HttpStatus.UNAUTHORIZED),
 
     NOTIFICATION_TYPE_NOT_FOUND("02001", "알림 타입을 찾을 수 없습니다.", HttpStatus.BAD_REQUEST),
     NOTIFICATION_NOT_FOUND("02002", "알림을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
