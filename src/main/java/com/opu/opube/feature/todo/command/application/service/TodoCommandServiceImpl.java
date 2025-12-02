@@ -283,8 +283,6 @@ public class TodoCommandServiceImpl implements TodoCommandService {
             memberOpuEventService.completeEvent(member, todo.getOpu());
         }
 
-        // routine 인 todos 완료 시
-
         todo.updateStatus(dto);
     }
 
