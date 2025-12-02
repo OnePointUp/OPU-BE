@@ -24,11 +24,6 @@ public class KakaoRegisterRequest {
     @NotBlank
     private String nickname;
 
-    @Schema(
-            description = "프로필 이미지 URL (선택)",
-            example = "https://d1234.cloudfront.net/profile/sample.png"
-    )
-    private String profileImageUrl;
 
     @Schema(
             description = "웹 푸시 알림 동의",

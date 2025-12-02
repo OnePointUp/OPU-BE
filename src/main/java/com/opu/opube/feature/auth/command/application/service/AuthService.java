@@ -100,7 +100,6 @@ public class AuthService {
                 .authProvider("local")
                 .emailVerified(false)
                 .webPushAgreed(webPushAgreed)
-                .profileImageUrl(req.getProfileImageUrl())
                 .build();
 
         Member saved = memberRepository.save(m);
@@ -413,7 +412,6 @@ public class AuthService {
                 .providerId(providerId)
                 .emailVerified(true)
                 .webPushAgreed(webPushAgreed)
-                .profileImageUrl(req.getProfileImageUrl())
                 .build();
 
         Member saved = memberRepository.save(newMember);
