@@ -37,7 +37,7 @@ public class TodoCommandController {
     public ResponseEntity<ApiResponse<Long>> createTodoByOpuId(
             @AuthenticationPrincipal MemberPrincipal principal,
             @PathVariable Long opuId,
-            @Valid @RequestParam OpuTodoCreateDto opuTodoCreateDto
+            @Valid @RequestBody OpuTodoCreateDto opuTodoCreateDto
     ) {
         Long memberId = principal.getMemberId();
         Long todoId = todoCommandService.createTodoByOpu(memberId, opuId, opuTodoCreateDto);

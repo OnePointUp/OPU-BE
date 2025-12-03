@@ -87,6 +87,9 @@ public class TodoCommandServiceImpl implements TodoCommandService {
         Todo todo = todoRepository.findById(todoId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.TODO_NOT_FOUND));
 
+        boolean before = todo.isCompleted();      // 기존 상태
+        boolean after  = dto.getCompleted();      // 바꾸려는 상태
+
         if (!todo.isOwnedBy(member)) {
             throw new BusinessException(ErrorCode.TODO_FORBIDDEN);
         }
@@ -96,10 +99,14 @@ public class TodoCommandServiceImpl implements TodoCommandService {
             return;
         }
 
-        // opu 인 todos 완료 시
-        if (todo.getOpu() != null) {
+        // opu 인 todos 미완료 -> 완료
+        if (todo.getOpu() != null && !before && after) {
             memberOpuCounterService.completeTodo(member, todo.getOpu());
             memberOpuEventService.completeEvent(member, todo.getOpu());
+        } else if (before && !after) {
+            // 완료 → 미완료 (롤백)
+            memberOpuCounterService.cancelCompleteTodo(member, todo.getOpu());
+            memberOpuEventService.cancelEvent(member, todo.getOpu());
         }
 
         // routine 인 todos 완료 시
