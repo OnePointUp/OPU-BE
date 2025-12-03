@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -19,17 +21,21 @@ public class MemberOpuEventServiceImpl implements MemberOpuEventService {
 
     @Override
     @Transactional
-    public void createEvent(Member member, Opu opu) {
-        MemberOpuEvent memberOpuEvent = MemberOpuEvent.toEntity(member, opu);
-        memberOpuEventRepository.save(memberOpuEvent);
+    public void completeEvent(Member member, Opu opu) {
+        MemberOpuEvent event = MemberOpuEvent.toEntity(
+                member,
+                opu,
+                LocalDateTime.now()
+        );
+
+        memberOpuEventRepository.save(event);
     }
 
     @Override
     @Transactional
-    public void completeEvent(Member member, Opu opu) {
-        MemberOpuEvent memberOpuEvent = memberOpuEventRepository.findByMemberAndOpu(member, opu)
-                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_OPU_EVENT_NOT_FOUND));
-
-        memberOpuEvent.setCompleted();
+    public void cancelEvent(Member member, Opu opu) {
+        // 가장 최근 수행 이벤트 하나만 삭제
+        memberOpuEventRepository.findTopByMemberAndOpuOrderByCompletedAtDesc(member, opu)
+                .ifPresent(memberOpuEventRepository::delete);
     }
 }

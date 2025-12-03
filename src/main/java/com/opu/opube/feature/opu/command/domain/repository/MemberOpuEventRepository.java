@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface MemberOpuEventRepository extends JpaRepository<MemberOpuEvent, Long> {
 
     Optional<MemberOpuEvent> findByMemberAndOpu(Member member, Opu opu);
+    Optional<MemberOpuEvent> findTopByMemberAndOpuOrderByCompletedAtDesc(Member member, Opu opu);
 }
