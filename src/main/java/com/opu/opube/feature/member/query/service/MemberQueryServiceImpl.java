@@ -50,6 +50,7 @@ public class MemberQueryServiceImpl implements MemberQueryService {
                 .favoriteOpuCount(opuSummary.getFavoriteOpuCount())
                 .myOpuCount(opuSummary.getMyOpuCount())
                 .bio(member.getBio())
+                .authProvider(member.getAuthProvider())
                 .build();
     }
 }
