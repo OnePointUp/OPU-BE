@@ -52,7 +52,6 @@ public class TodoCommandServiceImpl implements TodoCommandService {
         Integer maxOrder = todoRepository.findMaxSortOrderByMemberIdAndDate(memberId, opuTodoCreateDto.getScheduledDate());
         int newOrder = (maxOrder != null ? maxOrder : -1) + 1;
 
-        memberOpuEventService.createEvent(member, opu);
         Todo todo = Todo.toEntity(opu, opuTodoCreateDto, member, newOrder);
         Todo savedTodo = todoRepository.save(todo);
 
