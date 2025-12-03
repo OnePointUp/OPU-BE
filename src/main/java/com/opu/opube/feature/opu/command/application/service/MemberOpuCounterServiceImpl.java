@@ -32,6 +32,14 @@ public class MemberOpuCounterServiceImpl implements MemberOpuCounterService {
                     return memberOpuCounterRepository.save(newCounter);
                 });
 
-        counter.addCount();
+        counter.increaseCount();
+    }
+
+    @Override
+    @Transactional
+    public void cancelCompleteTodo(Member member, Opu opu) {
+        memberOpuCounterRepository
+                .findByMemberAndOpu(member, opu)
+                .ifPresent(MemberOpuCounter::decreaseCount);
     }
 }
