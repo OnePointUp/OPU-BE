@@ -69,6 +69,21 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         member.updateWebPushAgreed(Boolean.TRUE.equals(agreed));
     }
 
+    @Override
+    @Transactional
+    public void deactivateMember(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
+
+        if (member.isDeleted()) {
+            return; // 이미 탈퇴된 경우 멱등 처리
+        }
+
+        //TODO: 탈퇴시 데이터 삭제 로직 추가
+
+
+        member.deactivate();
+    }
 
     private void validateNickname(String nickname) {
         if (nickname == null ||

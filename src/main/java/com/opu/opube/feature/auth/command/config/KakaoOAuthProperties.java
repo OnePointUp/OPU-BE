@@ -16,4 +16,7 @@ public class KakaoOAuthProperties {
     private String redirectUri;
     private String tokenUri;
     private String userInfoUri;
+
+    private String adminKey;
+    private String unlinkUri;
 }

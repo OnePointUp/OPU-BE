@@ -17,6 +17,9 @@ import java.util.Objects;
 @AllArgsConstructor
 @Builder
 public class Member {
+
+    public static final String DEACTIVATED_NICKNAME = "탈퇴한 사용자";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -76,30 +79,32 @@ public class Member {
     private LocalDateTime passwordResetIssuedAt;
 
 
-    public void markDeleted() {
+    // 탈퇴 회원인지 확인
+    public boolean isDeleted() {
+        return deletedAt != null;
+    }
+
+    // 비활성화(탈퇴) 처리
+    public void deactivate() {
+        // 개인정보 최소화
+        this.email = null;
+        this.password = null;
+        this.bio = null;
+        this.profileImageUrl = null;
+        this.webPushAgreed = false;
+
+        // 소셜 재가입 허용을 위해 providerId 제거
+        this.providerId = null;
+
+        // 닉네임은 NOT NULL 이라서 기본값으로 덮어쓰기
+        this.nickname = DEACTIVATED_NICKNAME;
+        this.nicknameTag = null;
+
         this.deletedAt = LocalDateTime.now();
     }
 
     public void updateLastLogin(LocalDateTime at) {
         this.lastLogin = at;
-    }
-
-    public void updateProfile(String nickname, String bio, String profileImageUrl) {
-        if (nickname != null) {
-            if (nickname.isBlank() || nickname.length() < 2 || nickname.length() > 20) {
-                throw new BusinessException(ErrorCode.INVALID_NICKNAME_LENGTH);
-            }
-            this.nickname = nickname;
-        }
-        if (bio != null) {
-            if (bio.length() > 100) {
-                throw new BusinessException(ErrorCode.INVALID_BIO_LENGTH);
-            }
-            this.bio = bio;
-        }
-        if (profileImageUrl != null) {
-            this.profileImageUrl = profileImageUrl;
-        }
     }
 
     public void verifyEmail() {
