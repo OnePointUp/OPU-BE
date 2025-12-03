@@ -17,6 +17,9 @@ import java.util.Objects;
 @AllArgsConstructor
 @Builder
 public class Member {
+
+    public static final String DEACTIVATED_NICKNAME = "탈퇴한 사용자";
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -94,7 +97,7 @@ public class Member {
         this.providerId = null;
 
         // 닉네임은 NOT NULL 이라서 기본값으로 덮어쓰기
-        this.nickname = "탈퇴한 사용자";
+        this.nickname = DEACTIVATED_NICKNAME;
         this.nicknameTag = null;
 
         this.deletedAt = LocalDateTime.now();

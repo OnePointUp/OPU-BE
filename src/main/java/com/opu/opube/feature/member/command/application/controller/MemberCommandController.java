@@ -10,6 +10,7 @@ import com.opu.opube.feature.member.command.application.dto.request.UpdateMember
 import com.opu.opube.feature.member.command.application.dto.request.WebPushAgreeRequest;
 import com.opu.opube.feature.member.command.application.dto.response.MemberProfileResponse;
 import com.opu.opube.feature.member.command.application.service.MemberCommandService;
+import com.opu.opube.feature.member.command.domain.aggregate.AuthProvider;
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.member.query.service.MemberQueryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -144,10 +145,10 @@ public class MemberCommandController {
         }
 
         // local 계정이면 비밀번호 검증
-        if ("local".equalsIgnoreCase(member.getAuthProvider())) {
+        if (AuthProvider.LOCAL.equalsIgnoreCase(member.getAuthProvider())) {
             if (req == null || req.getCurrentPassword() == null || req.getCurrentPassword().isBlank()) {
                 throw new BusinessException(
-                        ErrorCode.INVALID_PASSWORD
+                        ErrorCode.VALIDATION_ERROR
                 );
             }
 

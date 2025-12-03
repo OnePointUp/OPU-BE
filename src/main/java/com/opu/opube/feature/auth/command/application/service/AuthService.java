@@ -11,6 +11,7 @@ import com.opu.opube.feature.auth.command.application.dto.response.KakaoLoginRes
 import com.opu.opube.feature.auth.command.application.dto.response.KakaoTokenResponse;
 import com.opu.opube.feature.auth.command.application.dto.response.KakaoUserInfoResponse;
 import com.opu.opube.feature.auth.command.config.KakaoOAuthProperties;
+import com.opu.opube.feature.member.command.domain.aggregate.AuthProvider;
 import com.opu.opube.feature.member.command.domain.aggregate.Authorization;
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.member.command.domain.repository.MemberRepository;
@@ -687,7 +688,7 @@ public class AuthService {
             return;
         }
 
-        if ("kakao".equalsIgnoreCase(provider)) {
+        if (AuthProvider.KAKAO.equalsIgnoreCase(provider)) {
             unlinkKakao(providerId);
         }
     }
