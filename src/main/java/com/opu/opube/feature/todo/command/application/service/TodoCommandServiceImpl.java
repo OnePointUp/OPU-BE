@@ -103,7 +103,7 @@ public class TodoCommandServiceImpl implements TodoCommandService {
         if (todo.getOpu() != null && !before && after) {
             memberOpuCounterService.completeTodo(member, todo.getOpu());
             memberOpuEventService.completeEvent(member, todo.getOpu());
-        } else if (before && !after) {
+        } else if (todo.getOpu() != null && before && !after) {
             // 완료 → 미완료 (롤백)
             memberOpuCounterService.cancelCompleteTodo(member, todo.getOpu());
             memberOpuEventService.cancelEvent(member, todo.getOpu());
