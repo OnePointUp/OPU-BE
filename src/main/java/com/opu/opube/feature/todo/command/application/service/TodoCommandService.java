@@ -26,13 +26,5 @@ public interface TodoCommandService {
 
     void updateTodoByRoutine(Long routineId, String title, LocalTime alarmTime);
 
-    void deleteUncompletedTodoByRoutine(Long routineId);
-
-    void deleteTodoByRoutine(Long routineId);
-
-    void unlinkToRoutine(Long routineId);
-
-    void deleteTodoByRoutineAfterDate(Long id, LocalDate afterDate);
-
     void updateTodoByRoutineChange(Member member, Routine routine, RoutineUpdateScope scope);
 }

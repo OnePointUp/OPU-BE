@@ -229,26 +229,4 @@ public class TodoCommandServiceImpl implements TodoCommandService {
     public void clearOpuFromTodos(Long opuId) {
         todoRepository.clearOpuFromTodos(opuId);
     }
-
-    @Override
-    public void deleteUncompletedTodoByRoutine(Long routineId) {
-        todoRepository.findByRoutine_IdAndDeletedAtIsNullAndCompletedFalse(routineId)
-                .forEach(Todo::softDelete);
-    }
-
-    @Override
-    public void deleteTodoByRoutine(Long routineId) {
-        todoRepository.findByRoutine_IdAndDeletedAtIsNull(routineId)
-                .forEach(Todo::softDelete);
-    }
-
-    @Override
-    public void unlinkToRoutine(Long routineId) {
-        todoRepository.unlinkToRoutine(routineId);
-    }
-
-    @Override
-    public void deleteTodoByRoutineAfterDate(Long routineId, LocalDate afterDate) {
-        todoRepository.deleteTodoByRoutineIdAfterDate(routineId, afterDate);
-    }
 }
