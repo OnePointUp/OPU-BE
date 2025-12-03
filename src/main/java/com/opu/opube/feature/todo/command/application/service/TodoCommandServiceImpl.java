@@ -8,17 +8,21 @@ import com.opu.opube.feature.opu.command.application.service.MemberOpuCounterSer
 import com.opu.opube.feature.opu.command.application.service.MemberOpuEventService;
 import com.opu.opube.feature.opu.command.domain.aggregate.Opu;
 import com.opu.opube.feature.opu.query.service.OpuQueryService;
-import com.opu.opube.feature.todo.command.application.dto.request.OpuTodoCreateDto;
-import com.opu.opube.feature.todo.command.application.dto.request.TodoCreateDto;
-import com.opu.opube.feature.todo.command.application.dto.request.TodoStatusUpdateDto;
-import com.opu.opube.feature.todo.command.application.dto.request.TodoUpdateDto;
+import com.opu.opube.feature.todo.command.application.dto.request.*;
+import com.opu.opube.feature.todo.command.domain.aggregate.Routine;
 import com.opu.opube.feature.todo.command.domain.aggregate.Todo;
+import com.opu.opube.feature.todo.command.domain.repository.TodoRepository;
+import com.opu.opube.feature.todo.command.domain.service.RoutineDateCalculator;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.opu.opube.feature.todo.command.domain.repository.TodoRepository;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +34,7 @@ public class TodoCommandServiceImpl implements TodoCommandService {
     private final MemberOpuCounterService memberOpuCounterService;
     private final MemberOpuEventService memberOpuEventService;
     private final OpuQueryService opuQueryService;
+    private final RoutineDateCalculator routineDateCalculator;
 
     @Override
     @Transactional
@@ -45,17 +50,114 @@ public class TodoCommandServiceImpl implements TodoCommandService {
     }
 
     @Override
+    @Transactional
     public Long createTodoByOpu(Long memberId, Long opuId, OpuTodoCreateDto opuTodoCreateDto) {
         Member member = memberQueryService.getMember(memberId);
         Opu opu = opuQueryService.getOpu(opuId);
 
-        Integer maxOrder = todoRepository.findMaxSortOrderByMemberIdAndDate(memberId, opuTodoCreateDto.getScheduledDate());
-        int newOrder = (maxOrder != null ? maxOrder : -1) + 1;
+        int newOrder = getOrder(memberId, opuTodoCreateDto.getScheduledDate());
 
         Todo todo = Todo.toEntity(opu, opuTodoCreateDto, member, newOrder);
         Todo savedTodo = todoRepository.save(todo);
 
         return savedTodo.getId();
+    }
+
+    int getOrder(Long memberId,LocalDate date) {
+        Integer maxOrder = todoRepository.findMaxSortOrderByMemberIdAndDate(memberId,date);
+        return (maxOrder != null ? maxOrder : -1) + 1;
+    }
+
+    @Override
+    @Transactional
+    public void createTodoByRoutine(Member member, Routine routine) {
+        Set<LocalDate> dates = routineDateCalculator.getDates(routine);
+        for (LocalDate date : dates) {
+            saveTodo(member, routine, date, routine.getAlarmTime());
+        }
+    }
+
+    @Override
+    public void updateTodoByRoutine(Long routineId, String title, LocalTime alarmTime) {
+        todoRepository.updateTodoByRoutine(routineId, title, alarmTime);
+    }
+
+    // 루틴 변경 시 날짜 diff 기반 업데이트
+    @Override
+    @Transactional
+    public void updateTodoByRoutineChange(Member member, Routine routine, RoutineScope scope) {
+
+        List<Todo> existingTodos =
+                todoRepository.findByRoutine_IdAndDeletedAtIsNull(routine.getId());
+
+        Set<LocalDate> existingDates = existingTodos.stream()
+                .map(Todo::getScheduledDate)
+                .collect(Collectors.toSet());
+
+        Set<LocalDate> newDates = routineDateCalculator.getDates(routine);
+
+        // 삭제 정책 - scope가 all 이면 모두 삭제, scope가 uncompleted면 uncompleted만 삭제 후 나머지는 연결 해제
+        Set<LocalDate> toDelete = existingDates.stream()
+                .filter(d -> !newDates.contains(d))
+                .collect(Collectors.toSet());
+
+        Set<LocalDate> toCreate = newDates.stream()
+                .filter(d -> !existingDates.contains(d))
+                .collect(Collectors.toSet());
+
+        // 삭제 처리 - 정책에 따름
+        deleteOrUnlinkTodos(existingTodos, toDelete, scope);
+
+        // 신규 생성
+        for (LocalDate d : toCreate) {
+            saveTodo(member, routine, d, routine.getAlarmTime());
+        }
+    }
+
+    private final EntityManager em;
+    @Override
+    public void deleteTodoByRoutine(Routine routine, RoutineScope scope) {
+        List<Todo> existingTodos = routine.getTodos();
+
+        Set<LocalDate> existingDates = existingTodos.stream()
+                .map(Todo::getScheduledDate)
+                .collect(Collectors.toSet());
+
+        deleteOrUnlinkTodos(existingTodos, existingDates, scope);
+        em.flush();
+        em.clear();
+    }
+
+    // 중복 삭제/연결 해제 로직 추출
+    private void deleteOrUnlinkTodos(
+            List<Todo> todos,
+            Set<LocalDate> toDelete,
+            RoutineScope scope
+    ) {
+        for (Todo todo : todos) {
+            LocalDate date = todo.getScheduledDate();
+
+            if (!toDelete.contains(date)) continue;
+
+            switch (scope) {
+                case ALL -> todo.softDelete();
+                case UNCOMPLETED_TODO -> {
+                    if (!todo.isCompleted()) {
+                        todo.softDelete();
+                    } else {
+                        todo.unlinkRoutine();
+                    }
+                }
+                default -> throw new BusinessException(ErrorCode.ROUTINE_UPDATE_SCOPE_INVALID);
+            }
+        }
+    }
+
+    private void saveTodo(Member member, Routine routine, LocalDate date, LocalTime time) {
+        int sortOrder = getOrder(member.getId(), date);
+
+        Todo todo = Todo.toEntity(member, routine, date, time, sortOrder);
+        todoRepository.save(todo);
     }
 
     @Override
@@ -69,15 +171,17 @@ public class TodoCommandServiceImpl implements TodoCommandService {
             throw new BusinessException(ErrorCode.TODO_FORBIDDEN);
         }
 
-        // opu 인 경우 수정 불가
-        if (todo.getOpu() != null) {
+        // opu 인 경우 title 수정 불가
+        if (todo.getOpu() != null && dto.getTitle() != null) {
             throw new BusinessException(ErrorCode.OPU_TODO_CANNOT_BE_MODIFIED);
         }
 
-        // todo : routine 인 경우
-
         todo.patch(dto.getTitle(), dto.getScheduledDate(), dto.getScheduledTime());
+        if (todo.getRoutine() != null) {
+            todo.unlinkRoutine();
+        }
 
+        // todo : todo 수정 정책 반영
     }
 
     @Override
@@ -109,8 +213,6 @@ public class TodoCommandServiceImpl implements TodoCommandService {
             memberOpuEventService.cancelEvent(member, todo.getOpu());
         }
 
-        // routine 인 todos 완료 시
-
         todo.updateStatus(dto);
     }
 
@@ -125,9 +227,7 @@ public class TodoCommandServiceImpl implements TodoCommandService {
             throw new BusinessException(ErrorCode.TODO_FORBIDDEN);
         }
 
-        // todo 멱등성 관리
-
-        todoRepository.delete(todo);
+        todo.softDelete();
     }
 
     @Override

@@ -65,6 +65,9 @@ public class Todo {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     public static Todo toEntity(TodoCreateDto todoCreateDto, Member member, Integer sortOrder) {
         return Todo.builder()
                 .title(todoCreateDto.getTitle())
@@ -87,6 +90,18 @@ public class Todo {
                 .build();
     }
 
+    // for routine
+    public static Todo toEntity(Member member, Routine routine, LocalDate date, LocalTime time, Integer sortOrder) {
+        return Todo.builder()
+                .title(routine.getTitle())
+                .scheduledDate(date)
+                .scheduledTime(time)
+                .member(member)
+                .sortOrder(sortOrder)
+                .routine(routine)
+                .build();
+    }
+
     public void patch(String title, LocalDate scheduledDate, LocalTime scheduledTime) {
         if (title != null) this.title = title;
         if (scheduledDate != null) this.scheduledDate = scheduledDate;
@@ -100,5 +115,14 @@ public class Todo {
 
     public void updateStatus(TodoStatusUpdateDto dto) {
         this.completed = dto.getCompleted();
+    }
+
+    public void unlinkRoutine() {
+        routine = null;
+    }
+
+    public void softDelete() {
+        if (this.deletedAt != null) return;
+        this.deletedAt = LocalDateTime.now();
     }
 }

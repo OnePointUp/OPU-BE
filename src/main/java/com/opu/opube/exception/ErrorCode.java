@@ -54,6 +54,12 @@ public enum ErrorCode {
     TODO_NOT_FOUND("04001", "해당 TODO를 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     TODO_FORBIDDEN("04002", "해당 TODO에 접근 권한이 없습니다.", HttpStatus.FORBIDDEN),
     OPU_TODO_CANNOT_BE_MODIFIED("04003", "OPU로 생성된 TODO는 수정할 수 없습니다.", HttpStatus.BAD_REQUEST),
+    UNSUPPORTED_FREQUENCY("04004", "지원하지 않는 반복 주기 타입입니다.", HttpStatus.BAD_REQUEST),
+
+    ROUTINE_NOT_FOUND("04005", "해당 ROUTINE을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
+    ROUTINE_FORBIDDEN("04006", "해당 ROUTINE에 접근 권한이 없습니다.", HttpStatus.FORBIDDEN),
+    ROUTINE_UPDATE_SCOPE_INVALID("04007", "올바르지 않은 ROUTINE 수정 정책입니다.", HttpStatus.BAD_REQUEST),
+
     ;
 
 
