@@ -47,6 +47,12 @@ public class MemberProfileResponse {
     )
     private String profileImageUrl;
 
+    @Schema(
+            description = "auth provider",
+            example = "local"
+    )
+    private String authProvider;
+
     public static MemberProfileResponse from(Member member) {
         return MemberProfileResponse.builder()
                 .id(member.getId())
@@ -55,6 +61,7 @@ public class MemberProfileResponse {
                 .nicknameTag(member.getNicknameTag())
                 .bio(member.getBio())
                 .profileImageUrl(member.getProfileImageUrl())
+                .authProvider(member.getAuthProvider())
                 .build();
     }
 }

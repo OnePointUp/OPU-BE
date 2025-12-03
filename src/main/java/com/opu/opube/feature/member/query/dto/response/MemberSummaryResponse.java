@@ -53,4 +53,10 @@ public class MemberSummaryResponse {
     )
     @Size(max = 100, message = "Bio는 최대 100자까지 입력 가능합니다.")
     private final String bio;
+
+    @Schema(
+            description = "auth provider",
+            example = "local"
+    )
+    private String authProvider;
 }
