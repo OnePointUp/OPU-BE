@@ -706,7 +706,7 @@ public class AuthService {
                     .block();
 
             log.info("카카오 계정 unlink 성공. providerId={}", providerId);
-        } catch (Exception e) {
+        } catch (WebClientException e) {
             log.warn("카카오 계정 unlink 실패. providerId={}", providerId, e);
         }
     }
