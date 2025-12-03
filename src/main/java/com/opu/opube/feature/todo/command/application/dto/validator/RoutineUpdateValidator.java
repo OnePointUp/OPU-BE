@@ -13,8 +13,8 @@ public class RoutineUpdateValidator implements ConstraintValidator<RoutineUpdate
     public boolean isValid(RoutineUpdateDto dto, ConstraintValidatorContext context) {
         if (dto == null) return true;
 
-        // title, color, frequency 셋 중 적어도 하나는 null이 아니어야 함
-        if (dto.getTitle() == null && dto.getColor() == null && dto.getFrequency() == null) {
+        // title, color, frequency, endDate, alarmTime 중 적어도 하나는 null이 아니어야 함
+        if (dto.getTitle() == null && dto.getColor() == null && dto.getFrequency() == null && dto.getEndDate() == null && dto.getAlarmTime() == null) {
             addViolation(context, "title, color, frequency 중 적어도 하나는 지정해야 합니다.", null);
             return false;
         }
