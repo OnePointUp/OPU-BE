@@ -49,7 +49,14 @@ public class MemberOpuCounter {
                 .build();
     }
 
-    public void addCount() {
+    public void increaseCount() {
         totalCompletions += 1;
+    }
+
+    public void decreaseCount() {
+        if (totalCompletions <= 0) {
+            return;
+        }
+        totalCompletions -= 1;
     }
 }

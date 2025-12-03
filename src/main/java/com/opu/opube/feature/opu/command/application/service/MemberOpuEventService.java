@@ -5,7 +5,6 @@ import com.opu.opube.feature.opu.command.domain.aggregate.Opu;
 
 public interface MemberOpuEventService {
     void completeEvent(Member member, Opu opu);
-
-    void createEvent(Member member, Opu opu);
+    void cancelEvent(Member member, Opu opu);
     // command methods here
 }

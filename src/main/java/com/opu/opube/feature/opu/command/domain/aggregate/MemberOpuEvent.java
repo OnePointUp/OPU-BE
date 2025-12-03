@@ -34,10 +34,11 @@ public class MemberOpuEvent {
     @JoinColumn(name = "member_id")
     private Member member;
 
-    public static MemberOpuEvent toEntity(Member member, Opu opu) {
+    public static MemberOpuEvent toEntity(Member member, Opu opu, LocalDateTime completedAt) {
         return MemberOpuEvent.builder()
                 .opu(opu)
                 .member(member)
+                .completedAt(completedAt)
                 .build();
     }
 
