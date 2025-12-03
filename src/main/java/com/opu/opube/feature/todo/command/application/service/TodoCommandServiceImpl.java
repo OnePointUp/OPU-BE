@@ -85,7 +85,7 @@ public class TodoCommandServiceImpl implements TodoCommandService {
     // 루틴 변경 시 날짜 diff 기반 업데이트
     @Override
     @Transactional
-    public void updateTodoByRoutineChange(Member member, Routine routine, RoutineUpdateScope scope) {
+    public void updateTodoByRoutineChange(Member member, Routine routine, RoutineScope scope) {
 
         List<Todo> existingTodos =
                 todoRepository.findByRoutine_IdAndDeletedAtIsNull(routine.getId());

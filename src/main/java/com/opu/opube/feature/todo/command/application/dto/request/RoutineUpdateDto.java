@@ -18,5 +18,5 @@ public class RoutineUpdateDto {
     String weekDays;
     String monthDays;
     String days;
-    RoutineUpdateScope scope;
+    RoutineScope scope;
 }

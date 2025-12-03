@@ -1,8 +1,6 @@
 package com.opu.opube.feature.todo.command.application.dto.validator;
 
-import com.opu.opube.feature.todo.command.application.dto.request.RoutineCreateDto;
 import com.opu.opube.feature.todo.command.application.dto.request.RoutineUpdateDto;
-import com.opu.opube.feature.todo.command.application.dto.request.RoutineUpdateScope;
 import com.opu.opube.feature.todo.command.domain.aggregate.Frequency;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
