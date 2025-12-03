@@ -37,6 +37,7 @@ public class RoutineCommandServiceImpl implements RoutineCommandService {
     }
 
     @Override
+    @Transactional
     public void updateRoutine(Long memberId, RoutineUpdateDto dto, Long routineId) {
         Member member = memberQueryService.getMember(memberId);
         Routine routine = routineRepository.findById(routineId)
@@ -49,24 +50,15 @@ public class RoutineCommandServiceImpl implements RoutineCommandService {
         // routine 업데이트
         routine.update(dto);
 
-        // todos 업데이트 - 반복 수정 x
+        // todos 업데이트
         todoCommandService.updateTodoByRoutine(routine.getId(), dto.getTitle(), dto.getAlarmTime());
 
-        // todos 업데이트 - 반복 수정 o
-        // 기존 todos 삭제 처리
-        switch (dto.getScope()) {
-            case UNCOMPLETED_TODO -> todoCommandService.deleteUncompletedTodoByRoutine(routine.getId());
-            case ALL -> todoCommandService.deleteTodoByRoutine(routine.getId());
-        }
-
-        // 기존 todos 연결 해제
-        todoCommandService.unlinkToRoutine(routine.getId());
-
-        // 업데이트 된 routine 기준으로 todos 새로 생성
-        todoCommandService.createTodoByRoutine(member, routine);
+        // 변경된 루틴 주기 기반으로 Todos diff 반영
+        todoCommandService.updateTodoByRoutineChange(member, routine, dto.getScope());
     }
 
     @Override
+    @Transactional
     public void deleteRoutine(Long routineId) {
         routineRepository.deleteById(routineId);
     }

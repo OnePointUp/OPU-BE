@@ -8,22 +8,19 @@ import com.opu.opube.feature.opu.command.application.service.MemberOpuCounterSer
 import com.opu.opube.feature.opu.command.application.service.MemberOpuEventService;
 import com.opu.opube.feature.opu.command.domain.aggregate.Opu;
 import com.opu.opube.feature.opu.query.service.OpuQueryService;
-import com.opu.opube.feature.todo.command.application.dto.request.OpuTodoCreateDto;
-import com.opu.opube.feature.todo.command.application.dto.request.TodoCreateDto;
-import com.opu.opube.feature.todo.command.application.dto.request.TodoStatusUpdateDto;
-import com.opu.opube.feature.todo.command.application.dto.request.TodoUpdateDto;
+import com.opu.opube.feature.todo.command.application.dto.request.*;
 import com.opu.opube.feature.todo.command.domain.aggregate.Routine;
 import com.opu.opube.feature.todo.command.domain.aggregate.Todo;
 import com.opu.opube.feature.todo.command.domain.repository.TodoRepository;
+import com.opu.opube.feature.todo.command.domain.service.RoutineDateCalculator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.time.YearMonth;
-import java.time.temporal.IsoFields;
-import java.util.*;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,6 +33,7 @@ public class TodoCommandServiceImpl implements TodoCommandService {
     private final MemberOpuCounterService memberOpuCounterService;
     private final MemberOpuEventService memberOpuEventService;
     private final OpuQueryService opuQueryService;
+    private final RoutineDateCalculator routineDateCalculator;
 
     @Override
     @Transactional
@@ -71,160 +69,65 @@ public class TodoCommandServiceImpl implements TodoCommandService {
     }
 
     @Override
+    @Transactional
     public void createTodoByRoutine(Member member, Routine routine) {
-        switch (routine.getFrequency()) {
-            case DAILY -> createDailyTodo(member, routine);
-            case WEEKLY -> createWeeklyTodo(member, routine);
-            case BIWEEKLY -> createBiWeeklyTodo(member, routine);
-            case MONTHLY -> createMonthlyTodo(member, routine);
-            case YEARLY -> createYearlyTodo(member, routine);
-            default -> throw new BusinessException(ErrorCode.UNSUPPORTED_FREQUENCY);
+        Set<LocalDate> dates = routineDateCalculator.getDates(routine);
+        for (LocalDate date : dates) {
+            saveTodo(member, routine, date, routine.getAlarmTime());
         }
     }
 
-    // 매일 Todo
-    private void createDailyTodo(Member member, Routine routine) {
-        LocalDate start = routine.getStartDate();
-        LocalDate end = routine.getEndDate();
-        LocalDate today = start;
-
-        while (!today.isAfter(end)) {
-            saveTodo(member, routine, today, routine.getAlarmTime());
-            today = today.plusDays(1);
-        }
+    @Override
+    public void updateTodoByRoutine(Long routineId, String title, LocalTime alarmTime) {
+        todoRepository.updateTodoByRoutine(routineId, title, alarmTime);
     }
 
-    // 매주 Todo
-    private void createWeeklyTodo(Member member, Routine routine) {
-        LocalDate start = routine.getStartDate();
-        LocalDate end = routine.getEndDate();
-        Set<Integer> daysOfWeek = parseWeekDays(routine.getWeekDays()); // 0~6
+    // 루틴 변경 시 날짜 diff 기반 업데이트
+    @Override
+    @Transactional
+    public void updateTodoByRoutineChange(Member member, Routine routine, RoutineUpdateScope scope) {
 
-        LocalDate date = start;
-        while (!date.isAfter(end)) {
-            if (daysOfWeek.contains(date.getDayOfWeek().getValue() % 7)) { // DayOfWeek 1=월 ... 7=일
-                saveTodo(member, routine, date, routine.getAlarmTime());
-            }
-            date = date.plusDays(1);
-        }
-    }
+        List<Todo> existingTodos =
+                todoRepository.findByRoutine_IdAndDeletedAtIsNull(routine.getId());
 
-    private int getSundayStartWeek(LocalDate date) {
-        // 0 = Sunday, 1 = Monday ... 6 = Saturday
-        int dow = date.getDayOfWeek().getValue() % 7;
-
-        // date - dow = Sunday of this week
-        LocalDate sunday = date.minusDays(dow);
-
-        return sunday.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
-    }
-
-    // 2주마다 Todo
-    private void createBiWeeklyTodo(Member member, Routine routine) {
-        LocalDate start = routine.getStartDate();
-        LocalDate end = routine.getEndDate();
-
-        Set<Integer> targetWeekDays = parseWeekDays(routine.getWeekDays()); // 0~6 (Sun=0)
-
-        // 기준 주차 (ISO Week 기준)
-        int baseWeekParity = getSundayStartWeek(start) % 2;
-
-        LocalDate current = start;
-
-        while (!current.isAfter(end)) {
-
-            int currentWeekParity = getSundayStartWeek(current) % 2;
-            int dow = current.getDayOfWeek().getValue() % 7; // Sunday=0 매핑 유지
-
-            boolean isTargetDay = targetWeekDays.contains(dow);
-            boolean isMatchingBiWeek = (currentWeekParity == baseWeekParity);
-
-            if (isTargetDay && isMatchingBiWeek) {
-                saveTodo(member, routine, current, routine.getAlarmTime());
-            }
-
-            current = current.plusDays(1);
-        }
-    }
-
-    // 월별 Todo
-    private void createMonthlyTodo(Member member, Routine routine) {
-        LocalDate start = routine.getStartDate();
-        LocalDate end = routine.getEndDate();
-
-        LocalDate date = start;
-        int currentMonth = -1;
-        Set<Integer> monthDays = new HashSet<>();
-        while (!date.isAfter(end)) {
-            if (date.getMonthValue() != currentMonth) {
-                monthDays = parseMonthDays(routine.getMonthDays(), date);
-                currentMonth = date.getMonthValue();
-            }
-
-            if (monthDays.contains(date.getDayOfMonth())) {
-                saveTodo(member, routine, date, routine.getAlarmTime());
-            }
-            date = date.plusDays(1);
-        }
-    }
-
-    // 년별 Todo
-    private void createYearlyTodo(Member member, Routine routine) {
-        LocalDate start = routine.getStartDate();
-        LocalDate end = routine.getEndDate();
-        Set<LocalDate> yearDays = parseYearDays(routine.getDays(), start.getYear(), end.getYear());
-
-        for (LocalDate date : yearDays) {
-            if (!date.isBefore(start) && !date.isAfter(end)) {
-                saveTodo(member, routine, date, routine.getAlarmTime());
-            }
-        }
-    }
-
-// --------------------------- Helper Methods ---------------------------
-
-    // weekDays 문자열 -> Set<Integer> 변환
-    private Set<Integer> parseWeekDays(String weekDays) {
-        if (weekDays == null || weekDays.isBlank()) return Collections.emptySet();
-        return Arrays.stream(weekDays.split(","))
-                .map(String::trim)
-                .map(Integer::parseInt)
+        Set<LocalDate> existingDates = existingTodos.stream()
+                .map(Todo::getScheduledDate)
                 .collect(Collectors.toSet());
-    }
 
-    // monthDays 문자열 -> Set<Integer> 변환
-    private Set<Integer> parseMonthDays(String monthDays, LocalDate start) {
-        if (monthDays == null || monthDays.isBlank()) return Collections.emptySet();
-        Set<Integer> result = new HashSet<>();
-        for (String s : monthDays.split(",")) {
-            s = s.trim();
-            if ("L".equalsIgnoreCase(s)) {
-                result.add(start.lengthOfMonth());
-            } else {
-                result.add(Integer.parseInt(s));
-            }
-        }
-        return result;
-    }
+        Set<LocalDate> newDates = routineDateCalculator.getDates(routine);
 
-    // yearDays 문자열 -> Set<LocalDate> 변환
-    private Set<LocalDate> parseYearDays(String days, int startYear, int endYear) {
-        Set<LocalDate> result = new HashSet<>();
-        if (days == null || days.isBlank()) return result;
+        // 삭제 정책 - scope가 all 이면 모두 삭제, scope가 uncompleted면 uncompleted만 삭제 후 나머지는 연결 해제
+        Set<LocalDate> toDelete = existingDates.stream()
+                .filter(d -> !newDates.contains(d))
+                .collect(Collectors.toSet());
 
-        for (String range : days.split(",")) {
-            String[] parts = range.split("-");
-            if (parts.length == 2) {
-                int month = Integer.parseInt(parts[0]);
-                int day = Integer.parseInt(parts[1]);
-                for (int year = startYear; year <= endYear; year++) {
-                    if (day <= YearMonth.of(year, month).lengthOfMonth()) {
-                        result.add(LocalDate.of(year, month, day));
+        Set<LocalDate> toCreate = newDates.stream()
+                .filter(d -> !existingDates.contains(d))
+                .collect(Collectors.toSet());
+
+        // 삭제 처리 - 정책에 따름
+        for (Todo todo : existingTodos) {
+            LocalDate date = todo.getScheduledDate();
+
+            if (!toDelete.contains(date)) continue;  // 삭제 대상 날짜가 아니면 skip
+
+            switch (scope) {
+                case ALL -> todo.softDelete();
+                case UNCOMPLETED_TODO -> {
+                    if (!todo.isCompleted()) {
+                        todo.softDelete();
+                    } else {
+                        todo.unlinkRoutine();
                     }
                 }
+                default -> throw new BusinessException(ErrorCode.ROUTINE_UPDATE_SCOPE_INVALID);
             }
         }
-        return result;
+
+        // 신규 생성
+        for (LocalDate d : toCreate) {
+            saveTodo(member, routine, d, routine.getAlarmTime());
+        }
     }
 
     private void saveTodo(Member member, Routine routine, LocalDate date, LocalTime time) {
@@ -328,11 +231,6 @@ public class TodoCommandServiceImpl implements TodoCommandService {
     }
 
     @Override
-    public void updateTodoByRoutine(Long routineId, String title, LocalTime alarmTime) {
-        todoRepository.updateTodoByRoutine(routineId, title, alarmTime);
-    }
-
-    @Override
     public void deleteUncompletedTodoByRoutine(Long routineId) {
         todoRepository.findByRoutine_IdAndDeletedAtIsNullAndCompletedFalse(routineId)
                 .forEach(Todo::softDelete);
@@ -347,5 +245,10 @@ public class TodoCommandServiceImpl implements TodoCommandService {
     @Override
     public void unlinkToRoutine(Long routineId) {
         todoRepository.unlinkToRoutine(routineId);
+    }
+
+    @Override
+    public void deleteTodoByRoutineAfterDate(Long routineId, LocalDate afterDate) {
+        todoRepository.deleteTodoByRoutineIdAfterDate(routineId, afterDate);
     }
 }

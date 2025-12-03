@@ -7,7 +7,7 @@ import com.opu.opube.feature.todo.command.domain.aggregate.Frequency;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
-public class RoutineUpdateValidator implements ConstraintValidator<RoutineCreateConstraint, RoutineUpdateDto> {
+public class RoutineUpdateValidator implements ConstraintValidator<RoutineUpdateConstraint, RoutineUpdateDto> {
 
     @Override
     public boolean isValid(RoutineUpdateDto dto, ConstraintValidatorContext context) {
@@ -26,6 +26,10 @@ public class RoutineUpdateValidator implements ConstraintValidator<RoutineCreate
         }
 
         Frequency freq = dto.getFrequency();
+
+        if (freq == null) {
+            return true;
+        }
 
         switch (freq) {
             case WEEKLY, BIWEEKLY -> {

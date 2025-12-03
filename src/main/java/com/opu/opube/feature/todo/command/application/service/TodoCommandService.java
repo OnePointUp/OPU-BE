@@ -1,12 +1,10 @@
 package com.opu.opube.feature.todo.command.application.service;
 
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
-import com.opu.opube.feature.todo.command.application.dto.request.OpuTodoCreateDto;
-import com.opu.opube.feature.todo.command.application.dto.request.TodoCreateDto;
-import com.opu.opube.feature.todo.command.application.dto.request.TodoStatusUpdateDto;
-import com.opu.opube.feature.todo.command.application.dto.request.TodoUpdateDto;
+import com.opu.opube.feature.todo.command.application.dto.request.*;
 import com.opu.opube.feature.todo.command.domain.aggregate.Routine;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 
 public interface TodoCommandService {
@@ -33,5 +31,8 @@ public interface TodoCommandService {
     void deleteTodoByRoutine(Long routineId);
 
     void unlinkToRoutine(Long routineId);
-    // command methods here
+
+    void deleteTodoByRoutineAfterDate(Long id, LocalDate afterDate);
+
+    void updateTodoByRoutineChange(Member member, Routine routine, RoutineUpdateScope scope);
 }

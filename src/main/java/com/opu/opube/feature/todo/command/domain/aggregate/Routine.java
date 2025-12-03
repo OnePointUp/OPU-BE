@@ -96,6 +96,7 @@ public class Routine {
         if (dto.getTitle() != null) this.title = dto.getTitle();
         if (dto.getColor() != null) this.color = dto.getColor();
         if (dto.getAlarmTime() != null) this.alarmTime = dto.getAlarmTime();
+        if (dto.getEndDate() != null) this.endDate = dto.getEndDate();
 
         boolean isFrequencyChanged = dto.getFrequency() != null
                 && dto.getFrequency() != this.frequency;

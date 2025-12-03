@@ -35,7 +35,7 @@ public class RoutineCommandController {
     public ResponseEntity<ApiResponse<Void>> updateRoutine(
             @AuthenticationPrincipal MemberPrincipal principal,
             @PathVariable Long routineId,
-            @RequestBody RoutineUpdateDto dto
+            @Valid @RequestBody RoutineUpdateDto dto
     ) {
         Long memberId = principal.getMemberId();
         routineCommandService.updateRoutine(memberId, dto, routineId);

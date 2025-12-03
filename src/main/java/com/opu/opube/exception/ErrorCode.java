@@ -56,6 +56,7 @@ public enum ErrorCode {
 
     ROUTINE_NOT_FOUND("04005", "해당 ROUTINE을 찾을 수 없습니다.", HttpStatus.NOT_FOUND),
     ROUTINE_FORBIDDEN("04006", "해당 ROUTINE에 접근 권한이 없습니다.", HttpStatus.FORBIDDEN),
+    ROUTINE_UPDATE_SCOPE_INVALID("04007", "올바르지 않은 ROUTINE 수정 정책입니다.", HttpStatus.BAD_REQUEST),
 
     ;
 
