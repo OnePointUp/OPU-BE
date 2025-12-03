@@ -5,6 +5,7 @@ import com.opu.opube.exception.ErrorCode;
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.member.query.service.MemberQueryService;
 import com.opu.opube.feature.todo.command.application.dto.request.RoutineCreateDto;
+import com.opu.opube.feature.todo.command.application.dto.request.RoutineScope;
 import com.opu.opube.feature.todo.command.application.dto.request.RoutineUpdateDto;
 import com.opu.opube.feature.todo.command.domain.aggregate.Routine;
 import com.opu.opube.feature.todo.command.domain.repository.RoutineRepository;
@@ -59,7 +60,16 @@ public class RoutineCommandServiceImpl implements RoutineCommandService {
 
     @Override
     @Transactional
-    public void deleteRoutine(Long routineId) {
+    public void deleteRoutine(Long memberId, Long routineId, RoutineScope scope) {
+        Member member = memberQueryService.getMember(memberId);
+        Routine routine = routineRepository.findById(routineId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ROUTINE_NOT_FOUND));
+
+        if (!routine.getMember().getId().equals(member.getId())) {
+            throw new BusinessException(ErrorCode.ROUTINE_FORBIDDEN);
+        }
+
+        todoCommandService.deleteTodoByRoutine(routine, scope);
         routineRepository.deleteById(routineId);
     }
 }

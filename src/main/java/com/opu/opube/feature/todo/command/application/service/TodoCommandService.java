@@ -26,4 +26,6 @@ public interface TodoCommandService {
     void updateTodoByRoutine(Long routineId, String title, LocalTime alarmTime);
 
     void updateTodoByRoutineChange(Member member, Routine routine, RoutineScope scope);
+
+    void deleteTodoByRoutine(Routine routine, RoutineScope scope);
 }

@@ -8,7 +8,7 @@ public interface RoutineCommandService {
 
     void updateRoutine(Long memberId, RoutineUpdateDto dto, Long routineId);
 
-    void deleteRoutine(Long routineId);
+    void deleteRoutine(Long memberId, Long routineId, RoutineScope scope);
 
     // command methods here
 }

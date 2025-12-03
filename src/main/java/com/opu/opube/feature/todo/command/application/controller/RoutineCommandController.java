@@ -7,6 +7,7 @@ import com.opu.opube.feature.todo.command.application.service.RoutineCommandServ
 import com.opu.opube.feature.todo.command.application.service.TodoCommandService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -45,9 +46,11 @@ public class RoutineCommandController {
     @DeleteMapping("/{routineId}")
     public ResponseEntity<ApiResponse<Void>> deleteRoutine(
             @AuthenticationPrincipal MemberPrincipal principal,
-            @PathVariable Long routineId
+            @PathVariable Long routineId,
+            @Valid @NotNull(message = "루틴 삭제 정책은 필수입니다.") @RequestParam RoutineScope scope
     ) {
-        routineCommandService.deleteRoutine(routineId);
+        Long memberId = principal.getMemberId();
+        routineCommandService.deleteRoutine(memberId, routineId, scope);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 }

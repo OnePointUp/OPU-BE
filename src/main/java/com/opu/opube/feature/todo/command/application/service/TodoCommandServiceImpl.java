@@ -106,10 +106,42 @@ public class TodoCommandServiceImpl implements TodoCommandService {
                 .collect(Collectors.toSet());
 
         // 삭제 처리 - 정책에 따름
-        for (Todo todo : existingTodos) {
+        deleteOrUnlinkTodos(existingTodos, existingDates, newDates, scope);
+
+        // 신규 생성
+        for (LocalDate d : toCreate) {
+            saveTodo(member, routine, d, routine.getAlarmTime());
+        }
+    }
+
+    @Override
+    public void deleteTodoByRoutine(Routine routine, RoutineScope scope) {
+        List<Todo> existingTodos = todoRepository.findByRoutine_IdAndDeletedAtIsNull(routine.getId());
+
+        Set<LocalDate> existingDates = existingTodos.stream()
+                .map(Todo::getScheduledDate)
+                .collect(Collectors.toSet());
+
+        Set<LocalDate> currentDates = routineDateCalculator.getDates(routine);
+
+        deleteOrUnlinkTodos(existingTodos, existingDates, currentDates, scope);
+    }
+
+    // 중복 삭제/연결 해제 로직 추출
+    private void deleteOrUnlinkTodos(
+            List<Todo> todos,
+            Set<LocalDate> existingDates,
+            Set<LocalDate> targetDates,
+            RoutineScope scope
+    ) {
+        Set<LocalDate> toDelete = existingDates.stream()
+                .filter(d -> !targetDates.contains(d))
+                .collect(Collectors.toSet());
+
+        for (Todo todo : todos) {
             LocalDate date = todo.getScheduledDate();
 
-            if (!toDelete.contains(date)) continue;  // 삭제 대상 날짜가 아니면 skip
+            if (!toDelete.contains(date)) continue;
 
             switch (scope) {
                 case ALL -> todo.softDelete();
@@ -122,11 +154,6 @@ public class TodoCommandServiceImpl implements TodoCommandService {
                 }
                 default -> throw new BusinessException(ErrorCode.ROUTINE_UPDATE_SCOPE_INVALID);
             }
-        }
-
-        // 신규 생성
-        for (LocalDate d : toCreate) {
-            saveTodo(member, routine, d, routine.getAlarmTime());
         }
     }
 
