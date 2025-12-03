@@ -13,6 +13,7 @@ import com.opu.opube.feature.todo.command.domain.aggregate.Routine;
 import com.opu.opube.feature.todo.command.domain.aggregate.Todo;
 import com.opu.opube.feature.todo.command.domain.repository.TodoRepository;
 import com.opu.opube.feature.todo.command.domain.service.RoutineDateCalculator;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -106,7 +107,7 @@ public class TodoCommandServiceImpl implements TodoCommandService {
                 .collect(Collectors.toSet());
 
         // 삭제 처리 - 정책에 따름
-        deleteOrUnlinkTodos(existingTodos, existingDates, newDates, scope);
+        deleteOrUnlinkTodos(existingTodos, toDelete, scope);
 
         // 신규 생성
         for (LocalDate d : toCreate) {
@@ -114,30 +115,26 @@ public class TodoCommandServiceImpl implements TodoCommandService {
         }
     }
 
+    private final EntityManager em;
     @Override
     public void deleteTodoByRoutine(Routine routine, RoutineScope scope) {
-        List<Todo> existingTodos = todoRepository.findByRoutine_IdAndDeletedAtIsNull(routine.getId());
+        List<Todo> existingTodos = routine.getTodos();
 
         Set<LocalDate> existingDates = existingTodos.stream()
                 .map(Todo::getScheduledDate)
                 .collect(Collectors.toSet());
 
-        Set<LocalDate> currentDates = routineDateCalculator.getDates(routine);
-
-        deleteOrUnlinkTodos(existingTodos, existingDates, currentDates, scope);
+        deleteOrUnlinkTodos(existingTodos, existingDates, scope);
+        em.flush();
+        em.clear();
     }
 
     // 중복 삭제/연결 해제 로직 추출
     private void deleteOrUnlinkTodos(
             List<Todo> todos,
-            Set<LocalDate> existingDates,
-            Set<LocalDate> targetDates,
+            Set<LocalDate> toDelete,
             RoutineScope scope
     ) {
-        Set<LocalDate> toDelete = existingDates.stream()
-                .filter(d -> !targetDates.contains(d))
-                .collect(Collectors.toSet());
-
         for (Todo todo : todos) {
             LocalDate date = todo.getScheduledDate();
 

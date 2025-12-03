@@ -14,6 +14,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 
 @Entity
 @Table(name = "routine")
@@ -71,6 +72,9 @@ public class Routine {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @OneToMany(mappedBy = "routine", cascade = {}, orphanRemoval = false)
+    private List<Todo> todos;
 
     public static Routine toEntity(RoutineCreateDto dto, Member member) {
         return Routine.builder()
