@@ -84,7 +84,7 @@ public class TodoCommandController {
     @ApiErrorResponses(value = {ErrorCode.MEMBER_NOT_FOUND, ErrorCode.TODO_NOT_FOUND,
             ErrorCode.TODO_FORBIDDEN})
     @PatchMapping("/todo/{todoId}/status")
-    public ResponseEntity<ApiResponse<Void>> updateTodo(
+    public ResponseEntity<ApiResponse<Void>> updateTodoStatus(
             @AuthenticationPrincipal MemberPrincipal principal,
             @PathVariable Long todoId,
             @Valid @RequestBody TodoStatusUpdateDto dto
