@@ -4,16 +4,20 @@ import com.opu.opube.common.dto.PageResponse;
 import com.opu.opube.exception.BusinessException;
 import com.opu.opube.exception.ErrorCode;
 import com.opu.opube.feature.opu.command.domain.aggregate.Opu;
+import com.opu.opube.feature.opu.command.domain.aggregate.OpuRandomDrawEvent;
+import com.opu.opube.feature.opu.command.domain.repository.OpuRandomDrawEventRepository;
 import com.opu.opube.feature.opu.query.dto.request.OpuListFilterRequest;
 import com.opu.opube.feature.opu.query.dto.request.OpuRandomSource;
 import com.opu.opube.feature.opu.query.dto.response.BlockedOpuSummaryResponse;
 import com.opu.opube.feature.opu.query.dto.response.OpuCountSummaryResponse;
 import com.opu.opube.feature.opu.query.dto.response.OpuSummaryResponse;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.opu.opube.feature.opu.query.infrastructure.repository.OpuQueryRepository;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -22,6 +26,8 @@ import java.util.Optional;
 public class OpuQueryService {
 
     private final OpuQueryRepository opuQueryRepository;
+    private final OpuRandomDrawEventRepository opuRandomDrawEventRepository;
+    private final EntityManager entityManager;
 
     @Transactional(readOnly = true)
     public OpuCountSummaryResponse getOpuCountSummary(Long memberId) {
@@ -97,6 +103,35 @@ public class OpuQueryService {
                     .pickRandomOpuFromAll(memberId, requiredMinutes, excludeOpuId);
         };
 
+        OpuSummaryResponse picked = optional.orElse(null);
+
+        var memberRef = entityManager.getReference(
+                com.opu.opube.feature.member.command.domain.aggregate.Member.class,
+                memberId
+        );
+
+        com.opu.opube.feature.opu.command.domain.aggregate.Opu opuRef = null;
+        if (picked != null && picked.getId() != null) {
+            opuRef = entityManager.getReference(
+                    com.opu.opube.feature.opu.command.domain.aggregate.Opu.class,
+                    picked.getId()
+            );
+        }
+
+        OpuRandomDrawEvent event = OpuRandomDrawEvent.builder()
+                .member(memberRef)
+                .opu(opuRef)                     // 실패한 뽑기면 null 저장
+                .source(source)
+                .requiredMinutes(requiredMinutes)
+                .drawnAt(LocalDateTime.now())
+                .build();
+
+        opuRandomDrawEventRepository.save(event);
+
+
+
         return optional.orElseThrow(() -> new BusinessException(ErrorCode.OPU_NOT_FOUND));
+
+
     }
 }
