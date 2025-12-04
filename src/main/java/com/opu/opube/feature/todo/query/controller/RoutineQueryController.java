@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/routine")
+@RequestMapping("/api/v1/routines")
 public class RoutineQueryController {
 
     private final RoutineQueryService routineQueryService;

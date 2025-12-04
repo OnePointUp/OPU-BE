@@ -17,7 +17,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/todo")
+@RequestMapping("/api/v1/todos")
 public class TodoQueryController {
 
     private final TodoQueryService todoQueryService;

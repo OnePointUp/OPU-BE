@@ -23,7 +23,7 @@ public class TodoCommandController {
 
     private final TodoCommandService todoCommandService;
 
-    @PostMapping("/todo")
+    @PostMapping("/todos")
     public ResponseEntity<ApiResponse<Long>> createTodo(
             @AuthenticationPrincipal MemberPrincipal principal,
             @Valid @RequestBody TodoCreateDto todoCreateDto
@@ -33,7 +33,7 @@ public class TodoCommandController {
         return ResponseEntity.ok(ApiResponse.success(todoId));
     }
 
-    @PostMapping("/opu/{opuId}/todo")
+    @PostMapping("/opus/{opuId}/todos")
     public ResponseEntity<ApiResponse<Long>> createTodoByOpuId(
             @AuthenticationPrincipal MemberPrincipal principal,
             @PathVariable Long opuId,
@@ -44,7 +44,7 @@ public class TodoCommandController {
         return ResponseEntity.ok(ApiResponse.success(todoId));
     }
 
-    @PatchMapping("/todo/{todoId}")
+    @PatchMapping("/todos/{todoId}")
     public ResponseEntity<ApiResponse<Void>> updateTodo(
             @AuthenticationPrincipal MemberPrincipal principal,
             @PathVariable Long todoId,
@@ -55,7 +55,7 @@ public class TodoCommandController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    @PatchMapping("/todo/{todoId}/status")
+    @PatchMapping("/todos/{todoId}/status")
     public ResponseEntity<ApiResponse<Void>> updateTodo(
             @AuthenticationPrincipal MemberPrincipal principal,
             @PathVariable Long todoId,
@@ -66,7 +66,7 @@ public class TodoCommandController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    @PatchMapping("/todo/{todoId}/order")
+    @PatchMapping("/todos/{todoId}/order")
     public ResponseEntity<ApiResponse<Void>> reorderTodo(
             @AuthenticationPrincipal MemberPrincipal principal,
             @PathVariable Long todoId,
@@ -77,7 +77,7 @@ public class TodoCommandController {
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
-    @DeleteMapping("/todo/{todoId}")
+    @DeleteMapping("/todos/{todoId}")
     public ResponseEntity<ApiResponse<Void>> deleteTodo(
             @AuthenticationPrincipal MemberPrincipal principal,
             @PathVariable Long todoId
