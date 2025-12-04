@@ -4,6 +4,9 @@ import com.opu.opube.common.dto.PageResponse;
 import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
 import com.opu.opube.feature.todo.query.dto.response.TodoResponseDto;
 import com.opu.opube.feature.todo.query.dto.response.TodoStatisticsDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -17,11 +20,16 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "Todo Query API", description = "todo 조회 API")
 @RequestMapping("/api/v1/todos")
 public class TodoQueryController {
 
     private final TodoQueryService todoQueryService;
 
+    @Operation(
+            summary = "일일 todo 조회",
+            description = "사용자가 오늘 해야할 todo를 조회합니다."
+    )
     @GetMapping
     public ResponseEntity<PageResponse<TodoResponseDto>> getTodoByDate(
             @AuthenticationPrincipal MemberPrincipal memberPrincipal,
@@ -38,6 +46,10 @@ public class TodoQueryController {
      * 주 단위 Todo 통계 조회
      * @param startDate 조회 시작일 (일요일)
      */
+    @Operation(
+            summary = "주간 todo 조회",
+            description = "하루에 총 todo, 그 중 완료한 todo를 일주일 단위로 조회합니다."
+    )
     @GetMapping("/weekly")
     public ResponseEntity<List<TodoStatisticsDto>> getWeeklyStatistics(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -55,6 +67,10 @@ public class TodoQueryController {
      * @param year 조회 연도
      * @param month 조회 월 (1~12)
      */
+    @Operation(
+            summary = "월간 todo 조회",
+            description = "하루에 총 todo, 그 중 완료한 todo를 월 단위로 조회합니다."
+    )
     @GetMapping("/monthly")
     public ResponseEntity<List<TodoStatisticsDto>> getMonthlyStatistics(
             @RequestParam int year,
