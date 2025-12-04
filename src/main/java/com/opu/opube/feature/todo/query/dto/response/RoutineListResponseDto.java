@@ -15,6 +15,7 @@ public class RoutineListResponseDto {
     LocalDate endDate;
     String title;
     Frequency frequency;
+    boolean active;
 
     public static RoutineListResponseDto fromEntity(Routine routine) {
         return RoutineListResponseDto.builder()
@@ -23,6 +24,7 @@ public class RoutineListResponseDto {
                 .endDate(routine.getEndDate())
                 .title(routine.getTitle())
                 .frequency(routine.getFrequency())
+                .active(routine.isActive())
                 .build();
     }
 }
