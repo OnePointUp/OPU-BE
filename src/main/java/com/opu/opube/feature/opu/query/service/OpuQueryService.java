@@ -3,6 +3,7 @@ package com.opu.opube.feature.opu.query.service;
 import com.opu.opube.common.dto.PageResponse;
 import com.opu.opube.exception.BusinessException;
 import com.opu.opube.exception.ErrorCode;
+import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.opu.command.domain.aggregate.Opu;
 import com.opu.opube.feature.opu.command.domain.aggregate.OpuRandomDrawEvent;
 import com.opu.opube.feature.opu.command.domain.repository.OpuRandomDrawEventRepository;
@@ -105,17 +106,10 @@ public class OpuQueryService {
 
         OpuSummaryResponse drawn = optional.orElse(null);
 
-        var memberRef = entityManager.getReference(
-                com.opu.opube.feature.member.command.domain.aggregate.Member.class,
-                memberId
-        );
-
-        com.opu.opube.feature.opu.command.domain.aggregate.Opu opuRef = null;
+        var memberRef = entityManager.getReference(Member.class, memberId);
+        Opu opuRef = null;
         if (drawn != null && drawn.getId() != null) {
-            opuRef = entityManager.getReference(
-                    com.opu.opube.feature.opu.command.domain.aggregate.Opu.class,
-                    drawn.getId()
-            );
+            opuRef = entityManager.getReference(Opu.class, drawn.getId());
         }
 
         OpuRandomDrawEvent event = OpuRandomDrawEvent.builder()

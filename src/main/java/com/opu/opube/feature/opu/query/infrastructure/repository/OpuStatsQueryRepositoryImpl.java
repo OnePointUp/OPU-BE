@@ -110,16 +110,7 @@ public class OpuStatsQueryRepositoryImpl implements OpuStatsQueryRepository {
                 .limit(limit)
                 .fetch();
 
-        return projections.stream()
-                .map(p -> new OpuMonthlyStatsResponse.TopCompletedOpu(
-                        p.getOpuId(),
-                        p.getTitle(),
-                        p.getEmoji(),
-                        p.getCategoryName(),
-                        p.getRequiredMinutes(),
-                        p.getCompletedCount()
-                ))
-                .toList();
+        return List.copyOf(projections);
     }
 
 
