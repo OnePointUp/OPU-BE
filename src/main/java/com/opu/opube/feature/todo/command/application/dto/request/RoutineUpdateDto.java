@@ -16,7 +16,7 @@ public class RoutineUpdateDto {
     String title;
     @Schema(description = "색상 - HEX 색상", example = "#000000", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     String color;
-    @Schema(description = "예정 시간", example = "24:00", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    @Schema(description = "예정 시간", example = "23:59", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     LocalTime alarmTime;
     @Schema(description = "종료 날짜", example = "2026-12-12", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     LocalDate endDate;
