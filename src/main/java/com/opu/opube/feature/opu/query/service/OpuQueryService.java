@@ -90,7 +90,7 @@ public class OpuQueryService {
     }
 
 
-    public OpuSummaryResponse pickRandomOpu(
+    public OpuSummaryResponse drawRandomOpu(
             Long memberId,
             OpuRandomSource source,
             Integer requiredMinutes,
@@ -98,12 +98,12 @@ public class OpuQueryService {
     ) {
         Optional<OpuSummaryResponse> optional = switch (source) {
             case FAVORITE -> opuQueryRepository
-                    .pickRandomOpuFromFavorite(memberId, requiredMinutes, excludeOpuId);
+                    .drawRandomOpuFromFavorite(memberId, requiredMinutes, excludeOpuId);
             case ALL -> opuQueryRepository
-                    .pickRandomOpuFromAll(memberId, requiredMinutes, excludeOpuId);
+                    .drawRandomOpuFromAll(memberId, requiredMinutes, excludeOpuId);
         };
 
-        OpuSummaryResponse picked = optional.orElse(null);
+        OpuSummaryResponse drawn = optional.orElse(null);
 
         var memberRef = entityManager.getReference(
                 com.opu.opube.feature.member.command.domain.aggregate.Member.class,
@@ -111,10 +111,10 @@ public class OpuQueryService {
         );
 
         com.opu.opube.feature.opu.command.domain.aggregate.Opu opuRef = null;
-        if (picked != null && picked.getId() != null) {
+        if (drawn != null && drawn.getId() != null) {
             opuRef = entityManager.getReference(
                     com.opu.opube.feature.opu.command.domain.aggregate.Opu.class,
-                    picked.getId()
+                    drawn.getId()
             );
         }
 

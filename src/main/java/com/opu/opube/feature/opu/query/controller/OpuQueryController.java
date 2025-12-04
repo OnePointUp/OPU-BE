@@ -216,7 +216,7 @@ public class OpuQueryController {
             )
     })
     @GetMapping("/random")
-    public ResponseEntity<ApiResponse<OpuSummaryResponse>> pickRandomOpu(
+    public ResponseEntity<ApiResponse<OpuSummaryResponse>> drawRandomOpu(
             @AuthenticationPrincipal MemberPrincipal principal,
             @Parameter(
                     description = """
@@ -244,7 +244,7 @@ public class OpuQueryController {
         Long memberId = principal.getMemberId();
 
         OpuSummaryResponse result =
-                opuQueryService.pickRandomOpu(memberId, source, requiredMinutes, excludeOpuId);
+                opuQueryService.drawRandomOpu(memberId, source, requiredMinutes, excludeOpuId);
 
         return ResponseEntity.ok(ApiResponse.success(result));
     }
