@@ -33,7 +33,7 @@ public class OpuRandomDrawEvent {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "source", nullable = false, length = 16)
-    private OpuRandomSource source;   // 이미 enum 있으니까 그거 재활용해도 됨
+    private OpuRandomSource source;
 
     @Column(name = "required_minutes")
     private Integer requiredMinutes;
