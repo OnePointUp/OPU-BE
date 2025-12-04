@@ -26,7 +26,7 @@ public class RoutineCreateDto {
     @Schema(description = "종료 날짜", example = "2026-12-12", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull()
     LocalDate endDate;
-    @Schema(description = "예정 시간", example = "24:00", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    @Schema(description = "예정 시간", example = "23:59", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     LocalTime alarmTime;
     @Schema(description = "frequency가 WEEKLY 일 시 필수", example = "0,1,2,3,4,5,6", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     String weekDays;
