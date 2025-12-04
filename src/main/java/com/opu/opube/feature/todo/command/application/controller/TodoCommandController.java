@@ -33,7 +33,7 @@ public class TodoCommandController {
         return ResponseEntity.ok(ApiResponse.success(todoId));
     }
 
-    @PostMapping("/opus/{opuId}/todo")
+    @PostMapping("/opus/{opuId}/todos")
     public ResponseEntity<ApiResponse<Long>> createTodoByOpuId(
             @AuthenticationPrincipal MemberPrincipal principal,
             @PathVariable Long opuId,
