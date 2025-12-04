@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/routine")
+@RequestMapping("/api/v1/routines")
 @Tag(name = "Routine Command API", description = "routine 등록/수정/삭제 API")
 @Validated
 public class RoutineCommandController {

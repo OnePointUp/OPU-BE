@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/routine")
+@RequestMapping("/api/v1/routines")
 @Tag(name = "Routine Query API", description = "routine 조회 API")
 public class RoutineQueryController {
 

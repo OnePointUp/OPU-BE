@@ -34,7 +34,7 @@ public class TodoCommandController {
             description = "todo를 생성합니다."
     )
     @ApiErrorResponses(value = {ErrorCode.MEMBER_NOT_FOUND})
-    @PostMapping("/todo")
+    @PostMapping("/todos")
     public ResponseEntity<ApiResponse<Long>> createTodo(
             @AuthenticationPrincipal MemberPrincipal principal,
             @Valid @RequestBody TodoCreateDto todoCreateDto
@@ -49,7 +49,7 @@ public class TodoCommandController {
             description = "opu 로부터 todo를 생성합니다."
     )
     @ApiErrorResponses(value = {ErrorCode.MEMBER_NOT_FOUND, ErrorCode.OPU_NOT_FOUND})
-    @PostMapping("/opu/{opuId}/todo")
+    @PostMapping("/opus/{opuId}/todos")
     public ResponseEntity<ApiResponse<Long>> createTodoByOpuId(
             @AuthenticationPrincipal MemberPrincipal principal,
             @PathVariable Long opuId,
@@ -66,7 +66,7 @@ public class TodoCommandController {
     )
     @ApiErrorResponses(value = {ErrorCode.MEMBER_NOT_FOUND, ErrorCode.TODO_NOT_FOUND,
             ErrorCode.TODO_FORBIDDEN, ErrorCode.OPU_TODO_CANNOT_BE_MODIFIED})
-    @PatchMapping("/todo/{todoId}")
+    @PatchMapping("/todos/{todoId}")
     public ResponseEntity<ApiResponse<Void>> updateTodo(
             @AuthenticationPrincipal MemberPrincipal principal,
             @PathVariable Long todoId,
@@ -83,8 +83,8 @@ public class TodoCommandController {
     )
     @ApiErrorResponses(value = {ErrorCode.MEMBER_NOT_FOUND, ErrorCode.TODO_NOT_FOUND,
             ErrorCode.TODO_FORBIDDEN})
-    @PatchMapping("/todo/{todoId}/status")
-    public ResponseEntity<ApiResponse<Void>> updateTodoStatus(
+    @PatchMapping("/todos/{todoId}/status")
+    public ResponseEntity<ApiResponse<Void>> updateTodo(
             @AuthenticationPrincipal MemberPrincipal principal,
             @PathVariable Long todoId,
             @Valid @RequestBody TodoStatusUpdateDto dto
@@ -100,7 +100,7 @@ public class TodoCommandController {
     )
     @ApiErrorResponses(value = {ErrorCode.MEMBER_NOT_FOUND, ErrorCode.TODO_NOT_FOUND,
             ErrorCode.TODO_FORBIDDEN})
-    @PatchMapping("/todo/{todoId}/order")
+    @PatchMapping("/todos/{todoId}/order")
     public ResponseEntity<ApiResponse<Void>> reorderTodo(
             @AuthenticationPrincipal MemberPrincipal principal,
             @PathVariable Long todoId,
@@ -117,7 +117,7 @@ public class TodoCommandController {
     )
     @ApiErrorResponses(value = {ErrorCode.MEMBER_NOT_FOUND, ErrorCode.TODO_NOT_FOUND,
             ErrorCode.TODO_FORBIDDEN})
-    @DeleteMapping("/todo/{todoId}")
+    @DeleteMapping("/todos/{todoId}")
     public ResponseEntity<ApiResponse<Void>> deleteTodo(
             @AuthenticationPrincipal MemberPrincipal principal,
             @PathVariable Long todoId

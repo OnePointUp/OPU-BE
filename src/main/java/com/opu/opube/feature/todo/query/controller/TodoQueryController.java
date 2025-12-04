@@ -20,8 +20,8 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/todo")
 @Tag(name = "Todo Query API", description = "todo 조회 API")
+@RequestMapping("/api/v1/todos")
 public class TodoQueryController {
 
     private final TodoQueryService todoQueryService;
