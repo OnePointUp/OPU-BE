@@ -13,6 +13,6 @@ public class TodoUpdateDto {
     String title;
     @Schema(description = "예정 날짜", example = "2025-12-12", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     LocalDate scheduledDate;
-    @Schema(description = "예정 시간", example = "24:00", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    @Schema(description = "예정 시간", example = "23:59", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     LocalTime scheduledTime;
 }
