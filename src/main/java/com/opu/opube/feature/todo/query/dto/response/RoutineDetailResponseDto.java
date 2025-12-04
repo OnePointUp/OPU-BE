@@ -18,6 +18,7 @@ public class RoutineDetailResponseDto {
     String weekDays;
     String monthDays;
     String days;
+    String color;
 
     public static RoutineDetailResponseDto fromEntity(Routine routine) {
         return RoutineDetailResponseDto.builder()
@@ -29,6 +30,7 @@ public class RoutineDetailResponseDto {
                 .weekDays(routine.getWeekDays())
                 .monthDays(routine.getMonthDays())
                 .days(routine.getDays())
+                .color(routine.getColor())
                 .build();
     }
 }
