@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 @Builder
 @Getter
@@ -19,6 +20,8 @@ public class RoutineDetailResponseDto {
     String monthDays;
     String days;
     String color;
+    LocalTime alarmTime;
+    boolean active;
 
     public static RoutineDetailResponseDto fromEntity(Routine routine) {
         return RoutineDetailResponseDto.builder()
@@ -31,6 +34,8 @@ public class RoutineDetailResponseDto {
                 .monthDays(routine.getMonthDays())
                 .days(routine.getDays())
                 .color(routine.getColor())
+                .alarmTime(routine.getAlarmTime())
+                .active(routine.isActive())
                 .build();
     }
 }
