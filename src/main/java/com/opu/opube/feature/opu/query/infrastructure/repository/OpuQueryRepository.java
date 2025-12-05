@@ -45,13 +45,13 @@ public interface OpuQueryRepository {
             int size
     );
 
-    Optional<OpuSummaryResponse> pickRandomOpuFromAll(
+    Optional<OpuSummaryResponse> drawRandomOpuFromAll(
             Long loginMemberId,
             Integer requiredMinutes,
             Long excludeOpuId
     );
 
-    Optional<OpuSummaryResponse> pickRandomOpuFromFavorite(
+    Optional<OpuSummaryResponse> drawRandomOpuFromFavorite(
             Long loginMemberId,
             Integer requiredMinutes,
             Long excludeOpuId
