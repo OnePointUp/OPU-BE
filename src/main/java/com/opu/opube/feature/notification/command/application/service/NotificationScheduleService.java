@@ -147,11 +147,10 @@ public class NotificationScheduleService {
 
         NotificationType routineType = notificationTypeRepository
                 .findByCode(NotificationTypeCode.ROUTINE.getCode())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOTIFICATION_TYPE_NOT_FOUND));
-
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOTIFICATION_TYPE_NOT_FOUND, "ROUTINE 알림 타입을 찾을 수 없습니다."));
         NotificationType allType = notificationTypeRepository
                 .findByCode(NotificationTypeCode.ALL.getCode())
-                .orElseThrow(() -> new BusinessException(ErrorCode.NOTIFICATION_TYPE_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOTIFICATION_TYPE_NOT_FOUND, "ALL 알림 타입을 찾을 수 없습니다."));
 
         List<Long> memberIds = scheduleQueryRepository.findTargetMemberIdsForType(
                 routineType.getId(),
