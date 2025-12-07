@@ -41,7 +41,6 @@ public class NotificationScheduleService {
         }
 
         processTodoReminders(now);
-        processWeeklyRoutineReminder();
     }
 
     private void processTypeIfTimeMatched(NotificationTypeCode typeCode, LocalTime now) {
