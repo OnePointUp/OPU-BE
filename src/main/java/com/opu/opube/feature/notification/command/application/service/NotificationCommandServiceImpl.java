@@ -34,7 +34,7 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
             NotificationTypeCode typeCode,
             String title,
             String message,
-            Integer linkedContentId
+            Long linkedContentId
     ) {
         String code = typeCode.getCode();
         NotificationType type = notificationTypeRepository.findByCode(code)

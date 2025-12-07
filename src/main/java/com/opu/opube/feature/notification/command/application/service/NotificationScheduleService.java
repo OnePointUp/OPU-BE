@@ -12,6 +12,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -38,6 +39,8 @@ public class NotificationScheduleService {
         )) {
             processTypeIfTimeMatched(code, now);
         }
+
+        processTodoReminders(now);
     }
 
     private void processTypeIfTimeMatched(NotificationTypeCode typeCode, LocalTime now) {
@@ -95,5 +98,45 @@ public class NotificationScheduleService {
             case RANDOM_PICK -> "OPU를 뽑고 실천하며 오늘도 한 발짝 나아가보아요.";
             default -> "";
         };
+    }
+
+    private void processTodoReminders(LocalTime now) {
+        NotificationType todoType = notificationTypeRepository
+                .findByCode(NotificationTypeCode.TODO.getCode())
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.NOTIFICATION_TYPE_NOT_FOUND,
+                        "TODO 알림 타입을 찾을 수 없습니다."
+                ));
+
+        NotificationType allType = notificationTypeRepository
+                .findByCode(NotificationTypeCode.ALL.getCode())
+                .orElseThrow(() -> new BusinessException(
+                        ErrorCode.NOTIFICATION_TYPE_NOT_FOUND,
+                        "ALL 알림 타입을 찾을 수 없습니다."
+                ));
+
+        LocalDate today = LocalDate.now();
+        LocalTime targetTime = now.plusMinutes(10);
+
+        var todos = scheduleQueryRepository.findTodosForReminder(
+                today,
+                targetTime,
+                todoType.getId(),
+                todoType.getDefaultEnabled(),
+                allType.getId(),
+                allType.getDefaultEnabled()
+        );
+
+        if (todos.isEmpty()) return;
+
+        for (var todo : todos) {
+            notificationCommandService.sendNotification(
+                    todo.getMemberId(),
+                    NotificationTypeCode.TODO,
+                    todo.getTitle(),
+                    null,
+                    todo.getTodoId()
+            );
+        }
     }
 }

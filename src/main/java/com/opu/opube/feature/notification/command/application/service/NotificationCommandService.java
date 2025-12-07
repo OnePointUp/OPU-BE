@@ -10,7 +10,7 @@ public interface NotificationCommandService {
             NotificationTypeCode typeCode,
             String title,
             String message,
-            Integer linkedContentId
+            Long linkedContentId
     );
 
     void markAsRead(Long memberId, Long notificationId);
