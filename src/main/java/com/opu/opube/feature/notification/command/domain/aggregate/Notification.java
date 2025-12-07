@@ -32,7 +32,7 @@ public class Notification {
     private Boolean isRead = false;
 
     @Column(name = "linked_content_id")
-    private Integer linkedContentId;
+    private Long linkedContentId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
