@@ -41,6 +41,7 @@ public class NotificationScheduleService {
         }
 
         processTodoReminders(now);
+        processWeeklyRoutineReminder();
     }
 
     private void processTypeIfTimeMatched(NotificationTypeCode typeCode, LocalTime now) {
@@ -136,6 +137,41 @@ public class NotificationScheduleService {
                     todo.getTitle(),
                     null,
                     todo.getTodoId()
+            );
+        }
+    }
+
+    @Scheduled(cron = "0 0 18 ? * SUN")
+    @Transactional
+    public void processWeeklyRoutineReminder() {
+        log.info("[Scheduler] WEEKLY ROUTINE REMINDER triggered");
+
+        NotificationType routineType = notificationTypeRepository
+                .findByCode(NotificationTypeCode.ROUTINE.getCode())
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOTIFICATION_TYPE_NOT_FOUND));
+
+        NotificationType allType = notificationTypeRepository
+                .findByCode(NotificationTypeCode.ALL.getCode())
+                .orElseThrow(() -> new BusinessException(ErrorCode.NOTIFICATION_TYPE_NOT_FOUND));
+
+        List<Long> memberIds = scheduleQueryRepository.findTargetMemberIdsForType(
+                routineType.getId(),
+                routineType.getDefaultEnabled(),
+                allType.getId(),
+                allType.getDefaultEnabled()
+        );
+
+        if (memberIds.isEmpty()) return;
+
+        log.info("[Scheduler] WEEKLY ROUTINE members = {}", memberIds.size());
+
+        for (Long memberId : memberIds) {
+            notificationCommandService.sendNotification(
+                    memberId,
+                    NotificationTypeCode.ROUTINE,
+                    "다음주 루틴을 확인해보세요",
+                    null,
+                    null
             );
         }
     }
