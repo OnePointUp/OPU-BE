@@ -15,4 +15,6 @@ public interface WebPushSubscriptionRepository extends JpaRepository<WebPushSubs
     void deleteByMemberIdAndEndpoint(Long memberId, String endpoint);
 
     boolean existsByMemberId(Long memberId);
+
+    void deleteByMemberId(Long memberId);
 }
