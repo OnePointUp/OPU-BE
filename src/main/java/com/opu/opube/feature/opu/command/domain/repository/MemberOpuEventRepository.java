@@ -11,4 +11,6 @@ public interface MemberOpuEventRepository extends JpaRepository<MemberOpuEvent, 
 
     Optional<MemberOpuEvent> findByMemberAndOpu(Member member, Opu opu);
     Optional<MemberOpuEvent> findTopByMemberAndOpuOrderByCompletedAtDesc(Member member, Opu opu);
+
+    void deleteByMemberId(Long memberId);
 }

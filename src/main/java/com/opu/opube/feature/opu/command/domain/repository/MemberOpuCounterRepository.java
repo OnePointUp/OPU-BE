@@ -15,4 +15,6 @@ public interface MemberOpuCounterRepository extends JpaRepository<MemberOpuCount
 
     @Lock(PESSIMISTIC_WRITE)
     Optional<MemberOpuCounter> findByMemberAndOpu(Member member, Opu opu);
+
+    void deleteByMemberId(Long memberId);
 }

@@ -9,4 +9,6 @@ public interface FavoriteOpuRepository {
     boolean existsByMemberIdAndOpuId(Long memberId, Long opuId);
 
     void deleteByMemberIdAndOpuId(Long memberId, Long opuId);
+
+    void deleteByMemberId(Long memberId);
 }

@@ -11,4 +11,6 @@ public interface BlockedOpuRepository {
     void deleteByMemberIdAndOpuId(Long memberId, Long opuId);
 
     void deleteByMemberIdAndOpuIdIn(Long memberId, List<Long> opuIds);
+
+    void deleteByMemberId(Long memberId);
 }
