@@ -1,9 +1,6 @@
 package com.opu.opube.feature.opu.command.application.service;
 
-import com.opu.opube.feature.opu.command.domain.repository.BlockedOpuRepository;
-import com.opu.opube.feature.opu.command.domain.repository.FavoriteOpuRepository;
-import com.opu.opube.feature.opu.command.domain.repository.MemberOpuCounterRepository;
-import com.opu.opube.feature.opu.command.domain.repository.MemberOpuEventRepository;
+import com.opu.opube.feature.opu.command.domain.repository.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +13,7 @@ public class OpuMemberCleanupServiceImpl implements OpuMemberCleanupService {
     private final BlockedOpuRepository blockedOpuRepository;
     private final MemberOpuEventRepository memberOpuEventRepository;
     private final MemberOpuCounterRepository memberOpuCounterRepository;
+    private final OpuRandomDrawEventRepository opuRandomDrawEventRepository;
 
     @Override
     @Transactional
@@ -24,5 +22,6 @@ public class OpuMemberCleanupServiceImpl implements OpuMemberCleanupService {
         blockedOpuRepository.deleteByMemberId(memberId);
         memberOpuEventRepository.deleteByMemberId(memberId);
         memberOpuCounterRepository.deleteByMemberId(memberId);
+        opuRandomDrawEventRepository.deleteByMemberId(memberId);
     }
 }
