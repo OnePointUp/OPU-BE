@@ -24,7 +24,7 @@ public class Notification {
     @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false)
+    @Column(name = "message")
     private String message;
 
     @Column(name = "is_read", nullable = false)
@@ -32,7 +32,7 @@ public class Notification {
     private Boolean isRead = false;
 
     @Column(name = "linked_content_id")
-    private Integer linkedContentId;
+    private Long linkedContentId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)

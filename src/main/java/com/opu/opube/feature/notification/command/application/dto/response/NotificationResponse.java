@@ -32,7 +32,7 @@ public class NotificationResponse {
             example = "55",
             nullable = true
     )
-    private Integer linkedContentId;
+    private Long linkedContentId;
 
     @Schema(description = "읽음 여부", example = "false")
     private Boolean read;

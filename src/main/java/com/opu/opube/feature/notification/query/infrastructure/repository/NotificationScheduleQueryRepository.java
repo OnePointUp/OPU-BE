@@ -2,11 +2,18 @@ package com.opu.opube.feature.notification.query.infrastructure.repository;
 
 import com.opu.opube.feature.member.command.domain.aggregate.QMember;
 import com.opu.opube.feature.notification.command.domain.aggregate.QMemberNotificationSetting;
+import com.opu.opube.feature.notification.query.dto.TodoNotificationProjection;
+import com.opu.opube.feature.notification.query.dto.TodoNotificationResponse;
+import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
+
+import static com.opu.opube.feature.todo.command.domain.aggregate.QTodo.todo;
 
 @Repository
 @RequiredArgsConstructor
@@ -57,5 +64,68 @@ public class NotificationScheduleQueryRepository {
                         )
                 )
                 .fetch();
+    }
+
+
+    public List<TodoNotificationProjection> findTodosForReminder(
+            LocalDate date,
+            LocalTime time,
+            Long todoTypeId,
+            boolean todoDefaultEnabled,
+            Long allTypeId,
+            boolean allDefaultEnabled
+    ) {
+        QMember member = QMember.member;
+        QMemberNotificationSetting todoSetting = QMemberNotificationSetting.memberNotificationSetting;
+        QMemberNotificationSetting allSetting = new QMemberNotificationSetting("allSetting");
+
+        return queryFactory
+                .select(Projections.constructor(
+                        TodoNotificationResponse.class,
+                        todo.member.id,
+                        todo.id,
+                        todo.title,
+                        todo.scheduledDate,
+                        todo.scheduledTime
+                ))
+                .from(todo)
+                .join(todo.member, member)
+                // ALL 설정
+                .leftJoin(allSetting).on(
+                        allSetting.member.id.eq(member.id),
+                        allSetting.notificationType.id.eq(allTypeId)
+                )
+                .leftJoin(todoSetting).on(
+                        todoSetting.member.id.eq(member.id),
+                        todoSetting.notificationType.id.eq(todoTypeId)
+                )
+                .where(
+                        todo.deletedAt.isNull(),
+                        todo.completed.eq(false),
+                        todo.scheduledDate.eq(date),
+                        todo.scheduledTime.isNotNull(),
+                        todo.scheduledTime.eq(time),
+
+
+                        (
+                                allSetting.id.isNotNull().and(allSetting.enabled.isTrue())
+                        ).or(
+                                allDefaultEnabled
+                                        ? allSetting.id.isNull()
+                                        : allSetting.id.isNotNull().and(allSetting.enabled.isTrue())
+                        ),
+
+                        (
+                                todoSetting.id.isNotNull().and(todoSetting.enabled.isTrue())
+                        ).or(
+                                todoDefaultEnabled
+                                        ? todoSetting.id.isNull()
+                                        : todoSetting.id.isNotNull().and(todoSetting.enabled.isTrue())
+                        )
+                )
+                .fetch()
+                .stream()
+                .map(it -> (TodoNotificationProjection) it)
+                .toList();
     }
 }
