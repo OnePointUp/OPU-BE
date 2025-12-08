@@ -86,7 +86,7 @@ public class NotificationScheduleService {
         return switch (typeCode) {
             case MORNING -> "OPU와 함께 기분 좋은 하루 시작해요 \uD83C\uDF24️";
             case EVENING -> "오늘을 잘 마무리하셨나요? \uD83C\uDF19";
-            case RANDOM_PICK -> "오늘의 랜덤 뽑기가 기다리고 있어요!";
+            case RANDOM_DRAW -> "오늘의 랜덤 뽑기가 기다리고 있어요!";
             default -> "알림";
         };
     }
@@ -95,7 +95,7 @@ public class NotificationScheduleService {
         return switch (typeCode) {
             case MORNING -> "오늘 일정을 확인하고 계획을 세워보아요.";
             case EVENING -> "오늘 완료하지 못한 일정이 있는지 확인하고 내일 계획을 세워보아요.";
-            case RANDOM_PICK -> "OPU를 뽑고 실천하며 오늘도 한 발짝 나아가보아요.";
+            case RANDOM_DRAW -> "OPU를 뽑고 실천하며 오늘도 한 발짝 나아가보아요.";
             default -> "";
         };
     }
