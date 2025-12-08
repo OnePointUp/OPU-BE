@@ -298,7 +298,7 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
     }
 
     @Override
-    public Optional<OpuSummaryResponse> pickRandomOpuFromAll(
+    public Optional<OpuSummaryResponse> drawRandomOpuFromAll(
             Long loginMemberId,
             Integer requiredMinutes,
             Long excludeOpuId
@@ -329,7 +329,7 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
     }
 
     @Override
-    public Optional<OpuSummaryResponse> pickRandomOpuFromFavorite(
+    public Optional<OpuSummaryResponse> drawRandomOpuFromFavorite(
             Long loginMemberId,
             Integer requiredMinutes,
             Long excludeOpuId

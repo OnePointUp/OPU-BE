@@ -8,7 +8,8 @@ public enum NotificationTypeCode {
     MORNING("MORNING"),
     EVENING("EVENING"),
     ROUTINE("ROUTINE"),
-    RANDOM_PICK("RANDOM_PICK");
+    TODO("TODO"),
+    RANDOM_PICK("RANDOM_DRAW");
 
     private final String code;
 
