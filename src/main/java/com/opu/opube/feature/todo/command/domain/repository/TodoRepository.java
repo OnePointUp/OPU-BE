@@ -72,5 +72,7 @@ public interface TodoRepository extends JpaRepository<Todo, Long> {
     @Query("DELETE FROM Todo t WHERE t.routine.id = :routineId AND t.scheduledDate > :afterDate")
     void deleteTodoByRoutineIdAfterDate(@Param("routineId") Long routineId,@Param("afterDate") LocalDate afterDate);
 
+    @Modifying
+    @Query("delete from Todo t where t.member.id = :memberId")
     void deleteByMemberId(Long memberId);
 }
