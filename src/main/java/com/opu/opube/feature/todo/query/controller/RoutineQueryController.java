@@ -5,6 +5,7 @@ import com.opu.opube.common.dto.PageResponse;
 import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
 import com.opu.opube.feature.todo.query.dto.response.RoutineDetailResponseDto;
 import com.opu.opube.feature.todo.query.dto.response.RoutineListResponseDto;
+import com.opu.opube.feature.todo.query.dto.response.RoutineSummaryResponseDto;
 import com.opu.opube.feature.todo.query.service.RoutineQueryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -48,5 +49,20 @@ public class RoutineQueryController {
         Long memberId = memberPrincipal.getMemberId();
         RoutineDetailResponseDto routine = routineQueryService.getRoutine(memberId, routineId);
         return ResponseEntity.ok(ApiResponse.success(routine));
+    }
+
+    @Operation(
+            summary = "routine 목록 조회 (통계)",
+            description = "routine의 제목, id를 반환합니다."
+    )
+    @GetMapping("/summary")
+    public ResponseEntity<PageResponse<RoutineSummaryResponseDto>> getRoutineTitleList(
+            @AuthenticationPrincipal MemberPrincipal memberPrincipal,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Long memberId = memberPrincipal.getMemberId();
+        PageResponse<RoutineSummaryResponseDto> summaries = routineQueryService.getRoutineTitleList(memberId, page, size);
+        return ResponseEntity.ok(summaries);
     }
 }
