@@ -91,11 +91,14 @@ public class RoutineQueryRepositoryImpl implements RoutineQueryRepository {
                 .from(routine)
                 .where(routine.member.id.eq(memberId))
                 // todo : todo 많이 생성된 순으로 정렬
+                .offset((long) page * size)
+                .limit(size)
                 .fetch();
         return PageResponse.from(content, totalCount, page, size);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public PageResponse<RoutineStatResponseDto> getRoutineStatList(Long memberId, int page, int size) {
         QRoutine routine = QRoutine.routine;
 
@@ -117,6 +120,8 @@ public class RoutineQueryRepositoryImpl implements RoutineQueryRepository {
                 .from(routine)
                 .where(routine.member.id.eq(memberId))
                 // todo : todo 많이 생성된 순으로 정렬
+                .offset((long) page * size)
+                .limit(size)
                 .fetch();
         return PageResponse.from(content, totalCount, page, size);
     }
