@@ -5,6 +5,8 @@ import com.opu.opube.feature.opu.command.domain.aggregate.MemberOpuCounter;
 import com.opu.opube.feature.opu.command.domain.aggregate.Opu;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.Optional;
 
@@ -15,4 +17,8 @@ public interface MemberOpuCounterRepository extends JpaRepository<MemberOpuCount
 
     @Lock(PESSIMISTIC_WRITE)
     Optional<MemberOpuCounter> findByMemberAndOpu(Member member, Opu opu);
+
+    @Modifying
+    @Query("delete from MemberOpuCounter m where m.member.id = :memberId")
+    void deleteByMemberId(Long memberId);
 }

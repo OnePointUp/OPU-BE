@@ -6,6 +6,9 @@ import com.opu.opube.feature.member.command.application.dto.request.UpdateMember
 import com.opu.opube.feature.member.command.application.dto.response.MemberProfileResponse;
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.member.command.domain.repository.MemberRepository;
+import com.opu.opube.feature.notification.command.application.service.NotificationMemberCleanupService;
+import com.opu.opube.feature.opu.command.application.service.OpuMemberCleanupService;
+import com.opu.opube.feature.todo.command.application.service.TodoMemberCleanupService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +27,9 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     private static final int TAG_GENERATE_ATTEMPTS = 5;
 
     private final MemberRepository memberRepository;
+    private final TodoMemberCleanupService todoMemberCleanupService;
+    private final NotificationMemberCleanupService notificationMemberCleanupService;
+    private final OpuMemberCleanupService opuMemberCleanupService;
 
     @Override
     @Transactional
@@ -79,10 +85,11 @@ public class MemberCommandServiceImpl implements MemberCommandService {
             return; // 이미 탈퇴된 경우 멱등 처리
         }
 
-        //TODO: 탈퇴시 데이터 삭제 로직 추가
-
-
         member.deactivate();
+
+        todoMemberCleanupService.deleteByMemberId(memberId);
+        notificationMemberCleanupService.deleteByMemberId(memberId);
+        opuMemberCleanupService.deleteByMemberId(memberId);
     }
 
     private void validateNickname(String nickname) {
