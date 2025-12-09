@@ -16,6 +16,8 @@ import java.util.List;
 public class MonthlyRoutineTodoStatsResponse {
     @Schema(description = "routine 식별자")
     private long routineId;
+    @Schema(description = "routine 제목")
+    private String title;
     @Schema(example = "2025", description = "년도")
     private int year;
     @Schema(example = "3", description = "월")

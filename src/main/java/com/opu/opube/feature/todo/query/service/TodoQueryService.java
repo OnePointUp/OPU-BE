@@ -1,10 +1,7 @@
 package com.opu.opube.feature.todo.query.service;
 
 import com.opu.opube.common.dto.PageResponse;
-import com.opu.opube.feature.todo.query.dto.response.DayTodoStats;
-import com.opu.opube.feature.todo.query.dto.response.MonthlyRoutineTodoStatsResponse;
-import com.opu.opube.feature.todo.query.dto.response.TodoResponseDto;
-import com.opu.opube.feature.todo.query.dto.response.TodoStatisticsDto;
+import com.opu.opube.feature.todo.query.dto.response.*;
 import com.opu.opube.feature.todo.query.infrastructure.repository.TodoQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -47,7 +44,7 @@ public class TodoQueryService {
         return filledResults;
     }
 
-    public MonthlyRoutineTodoStatsResponse getRoutineStat(Long memberId, Long routineId, int year, int month) {
+    public MonthlyRoutineTodoStatsResponse getRoutineStat(Long memberId, Long routineId, String routineTitle, int year, int month) {
         LocalDate start = LocalDate.of(year, month, 1);
         LocalDate end = start.plusMonths(1);
 
@@ -67,6 +64,7 @@ public class TodoQueryService {
 
         return MonthlyRoutineTodoStatsResponse.builder()
                 .routineId(routineId)
+                .title(routineTitle)
                 .year(year)
                 .month(month)
                 .days(filledResults)
