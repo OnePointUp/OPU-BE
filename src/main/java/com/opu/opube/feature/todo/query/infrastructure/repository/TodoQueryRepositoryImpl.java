@@ -2,6 +2,7 @@ package com.opu.opube.feature.todo.query.infrastructure.repository;
 
 import com.opu.opube.common.dto.PageResponse;
 import com.opu.opube.feature.todo.command.domain.aggregate.QTodo;
+import com.opu.opube.feature.todo.query.dto.response.DayTodoStats;
 import com.opu.opube.feature.todo.query.dto.response.TodoResponseDto;
 import com.opu.opube.feature.todo.query.dto.response.TodoStatisticsDto;
 import com.querydsl.core.types.Projections;
@@ -14,6 +15,8 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import static com.querydsl.core.types.dsl.Expressions.constant;
 
 @Repository
 @RequiredArgsConstructor
@@ -78,6 +81,27 @@ public class TodoQueryRepositoryImpl implements TodoQueryRepository {
                         .and(todo.scheduledDate.between(startDate, endDate))
                         .and(todo.deletedAt.isNull()))
                 .groupBy(todo.scheduledDate)
+                .orderBy(todo.scheduledDate.asc())
+                .fetch();
+    }
+
+    @Override
+    public List<DayTodoStats> getRoutineTodo(Long memberId, Long routineId, LocalDate start, LocalDate end) {
+        QTodo todo = QTodo.todo;
+
+        return queryFactory
+                .select(Projections.constructor(
+                        DayTodoStats.class,
+                        todo.scheduledDate,
+                        constant(true),
+                        todo.completed
+
+                ))
+                .from(todo)
+                .where(todo.member.id.eq(memberId)
+                        .and(todo.routine.id.eq(routineId))
+                        .and(todo.scheduledDate.goe(start))
+                        .and(todo.scheduledDate.lt(end)))
                 .orderBy(todo.scheduledDate.asc())
                 .fetch();
     }

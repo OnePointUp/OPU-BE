@@ -1,12 +1,14 @@
 package com.opu.opube.feature.todo.query.service;
 
 import com.opu.opube.common.dto.PageResponse;
+import com.opu.opube.feature.todo.query.dto.response.DayTodoStats;
+import com.opu.opube.feature.todo.query.dto.response.MonthlyRoutineTodoStatsResponse;
 import com.opu.opube.feature.todo.query.dto.response.TodoResponseDto;
 import com.opu.opube.feature.todo.query.dto.response.TodoStatisticsDto;
+import com.opu.opube.feature.todo.query.infrastructure.repository.TodoQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.opu.opube.feature.todo.query.infrastructure.repository.TodoQueryRepository;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -43,5 +45,31 @@ public class TodoQueryService {
             current = current.plusDays(1);
         }
         return filledResults;
+    }
+
+    public MonthlyRoutineTodoStatsResponse getRoutineStat(Long memberId, Long routineId, int year, int month) {
+        LocalDate start = LocalDate.of(year, month, 1);
+        LocalDate end = start.plusMonths(1);
+
+        List<DayTodoStats> results = todoQueryRepository.getRoutineTodo(memberId, routineId, start, end);
+
+        Map<LocalDate, DayTodoStats> map = results.stream()
+                .collect(Collectors.toMap(DayTodoStats::getDate, Function.identity()));
+
+        List<DayTodoStats> filledResults = new ArrayList<>();
+        LocalDate current = start;
+        while(current.isBefore(end)) {
+            filledResults.add(
+                    map.getOrDefault(current, new DayTodoStats(current, false, null))
+            );
+            current = current.plusDays(1);
+        }
+
+        return MonthlyRoutineTodoStatsResponse.builder()
+                .routineId(routineId)
+                .year(year)
+                .month(month)
+                .days(filledResults)
+                .build();
     }
 }
