@@ -73,8 +73,8 @@ public class TodoQueryService {
                 .build();
     }
 
-    public List<MonthlyAllRoutineTodoStatsResponse> getAllRoutineStat(Long memberId, List<RoutineSummaryResponseDto> content, int year, int month) {
-        List<Long> routineIds = content.stream().map(RoutineSummaryResponseDto::getId).toList();
+    public List<MonthlyAllRoutineTodoStatsResponse> getAllRoutineStat(Long memberId, List<RoutineStatResponseDto> content, int year, int month) {
+        List<Long> routineIds = content.stream().map(RoutineStatResponseDto::getId).toList();
 
         if (routineIds.isEmpty()) {
             return List.of();
@@ -98,7 +98,7 @@ public class TodoQueryService {
         // 5. routine 단위 응답 생성
         List<MonthlyAllRoutineTodoStatsResponse> responses = new ArrayList<>();
 
-        for (RoutineSummaryResponseDto routine : content) {
+        for (RoutineStatResponseDto routine : content) {
 
             Map<LocalDate, TodoStatRow> dateMap =
                     routineDateMap.getOrDefault(routine.getId(), Map.of());
@@ -123,6 +123,7 @@ public class TodoQueryService {
                     MonthlyAllRoutineTodoStatsResponse.builder()
                             .routineId(routine.getId())
                             .title(routine.getTitle())
+                            .color(routine.getColor())
                             .year(year)
                             .month(month)
                             .days(days)

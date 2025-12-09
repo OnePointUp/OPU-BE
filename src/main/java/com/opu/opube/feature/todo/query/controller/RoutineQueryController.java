@@ -98,7 +98,7 @@ public class RoutineQueryController {
             @RequestParam(defaultValue = "10") int size
     ) {
         Long memberId = memberPrincipal.getMemberId();
-        PageResponse<RoutineSummaryResponseDto> summary = routineQueryService.getRoutineTitleList(memberId, page, size);
+        PageResponse<RoutineStatResponseDto> summary = routineQueryService.getRoutineStatList(memberId, page, size);
         List<MonthlyAllRoutineTodoStatsResponse> stats = todoQueryService.getAllRoutineStat(memberId, summary.getContent(), year, month);
         PageResponse<MonthlyAllRoutineTodoStatsResponse> response = PageResponse.from(stats, summary.getTotalPages(), page, size);
         return ResponseEntity.ok(response);

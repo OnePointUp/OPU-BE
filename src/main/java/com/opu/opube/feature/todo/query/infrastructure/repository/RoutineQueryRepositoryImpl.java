@@ -7,6 +7,7 @@ import com.opu.opube.feature.todo.command.domain.aggregate.QRoutine;
 import com.opu.opube.feature.todo.command.domain.aggregate.Routine;
 import com.opu.opube.feature.todo.query.dto.response.RoutineDetailResponseDto;
 import com.opu.opube.feature.todo.query.dto.response.RoutineListResponseDto;
+import com.opu.opube.feature.todo.query.dto.response.RoutineStatResponseDto;
 import com.opu.opube.feature.todo.query.dto.response.RoutineSummaryResponseDto;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -86,6 +87,32 @@ public class RoutineQueryRepositoryImpl implements RoutineQueryRepository {
                         RoutineSummaryResponseDto.class,
                         routine.title.as("title"),
                         routine.id.as("id")
+                ))
+                .from(routine)
+                .where(routine.member.id.eq(memberId))
+                // todo : todo 많이 생성된 순으로 정렬
+                .fetch();
+        return PageResponse.from(content, totalCount, page, size);
+    }
+
+    @Override
+    public PageResponse<RoutineStatResponseDto> getRoutineStatList(Long memberId, int page, int size) {
+        QRoutine routine = QRoutine.routine;
+
+        Long total = queryFactory
+                .select(routine.count())
+                .from(routine)
+                .where(routine.member.id.eq(memberId))
+                .fetchOne();
+
+        long totalCount = total != null ? total : 0L;
+
+        List<RoutineStatResponseDto> content = queryFactory
+                .select(Projections.constructor(
+                        RoutineStatResponseDto.class,
+                        routine.title.as("title"),
+                        routine.id.as("id"),
+                        routine.color.as("color")
                 ))
                 .from(routine)
                 .where(routine.member.id.eq(memberId))
