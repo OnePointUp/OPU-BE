@@ -3,20 +3,17 @@ package com.opu.opube.feature.todo.query.controller;
 import com.opu.opube.common.dto.ApiResponse;
 import com.opu.opube.common.dto.PageResponse;
 import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
-import com.opu.opube.feature.todo.query.dto.response.MonthlyRoutineTodoStatsResponse;
-import com.opu.opube.feature.todo.query.dto.response.RoutineDetailResponseDto;
-import com.opu.opube.feature.todo.query.dto.response.RoutineListResponseDto;
-import com.opu.opube.feature.todo.query.dto.response.RoutineSummaryResponseDto;
+import com.opu.opube.feature.todo.query.dto.response.*;
 import com.opu.opube.feature.todo.query.service.RoutineQueryService;
 import com.opu.opube.feature.todo.query.service.TodoQueryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -76,7 +73,7 @@ public class RoutineQueryController {
             description = "월의 각 날짜에 대해 이 routine 으로 생성된 todo가 있었는지 & 있었으면 수행 되었는지를 확인할 수 있습니다."
     )
     @GetMapping("/{routineId}/todos/stats")
-    public ResponseEntity<ApiResponse<MonthlyRoutineTodoStatsResponse >> getRoutineTodoStats(
+    public ResponseEntity<ApiResponse<MonthlyRoutineTodoStatsResponse>> getRoutineTodoStats(
             @AuthenticationPrincipal MemberPrincipal memberPrincipal,
             @PathVariable Long routineId,
             @RequestParam int year,
@@ -86,5 +83,24 @@ public class RoutineQueryController {
         String title = routineQueryService.getRoutine(memberId, routineId).getTitle();
         MonthlyRoutineTodoStatsResponse summaries = todoQueryService.getRoutineStat(memberId, routineId, title, year, month);
         return ResponseEntity.ok(ApiResponse.success(summaries));
+    }
+
+    @Operation(
+            summary = "모든 routine의 월별 todo 목록 조회 (통계)",
+            description = "월의 각 날짜에 대해 모든 routine 으로 생성된 todo가 있었는지 & 있었으면 수행 되었는지를 확인할 수 있습니다."
+    )
+    @GetMapping("/todos/stats")
+    public ResponseEntity<PageResponse<MonthlyAllRoutineTodoStatsResponse>> getAllRoutineTodoStats(
+            @AuthenticationPrincipal MemberPrincipal memberPrincipal,
+            @RequestParam int year,
+            @RequestParam int month,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Long memberId = memberPrincipal.getMemberId();
+        PageResponse<RoutineSummaryResponseDto> summary = routineQueryService.getRoutineTitleList(memberId, page, size);
+        List<MonthlyAllRoutineTodoStatsResponse> stats = todoQueryService.getAllRoutineStat(memberId, summary.getContent(), year, month);
+        PageResponse<MonthlyAllRoutineTodoStatsResponse> response = PageResponse.from(stats, summary.getTotalPages(), page, size);
+        return ResponseEntity.ok(response);
     }
 }

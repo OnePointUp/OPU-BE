@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -68,6 +69,74 @@ public class TodoQueryService {
                 .year(year)
                 .month(month)
                 .days(filledResults)
+                .build();
+    }
+
+    public List<MonthlyAllRoutineTodoStatsResponse> getAllRoutineStat(Long memberId, List<RoutineSummaryResponseDto> content, int year, int month) {
+        List<Long> routineIds = content.stream().map(RoutineSummaryResponseDto::getId).toList();
+
+        if (routineIds.isEmpty()) {
+            return List.of();
+        }
+
+        LocalDate start = LocalDate.of(year, month, 1);
+        LocalDate end = start.plusMonths(1);
+
+        // todos bulk 조회 (routineId IN)
+        List<TodoStatRow> rows = todoQueryRepository.getAllRoutineTodo(memberId, routineIds, start, end);
+
+        // routineId -> (date -> TodoStatRow) 로 그룹핑
+        Map<Long, Map<LocalDate, TodoStatRow>> routineDateMap = new HashMap<>();
+
+        for (TodoStatRow row : rows) {
+            routineDateMap
+                    .computeIfAbsent(row.getRoutineId(), k -> new HashMap<>())
+                    .put(row.getDate(), row);
+        }
+
+        // 5. routine 단위 응답 생성
+        List<MonthlyAllRoutineTodoStatsResponse> responses = new ArrayList<>();
+
+        for (RoutineSummaryResponseDto routine : content) {
+
+            Map<LocalDate, TodoStatRow> dateMap =
+                    routineDateMap.getOrDefault(routine.getId(), Map.of());
+
+            List<TodoStatRow> days = new ArrayList<>();
+
+            LocalDate current = start;
+            while (current.isBefore(end)) {
+
+                if (dateMap.containsKey(current)) {
+                    // todos가 있었던 날 (DB 조회 결과)
+                    days.add(dateMap.get(current));
+                } else {
+                    // todos가 없던 날 → 더미 데이터 생성
+                    days.add(createEmptyDay(routine.getId(), current));
+                }
+
+                current = current.plusDays(1);
+            }
+
+            responses.add(
+                    MonthlyAllRoutineTodoStatsResponse.builder()
+                            .routineId(routine.getId())
+                            .title(routine.getTitle())
+                            .year(year)
+                            .month(month)
+                            .days(days)
+                            .build()
+            );
+        }
+
+        return responses;
+    }
+
+    private TodoStatRow createEmptyDay(long routineId, LocalDate date) {
+        return TodoStatRow.builder()
+                .routineId(routineId)
+                .hasTodo(false)
+                .date(date)
                 .build();
     }
 }

@@ -61,5 +61,17 @@ public class PageResponse<T> {
                 .hasPrevious(hasPrevious)
                 .build();
     }
+
+    public static <T> PageResponse<T> empty() {
+        return PageResponse.<T>builder()
+                .totalElements(0)
+                .totalPages(0)
+                .currentPage(0)
+                .pageSize(0)
+                .content(List.of())
+                .hasNext(false)
+                .hasPrevious(false)
+                .build();
+    }
 }
 

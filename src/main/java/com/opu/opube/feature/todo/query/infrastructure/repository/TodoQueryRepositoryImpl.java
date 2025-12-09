@@ -4,6 +4,7 @@ import com.opu.opube.common.dto.PageResponse;
 import com.opu.opube.feature.todo.command.domain.aggregate.QTodo;
 import com.opu.opube.feature.todo.query.dto.response.DayTodoStats;
 import com.opu.opube.feature.todo.query.dto.response.TodoResponseDto;
+import com.opu.opube.feature.todo.query.dto.response.TodoStatRow;
 import com.opu.opube.feature.todo.query.dto.response.TodoStatisticsDto;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.Expressions;
@@ -103,6 +104,29 @@ public class TodoQueryRepositoryImpl implements TodoQueryRepository {
                         .and(todo.scheduledDate.goe(start))
                         .and(todo.scheduledDate.lt(end)))
                 .orderBy(todo.scheduledDate.asc())
+                .fetch();
+    }
+
+    @Override
+    public List<TodoStatRow> getAllRoutineTodo(Long memberId, List<Long> routineIds, LocalDate start, LocalDate end) {
+        QTodo todo = QTodo.todo;
+
+        return queryFactory
+                .select(Projections.constructor(
+                        TodoStatRow.class,
+                        todo.routine.id,
+                        todo.scheduledDate,
+                        constant(true),
+                        todo.completed
+
+                ))
+                .from(todo)
+                .where(todo.member.id.eq(memberId)
+                        .and(todo.routine.id.in(routineIds))
+                        .and(todo.scheduledDate.goe(start))
+                        .and(todo.scheduledDate.lt(end)))
+                .orderBy(todo.routine.id.asc(),
+                        todo.scheduledDate.asc())
                 .fetch();
     }
 }
