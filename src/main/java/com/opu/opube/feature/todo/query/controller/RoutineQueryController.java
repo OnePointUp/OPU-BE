@@ -80,8 +80,8 @@ public class RoutineQueryController {
             @RequestParam int month
     ) {
         Long memberId = memberPrincipal.getMemberId();
-        String title = routineQueryService.getRoutine(memberId, routineId).getTitle();
-        MonthlyRoutineTodoStatsResponse summaries = todoQueryService.getRoutineStat(memberId, routineId, title, year, month);
+        RoutineDetailResponseDto routine = routineQueryService.getRoutine(memberId, routineId);
+        MonthlyRoutineTodoStatsResponse summaries = todoQueryService.getRoutineStat(memberId, routineId, routine, year, month);
         return ResponseEntity.ok(ApiResponse.success(summaries));
     }
 

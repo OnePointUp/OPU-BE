@@ -45,7 +45,7 @@ public class TodoQueryService {
         return filledResults;
     }
 
-    public MonthlyRoutineTodoStatsResponse getRoutineStat(Long memberId, Long routineId, String routineTitle, int year, int month) {
+    public MonthlyRoutineTodoStatsResponse getRoutineStat(Long memberId, Long routineId, RoutineDetailResponseDto routine, int year, int month) {
         LocalDate start = LocalDate.of(year, month, 1);
         LocalDate end = start.plusMonths(1);
 
@@ -65,7 +65,8 @@ public class TodoQueryService {
 
         return MonthlyRoutineTodoStatsResponse.builder()
                 .routineId(routineId)
-                .title(routineTitle)
+                .title(routine.getTitle())
+                .color(routine.getColor())
                 .year(year)
                 .month(month)
                 .days(filledResults)

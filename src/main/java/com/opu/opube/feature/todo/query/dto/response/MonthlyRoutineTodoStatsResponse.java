@@ -18,6 +18,8 @@ public class MonthlyRoutineTodoStatsResponse {
     private long routineId;
     @Schema(description = "routine 제목")
     private String title;
+    @Schema(description = "routine 색")
+    private String color;
     @Schema(example = "2025", description = "년도")
     private int year;
     @Schema(example = "3", description = "월")
