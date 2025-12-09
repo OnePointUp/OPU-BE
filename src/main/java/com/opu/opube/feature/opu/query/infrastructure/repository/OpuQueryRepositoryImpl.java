@@ -304,8 +304,17 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
             Long excludeOpuId
     ) {
         BooleanBuilder predicate = new BooleanBuilder()
-                .and(opu.isShared.isTrue())
                 .and(opu.deletedAt.isNull());
+
+        // 공개 OPU + 내 비공개 OPU
+        if (loginMemberId != null) {
+            predicate.and(
+                    opu.isShared.isTrue()
+                            .or(opu.member.id.eq(loginMemberId))
+            );
+        } else {
+            predicate.and(opu.isShared.isTrue());
+        }
 
         // 공통 필터 (requiredMinutes, excludeOpuId)
         applyRandomFilters(predicate, requiredMinutes, excludeOpuId);
@@ -339,17 +348,17 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
         }
 
         BooleanBuilder predicate = new BooleanBuilder()
+                // 내 찜 목록
                 .and(favoriteOpu.memberId.eq(loginMemberId))
-                .and(opu.deletedAt.isNull());
+                .and(opu.deletedAt.isNull())
+                // 공개 OPU + 내 비공개 OPU
+                .and(
+                        opu.isShared.isTrue()
+                                .or(opu.member.id.eq(loginMemberId))
+                );
 
         // 공통 필터 (requiredMinutes, excludeOpuId)
         applyRandomFilters(predicate, requiredMinutes, excludeOpuId);
-
-        // 공유된 OPU + 내 OPU 허용
-        predicate.and(
-                opu.isShared.isTrue()
-                        .or(opu.member.id.eq(loginMemberId))
-        );
 
         // 차단된 OPU 제외
         excludeBlockedOpu(predicate, loginMemberId);
