@@ -4,7 +4,6 @@ import com.opu.opube.common.dto.PageResponse;
 import com.opu.opube.feature.todo.query.dto.response.*;
 import com.opu.opube.feature.todo.query.infrastructure.repository.RoutineQueryRepository;
 import com.opu.opube.feature.todo.query.infrastructure.repository.TodoQueryRepository;
-import com.opu.opube.feature.todo.query.infrastructure.repository.TodoQueryRepositoryImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +18,6 @@ import java.util.List;
 public class RoutineQueryService {
 
     private final RoutineQueryRepository routineQueryRepository;
-    private final TodoQueryRepository todoQueryRepository;
 
     public PageResponse<RoutineListResponseDto> getRoutineList(Long memberId, int page, int size) {
         return routineQueryRepository.getRoutines(memberId, page, size);

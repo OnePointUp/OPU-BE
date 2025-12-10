@@ -7,7 +7,6 @@ import com.opu.opube.feature.todo.command.domain.aggregate.QRoutine;
 import com.opu.opube.feature.todo.command.domain.aggregate.QTodo;
 import com.opu.opube.feature.todo.command.domain.aggregate.Routine;
 import com.opu.opube.feature.todo.query.dto.response.*;
-import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
