@@ -7,6 +7,9 @@ import com.opu.opube.feature.todo.query.dto.response.*;
 import com.opu.opube.feature.todo.query.service.RoutineQueryService;
 import com.opu.opube.feature.todo.query.service.TodoQueryService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -102,5 +105,37 @@ public class RoutineQueryController {
         List<MonthlyAllRoutineTodoStatsResponse> stats = todoQueryService.getAllRoutineStat(memberId, summary.getContent(), year, month);
         PageResponse<MonthlyAllRoutineTodoStatsResponse> response = PageResponse.from(stats, summary.getTotalElements(), page, size);
         return ResponseEntity.ok(response);
+    }
+
+    @Operation(
+            summary = "루틴별 통계 조회",
+            description = """
+                    특정 루틴에 대해
+                    - 선택한 월의 달성률 (%%)
+                    - 현재 연속 성공 일수(스트릭)
+                    - 선택한 월의 완료 횟수
+                    를 조회합니다.
+                    year/month를 생략하면 이번 달 기준으로 계산
+                    """
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "조회 성공",
+                    content = @Content(schema = @Schema(implementation = RoutineMonthlyStatsResponse.class))
+            )
+    })
+    @GetMapping("/{routineId}/stats/monthly")
+    public ResponseEntity<ApiResponse<RoutineMonthlyStatsResponse>> getRoutineStats(
+            @AuthenticationPrincipal MemberPrincipal principal,
+            @PathVariable Long routineId,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) Integer month
+    ) {
+        Long memberId = principal.getMemberId();
+        RoutineMonthlyStatsResponse response =
+                routineQueryService.getRoutineStats(memberId, routineId, year, month);
+
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 }
