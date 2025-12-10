@@ -15,10 +15,6 @@ public interface RoutineQueryRepository {
 
     PageResponse<RoutineStatResponseDto> getRoutineStatList(Long memberId, int page, int size);
 
-    MonthlyRoutineStats getMonthlyRoutineStats(
-            Long memberId, Long routineId, LocalDate startDate, LocalDate endDate
-    );
-
     List<TodoStatRow> findDailyCompletion(
             Long memberId, Long routineId, LocalDate startDate, LocalDate endDate
     );

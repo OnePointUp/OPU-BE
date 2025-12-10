@@ -2,9 +2,9 @@ package com.opu.opube.feature.todo.query.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 
-@Data
+@Getter
 @Builder
 @Schema(description = "루틴 월간 통계 응답 DTO")
 public class RoutineMonthlyStatsResponse {

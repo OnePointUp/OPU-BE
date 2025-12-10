@@ -124,40 +124,6 @@ public class RoutineQueryRepositoryImpl implements RoutineQueryRepository {
         return PageResponse.from(content, totalCount, page, size);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public MonthlyRoutineStats getMonthlyRoutineStats(
-            Long memberId, Long routineId, LocalDate startDate, LocalDate endDate
-    ) {
-        QTodo todo = QTodo.todo;
-
-        List<TodoStatRow> dailyStats = queryFactory
-                .select(
-                        Projections.constructor(
-                                TodoStatRow.class,
-                                todo.routine.id,
-                                todo.scheduledDate,
-                                todo.id.count().gt(0L),
-                                todo.completed.when(true).then(1L).otherwise(0L).sum().gt(0L)
-                        )
-                )
-                .from(todo)
-                .where(
-                        todo.member.id.eq(memberId),
-                        todo.routine.id.eq(routineId),
-                        todo.deletedAt.isNull(),
-                        todo.scheduledDate.between(startDate, endDate)
-                )
-                .groupBy(todo.routine.id, todo.scheduledDate)
-                .fetch();
-
-        long scheduledCount = dailyStats.size();
-        long completedCount = dailyStats.stream()
-                .filter(row -> Boolean.TRUE.equals(row.getDone()))
-                .count();
-
-        return new MonthlyRoutineStats(scheduledCount, completedCount);
-    }
 
     @Override
     @Transactional(readOnly = true)

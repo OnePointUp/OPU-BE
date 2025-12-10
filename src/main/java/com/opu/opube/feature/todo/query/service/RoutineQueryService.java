@@ -46,13 +46,14 @@ public class RoutineQueryService {
         int m = (month != null) ? month : now.getMonthValue();
 
         LocalDate start = LocalDate.of(y, m, 1);
-        LocalDate end = start.plusMonths(1).minusDays(1);
+        LocalDate end = YearMonth.of(y, m).atEndOfMonth();
 
-        MonthlyRoutineStats monthly = routineQueryRepository
-                .getMonthlyRoutineStats(memberId, routineId, start, end);
+        List<TodoStatRow> dailyList = routineQueryRepository.findDailyCompletion(memberId, routineId, start, end);
 
-        long scheduledCount = monthly.getTotalCount();
-        long completedCount = monthly.getCompletedCount();
+        long scheduledCount = dailyList.size();
+        long completedCount = dailyList.stream()
+                .filter(row -> Boolean.TRUE.equals(row.getDone()))
+                .count();
 
         int achievementRate = 0;
         if (scheduledCount > 0) {
@@ -61,7 +62,7 @@ public class RoutineQueryService {
             );
         }
 
-        int streak = calcStreakDays(memberId, routineId, y, m);
+        int streak = calcStreakDays(dailyList, y, m);
 
         return RoutineMonthlyStatsResponse.builder()
                 .routineId(routineId)
@@ -74,9 +75,8 @@ public class RoutineQueryService {
                 .build();
     }
 
-    private int calcStreakDays(Long memberId, Long routineId, int year, int intMonth) {
-        LocalDate today  = LocalDate.now();
-        LocalDate monthStart = LocalDate.of(year, intMonth, 1);
+    private int calcStreakDays(List<TodoStatRow> dailyList, int year, int intMonth) {
+        LocalDate today = LocalDate.now();
         LocalDate effectiveEndDate;
 
         if (year == today.getYear() && intMonth == today.getMonthValue()) {
@@ -87,15 +87,16 @@ public class RoutineQueryService {
             return 0;
         }
 
-        List<TodoStatRow> dailyList =
-                routineQueryRepository.findDailyCompletion(memberId, routineId, monthStart, effectiveEndDate);
-
         if (dailyList.isEmpty()) {
             return 0;
         }
 
         int streak = 0;
         for (TodoStatRow row : dailyList) {
+            if (row.getDate().isAfter(effectiveEndDate)) {
+                continue;
+            }
+
             if (Boolean.TRUE.equals(row.getDone())) {
                 streak++;
             } else {
