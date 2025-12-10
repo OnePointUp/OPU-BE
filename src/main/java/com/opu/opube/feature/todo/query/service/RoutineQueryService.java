@@ -3,7 +3,6 @@ package com.opu.opube.feature.todo.query.service;
 import com.opu.opube.common.dto.PageResponse;
 import com.opu.opube.feature.todo.query.dto.response.*;
 import com.opu.opube.feature.todo.query.infrastructure.repository.RoutineQueryRepository;
-import com.opu.opube.feature.todo.query.infrastructure.repository.TodoQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -75,39 +74,34 @@ public class RoutineQueryService {
                 .build();
     }
 
-    private int calcStreakDays(Long memberId, Long routineId, int year, int month) {
-        LocalDate today = YearMonth.of(year, month).atEndOfMonth();
-        LocalDate monthStart = LocalDate.of(year, month, 1);
+    private int calcStreakDays(Long memberId, Long routineId, int year, int intMonth) {
+        LocalDate today  = LocalDate.now();
+        LocalDate monthStart = LocalDate.of(year, intMonth, 1);
+        LocalDate effectiveEndDate;
 
-        List<TodoStatRow> dailyList =
-                routineQueryRepository.findDailyCompletion(memberId, routineId, monthStart, today);
-
-        if (dailyList.isEmpty()) {
+        if (year == today.getYear() && intMonth == today.getMonthValue()) {
+            effectiveEndDate = today;
+        } else if (year < today.getYear() || (year == today.getYear() && intMonth < today.getMonthValue())) {
+            effectiveEndDate = YearMonth.of(year, intMonth).atEndOfMonth();
+        } else {
             return 0;
         }
 
-        dailyList = dailyList.stream()
-                .filter(row -> {
-                    LocalDate date = row.getDate();
-                    if (!date.isEqual(today)) return true;
-                    return Boolean.TRUE.equals(row.getDone());
-                })
-                .sorted((a, b) -> b.getDate().compareTo(a.getDate()))
-                .toList();
+        List<TodoStatRow> dailyList =
+                routineQueryRepository.findDailyCompletion(memberId, routineId, monthStart, effectiveEndDate);
 
         if (dailyList.isEmpty()) {
             return 0;
         }
 
         int streak = 0;
-
         for (TodoStatRow row : dailyList) {
-            if (!Boolean.TRUE.equals(row.getDone())) {
+            if (Boolean.TRUE.equals(row.getDone())) {
+                streak++;
+            } else {
                 break;
             }
-            streak++;
         }
-
         return streak;
     }
 }
