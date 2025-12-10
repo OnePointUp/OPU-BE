@@ -105,7 +105,7 @@ public class Todo {
     public void patch(String title, LocalDate scheduledDate, LocalTime scheduledTime) {
         if (title != null) this.title = title;
         if (scheduledDate != null) this.scheduledDate = scheduledDate;
-        if (scheduledDate != null) this.scheduledTime = scheduledTime;
+        if (scheduledTime != null) this.scheduledTime = scheduledTime;
     }
 
     public boolean isOwnedBy(Member member) {
