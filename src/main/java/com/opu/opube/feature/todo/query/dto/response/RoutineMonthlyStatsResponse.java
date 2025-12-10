@@ -45,3 +45,4 @@ public class RoutineMonthlyStatsResponse {
     )
     private long scheduledCount;
 }
+
