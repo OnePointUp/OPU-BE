@@ -3,15 +3,17 @@ package com.opu.opube.feature.todo.query.controller;
 import com.opu.opube.common.dto.ApiResponse;
 import com.opu.opube.common.dto.PageResponse;
 import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
-import com.opu.opube.feature.todo.query.dto.response.RoutineDetailResponseDto;
-import com.opu.opube.feature.todo.query.dto.response.RoutineListResponseDto;
+import com.opu.opube.feature.todo.query.dto.response.*;
 import com.opu.opube.feature.todo.query.service.RoutineQueryService;
+import com.opu.opube.feature.todo.query.service.TodoQueryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -20,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 public class RoutineQueryController {
 
     private final RoutineQueryService routineQueryService;
+    private final TodoQueryService todoQueryService;
 
     @Operation(
             summary = "routine 목록 조회",
@@ -48,5 +51,56 @@ public class RoutineQueryController {
         Long memberId = memberPrincipal.getMemberId();
         RoutineDetailResponseDto routine = routineQueryService.getRoutine(memberId, routineId);
         return ResponseEntity.ok(ApiResponse.success(routine));
+    }
+
+    @Operation(
+            summary = "routine 목록 조회 (통계)",
+            description = "routine의 제목, id를 반환합니다."
+    )
+    @GetMapping("/summary")
+    public ResponseEntity<PageResponse<RoutineSummaryResponseDto>> getRoutineTitleList(
+            @AuthenticationPrincipal MemberPrincipal memberPrincipal,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Long memberId = memberPrincipal.getMemberId();
+        PageResponse<RoutineSummaryResponseDto> summaries = routineQueryService.getRoutineTitleList(memberId, page, size);
+        return ResponseEntity.ok(summaries);
+    }
+
+    @Operation(
+            summary = "routine의 월별 todo 목록 조회 (통계)",
+            description = "월의 각 날짜에 대해 이 routine 으로 생성된 todo가 있었는지 & 있었으면 수행 되었는지를 확인할 수 있습니다."
+    )
+    @GetMapping("/{routineId}/todos/stats")
+    public ResponseEntity<ApiResponse<MonthlyRoutineTodoStatsResponse>> getRoutineTodoStats(
+            @AuthenticationPrincipal MemberPrincipal memberPrincipal,
+            @PathVariable Long routineId,
+            @RequestParam int year,
+            @RequestParam int month
+    ) {
+        Long memberId = memberPrincipal.getMemberId();
+        RoutineDetailResponseDto routine = routineQueryService.getRoutine(memberId, routineId);
+        MonthlyRoutineTodoStatsResponse summaries = todoQueryService.getRoutineStat(memberId, routineId, routine, year, month);
+        return ResponseEntity.ok(ApiResponse.success(summaries));
+    }
+
+    @Operation(
+            summary = "모든 routine의 월별 todo 목록 조회 (통계)",
+            description = "월의 각 날짜에 대해 모든 routine 으로 생성된 todo가 있었는지 & 있었으면 수행 되었는지를 확인할 수 있습니다."
+    )
+    @GetMapping("/todos/stats")
+    public ResponseEntity<PageResponse<MonthlyAllRoutineTodoStatsResponse>> getAllRoutineTodoStats(
+            @AuthenticationPrincipal MemberPrincipal memberPrincipal,
+            @RequestParam int year,
+            @RequestParam int month,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Long memberId = memberPrincipal.getMemberId();
+        PageResponse<RoutineStatResponseDto> summary = routineQueryService.getRoutineStatList(memberId, page, size);
+        List<MonthlyAllRoutineTodoStatsResponse> stats = todoQueryService.getAllRoutineStat(memberId, summary.getContent(), year, month);
+        PageResponse<MonthlyAllRoutineTodoStatsResponse> response = PageResponse.from(stats, summary.getTotalElements(), page, size);
+        return ResponseEntity.ok(response);
     }
 }
