@@ -2,13 +2,11 @@ package com.opu.opube.feature.member.command.application.controller;
 
 import com.opu.opube.common.dto.ApiResponse;
 import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
-import com.opu.opube.feature.auth.command.application.service.AuthCommandService;
 import com.opu.opube.feature.member.command.application.dto.request.MemberDeactivateRequest;
 import com.opu.opube.feature.member.command.application.dto.request.UpdateMemberProfileRequest;
 import com.opu.opube.feature.member.command.application.dto.request.WebPushAgreeRequest;
 import com.opu.opube.feature.member.command.application.dto.response.MemberProfileResponse;
 import com.opu.opube.feature.member.command.application.service.MemberCommandService;
-import com.opu.opube.feature.member.query.service.MemberQueryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;

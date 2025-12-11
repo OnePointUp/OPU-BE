@@ -17,7 +17,7 @@ public class OpuMemberDeactivatedListener {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(MemberDeactivatedEvent event) {
-        Long memberId = event.getMemberId();
+        Long memberId = event.memberId();
         log.info("[OPU] MemberDeactivatedEvent received. memberId={}", memberId);
 
         opuMemberCleanupService.deleteByMemberId(memberId);
