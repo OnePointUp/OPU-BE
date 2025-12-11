@@ -93,12 +93,7 @@ jobs:
             export AWS_REGION=${{ secrets.AWS_REGION }}
             export ECR_URI=${{ secrets.ECR_URI }}
 
-            echo "AWS_REGION=$AWS_REGION"
-            echo "ECR_URI=$ECR_URI"
             cd /home/ec2-user/app
-
-            ls -l docker-compose.app.yml
-            ls -l docker-compose.flyway.yml
 
             set -e
             echo "Logging in to AWS ECR..."
