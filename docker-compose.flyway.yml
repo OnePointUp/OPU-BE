@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  flyway:
+    image: flyway/flyway:11
+    container_name: opu-flyway
+    volumes:
+      - ./src/main/resources/db/migration:/flyway/sql:ro
+    environment:
+      FLYWAY_URL: jdbc:mariadb://${RDS_ENDPOINT}:3306/${DB_NAME}
+      FLYWAY_USER: ${FLYWAY_USER}
+      FLYWAY_PASSWORD: ${FLYWAY_PASSWORD}
+      FLYWAY_BASELINE_ON_MIGRATE: "true"
+      FLYWAY_VALIDATE_ON_MIGRATE: "true"
+    command: migrate
