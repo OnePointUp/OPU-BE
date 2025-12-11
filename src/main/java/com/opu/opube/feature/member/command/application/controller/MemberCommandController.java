@@ -4,7 +4,7 @@ import com.opu.opube.common.dto.ApiResponse;
 import com.opu.opube.exception.BusinessException;
 import com.opu.opube.exception.ErrorCode;
 import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
-import com.opu.opube.feature.auth.command.application.service.AuthService;
+import com.opu.opube.feature.auth.command.application.service.AuthCommandService;
 import com.opu.opube.feature.member.command.application.dto.request.MemberDeactivateRequest;
 import com.opu.opube.feature.member.command.application.dto.request.UpdateMemberProfileRequest;
 import com.opu.opube.feature.member.command.application.dto.request.WebPushAgreeRequest;
@@ -35,7 +35,7 @@ public class MemberCommandController {
 
     private final MemberCommandService memberCommandService;
     private final MemberQueryService memberQueryService;
-    private final AuthService authService;
+    private final AuthCommandService authCommandService;
 
     @Operation(
             summary = "내 프로필 수정",
@@ -152,17 +152,17 @@ public class MemberCommandController {
                 );
             }
 
-            authService.checkCurrentPassword(memberId, req.getCurrentPassword());
+            authCommandService.checkCurrentPassword(memberId, req.getCurrentPassword());
         }
 
         // 소셜 계정 unlink
-        authService.unlinkSocialIfNeeded(member);
+        authCommandService.unlinkSocialIfNeeded(member);
 
         // soft delete 처리
         memberCommandService.deactivateMember(memberId);
 
         // 로그아웃 처리
-        authService.logout(memberId);
+        authCommandService.logout(memberId);
 
         return ResponseEntity.ok(ApiResponse.success(null));
     }
