@@ -93,8 +93,15 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            echo "AWS_REGION=$AWS_REGION"
+            echo "ECR_URI=$ECR_URI"
             cd /home/ec2-user/app
 
+            ls -l docker-compose.app.yml
+            ls -l docker-compose.flyway.yml
+
+            set -e
+            echo "Logging in to AWS ECR..."
             aws ecr get-login-password --region $AWS_REGION \
               | docker login --username AWS --password-stdin $ECR_URI
 
