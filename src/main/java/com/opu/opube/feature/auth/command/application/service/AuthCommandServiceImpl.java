@@ -39,6 +39,7 @@ public class AuthCommandServiceImpl implements AuthCommandService {
     private static final String ICON_PATH = "/icon/icon.png";
     private static final String EMAIL_VERIFY_PATH = "/api/v1/auth/verify";
     private static final String PASSWORD_RESET_PATH = "/reset-password";
+    private static final String TOKEN_TYPE_BEARER = "Bearer";
 
     private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
@@ -57,6 +58,27 @@ public class AuthCommandServiceImpl implements AuthCommandService {
         return "https://" + cloudfrontDomain + ICON_PATH;
     }
 
+    private LocalDateTime toLocalDateTime(Date date) {
+        return date.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
+    }
+
+    private String createAndSaveEmailVerifyToken(Member member) {
+        String token = emailTokenProvider.createEmailVerifyToken(member.getId());
+        Date issuedAt = emailTokenProvider.getIssuedAt(token);
+        member.updateEmailVerifyIssuedAt(toLocalDateTime(issuedAt));
+        return token;
+    }
+
+    private String buildEmailVerifyUrl(String backendBaseUrl, String token) {
+        return backendBaseUrl + EMAIL_VERIFY_PATH + "?token=" + token;
+    }
+
+    private String buildPasswordResetUrl(String frontendBaseUrl, String token) {
+        return frontendBaseUrl + PASSWORD_RESET_PATH + "?token=" + token;
+    }
+
     private TokenResponse createTokenResponse(Long memberId) {
         String accessToken = jwtTokenProvider.createAccessToken(memberId);
         String refreshToken = jwtTokenProvider.createRefreshToken(memberId);
@@ -69,7 +91,7 @@ public class AuthCommandServiceImpl implements AuthCommandService {
         return TokenResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
-                .tokenType("Bearer")
+                .tokenType(TOKEN_TYPE_BEARER)
                 .expiresInSeconds(accessExpSec)
                 .refreshExpiresInSeconds(refreshExpSec)
                 .build();
@@ -116,23 +138,15 @@ public class AuthCommandServiceImpl implements AuthCommandService {
                 .nickname(req.getNickname())
                 .nicknameTag(nicknameTag)
                 .authorization(Authorization.MEMBER)
-                .authProvider("local")
+                .authProvider(AuthProvider.LOCAL)
                 .emailVerified(false)
                 .webPushAgreed(webPushAgreed)
                 .build();
 
         Member saved = memberRepository.save(m);
 
-        String token = emailTokenProvider.createEmailVerifyToken(saved.getId());
-
-        Date issuedAt = emailTokenProvider.getIssuedAt(token);
-        saved.updateEmailVerifyIssuedAt(
-                issuedAt.toInstant()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime()
-        );
-
-        String verifyUrl = backendBaseUrl + EMAIL_VERIFY_PATH + "?token=" + token;
+        String token = createAndSaveEmailVerifyToken(saved);
+        String verifyUrl = buildEmailVerifyUrl(backendBaseUrl, token);
         String html = EmailHtmlBuilder.buildVerificationHtml(saved.getNickname(), verifyUrl, getIconUrl());
 
         sendEmailAfterCommit(saved.getEmail(), "OPU 이메일 인증", html, saved.getId(), "회원가입");
@@ -198,8 +212,7 @@ public class AuthCommandServiceImpl implements AuthCommandService {
                 ));
 
         if (m.getEmailVerifyIssuedAt() != null) {
-            LocalDateTime tokenIat =
-                    issuedAt.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+            LocalDateTime tokenIat = toLocalDateTime(issuedAt);
 
             if (tokenIat.isBefore(m.getEmailVerifyIssuedAt())) {
                 throw new BusinessException(ErrorCode.EMAIL_VERIFY_TOKEN_EXPIRED);
@@ -225,13 +238,9 @@ public class AuthCommandServiceImpl implements AuthCommandService {
         String token = emailTokenProvider.createPasswordResetToken(member.getId());
 
         Date issuedAt = emailTokenProvider.getIssuedAt(token);
-        member.updatePasswordResetIssuedAt(
-                issuedAt.toInstant()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime()
-        );
+        member.updatePasswordResetIssuedAt(toLocalDateTime(issuedAt));
 
-        String resetUrl = frontendBaseUrl + PASSWORD_RESET_PATH + "?token=" + token;
+        String resetUrl = buildPasswordResetUrl(frontendBaseUrl, token);
         String html = EmailHtmlBuilder.buildPasswordResetHtml(member.getNickname(), resetUrl, getIconUrl());
 
         sendEmailAfterCommit(member.getEmail(), "OPU 비밀번호 재설정 안내", html, member.getId(), "비밀번호 재설정");
@@ -256,8 +265,7 @@ public class AuthCommandServiceImpl implements AuthCommandService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
         if (member.getPasswordResetIssuedAt() != null) {
-            LocalDateTime tokenIat =
-                    issuedAt.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime();
+            LocalDateTime tokenIat = toLocalDateTime(issuedAt);
 
             if (tokenIat.isBefore(member.getPasswordResetIssuedAt())) {
                 throw new BusinessException(ErrorCode.PASSWORD_RESET_TOKEN_EXPIRED);
@@ -279,7 +287,7 @@ public class AuthCommandServiceImpl implements AuthCommandService {
         Long kakaoId = userInfo.getId();
         String providerId = String.valueOf(kakaoId);
 
-        Member member = memberRepository.findByAuthProviderAndProviderId("kakao", providerId)
+        Member member = memberRepository.findByAuthProviderAndProviderId(AuthProvider.KAKAO, providerId)
                 .orElse(null);
 
         if (member == null) {
@@ -308,7 +316,7 @@ public class AuthCommandServiceImpl implements AuthCommandService {
         String nicknameTag = nicknameTagGenerator.generate(req.getNickname());
         boolean webPushAgreed = Boolean.TRUE.equals(req.getWebPushAgreed());
 
-        if (memberRepository.findByAuthProviderAndProviderId("kakao", providerId).isPresent()) {
+        if (memberRepository.findByAuthProviderAndProviderId(AuthProvider.KAKAO, providerId).isPresent()) {
             throw new BusinessException(ErrorCode.DUPLICATE_PROVIDER_MEMBER, "이미 가입된 카카오 계정입니다.");
         }
 
@@ -318,7 +326,7 @@ public class AuthCommandServiceImpl implements AuthCommandService {
                 .nickname(req.getNickname())
                 .nicknameTag(nicknameTag)
                 .authorization(Authorization.MEMBER)
-                .authProvider("kakao")
+                .authProvider(AuthProvider.KAKAO)
                 .providerId(providerId)
                 .emailVerified(true)
                 .webPushAgreed(webPushAgreed)
@@ -342,16 +350,8 @@ public class AuthCommandServiceImpl implements AuthCommandService {
             throw new BusinessException(ErrorCode.EMAIL_ALREADY_VERIFIED);
         }
 
-        String token = emailTokenProvider.createEmailVerifyToken(member.getId());
-
-        Date issuedAt = emailTokenProvider.getIssuedAt(token);
-        member.updateEmailVerifyIssuedAt(
-                issuedAt.toInstant()
-                        .atZone(ZoneId.systemDefault())
-                        .toLocalDateTime()
-        );
-
-        String verifyUrl = backendBaseUrl + EMAIL_VERIFY_PATH + "?token=" + token;
+        String token = createAndSaveEmailVerifyToken(member);
+        String verifyUrl = buildEmailVerifyUrl(backendBaseUrl, token);
         String html = EmailHtmlBuilder.buildVerificationHtml(member.getNickname(), verifyUrl, getIconUrl());
 
         sendEmailAfterCommit(member.getEmail(), "OPU 이메일 인증", html, member.getId(), "이메일 인증 재전송");
