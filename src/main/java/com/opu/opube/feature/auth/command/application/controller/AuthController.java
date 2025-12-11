@@ -17,8 +17,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import com.opu.opube.config.AppProperties;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -35,12 +35,7 @@ import java.io.IOException;
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthCommandService authCommandService;
-
-    @Value("${app.frontend-base-url}")
-    private String frontendBaseUrl;
-
-    @Value("${app.backend-base-url}")
-    private String backendBaseUrl;
+    private final AppProperties appProperties;
 
     private static final String SIGNUP_EMAIL_CONFIRMED_PATH = "/signup/email-confirmed";
     private static final String SIGNUP_EMAIL_FAILED_PATH    = "/signup/email-failed";
@@ -79,7 +74,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<RegisterResponse>> register(
             @RequestBody @Valid RegisterRequest req) {
 
-        Long id = authCommandService.register(req, backendBaseUrl);
+        Long id = authCommandService.register(req, appProperties.getBackendBaseUrl());
 
         RegisterResponse response = RegisterResponse.builder()
                 .memberId(id)
@@ -152,7 +147,7 @@ public class AuthController {
             authCommandService.verifyEmail(token);
 
             String redirectUrl = UriComponentsBuilder
-                    .fromHttpUrl(frontendBaseUrl)
+                    .fromHttpUrl(appProperties.getFrontendBaseUrl())
                     .path(SIGNUP_EMAIL_CONFIRMED_PATH)
                     .build()
                     .toUriString();
@@ -168,7 +163,7 @@ public class AuthController {
             };
 
             String redirectUrl = UriComponentsBuilder
-                    .fromHttpUrl(frontendBaseUrl)
+                    .fromHttpUrl(appProperties.getFrontendBaseUrl())
                     .path(SIGNUP_EMAIL_FAILED_PATH)
                     .queryParam(REASON_PARAM, reason)
                     .build()
@@ -281,7 +276,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> requestPasswordReset(
             @RequestBody PasswordResetRequest req
     ) {
-        authCommandService.requestPasswordReset(req, frontendBaseUrl);
+        authCommandService.requestPasswordReset(req, appProperties.getFrontendBaseUrl());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
@@ -342,7 +337,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> resendVerificationEmail(
             @RequestBody ResendVerificationEmailRequest req
     ) {
-        authCommandService.resendVerificationEmail(req.getEmail(), backendBaseUrl);
+        authCommandService.resendVerificationEmail(req.getEmail(), appProperties.getBackendBaseUrl());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
