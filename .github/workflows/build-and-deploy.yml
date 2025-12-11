@@ -93,22 +93,21 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             export IMAGE_TAG=${{ env.IMAGE_TAG }}
-            
+
             cd /home/ec2-user/app
-            
+
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
               | docker login --username AWS --password-stdin ${{ secrets.ECR_URI }}
 
             sed -i "s#image: .*#image: ${{ secrets.ECR_URI }}:IMAGE_TAG#g" docker-compose.yml
-                    
+
             docker-compose -f docker-compose.app.yml up -d
 
-#           Flyway 조건 실행
             if [ "$MIGRATION_CHANGED" = "true" ]; then
               echo "Flyway migration detected. Running migration..."
               docker-compose -f docker-compose.flyway.yml run --rm flyway
             else
               echo "No Flyway migration changes. Skipping."
             fi
-            
+
             docker image prune -f --filter until=72h
