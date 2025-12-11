@@ -8,6 +8,7 @@ import com.opu.opube.feature.auth.command.domain.service.AuthDomainService;
 import com.opu.opube.feature.auth.command.domain.service.NicknameTagGenerator;
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.member.command.domain.repository.MemberRepository;
+import com.opu.opube.feature.member.command.domain.service.MemberProfileDomainService;
 import com.opu.opube.feature.notification.command.application.service.NotificationMemberCleanupService;
 import com.opu.opube.feature.opu.command.application.service.OpuMemberCleanupService;
 import com.opu.opube.feature.todo.command.application.service.TodoMemberCleanupService;
@@ -23,8 +24,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     private final TodoMemberCleanupService todoMemberCleanupService;
     private final NotificationMemberCleanupService notificationMemberCleanupService;
     private final OpuMemberCleanupService opuMemberCleanupService;
-    private final AuthDomainService authDomainService;
-    private final NicknameTagGenerator nicknameTagGenerator;
+    private final MemberProfileDomainService memberProfileDomainService;
 
     @Override
     @Transactional
@@ -32,28 +32,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
-        String newNickname = req.getNickname();
-        String newBio = req.getBio();
-        String newProfileImageUrl = req.getProfileImageUrl();
-
-        if (newNickname != null && !newNickname.equals(member.getNickname())) {
-            authDomainService.validateNickname(newNickname);
-
-            String currentTag = member.getNicknameTag();
-
-            boolean conflict = memberRepository
-                    .existsByNicknameAndNicknameTag(
-                            newNickname, currentTag
-                    );
-
-            String finalTag = conflict
-                    ? nicknameTagGenerator.generate(newNickname)
-                    : currentTag;
-
-            member.updateNicknameAndTag(newNickname, finalTag);
-        }
-
-        member.updateProfile(newBio, newProfileImageUrl);
+        memberProfileDomainService.updateProfile(member, req);
 
         return MemberProfileResponse.from(member);
     }
