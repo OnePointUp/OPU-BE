@@ -8,12 +8,14 @@ import com.opu.opube.feature.member.command.application.dto.response.MemberProfi
 import com.opu.opube.feature.auth.command.domain.service.AuthDomainService;
 import com.opu.opube.feature.auth.command.domain.service.NicknameTagGenerator;
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
+import com.opu.opube.feature.member.command.domain.event.MemberDeactivatedEvent;
 import com.opu.opube.feature.member.command.domain.repository.MemberRepository;
 import com.opu.opube.feature.member.command.domain.service.MemberProfileDomainService;
 import com.opu.opube.feature.notification.command.application.service.NotificationMemberCleanupService;
 import com.opu.opube.feature.opu.command.application.service.OpuMemberCleanupService;
 import com.opu.opube.feature.todo.command.application.service.TodoMemberCleanupService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,11 +24,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class MemberCommandServiceImpl implements MemberCommandService {
 
     private final MemberRepository memberRepository;
-    private final TodoMemberCleanupService todoMemberCleanupService;
-    private final NotificationMemberCleanupService notificationMemberCleanupService;
-    private final OpuMemberCleanupService opuMemberCleanupService;
     private final MemberProfileDomainService memberProfileDomainService;
     private final AuthCommandService authCommandService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -67,16 +67,14 @@ public class MemberCommandServiceImpl implements MemberCommandService {
             authCommandService.checkCurrentPassword(memberId, currentPasswordOrNull);
         }
 
-        // 2) 소셜 계정 unlink (local 이면 내부에서 아무 것도 안 하도록 구현되어 있다고 가정)
+        // 2) 소셜 계정 unlink
         authCommandService.unlinkSocialIfNeeded(member);
 
         // 3) soft delete (개인정보 제거)
         member.deactivate();
 
-        // 4) 연관 데이터 정리
-        todoMemberCleanupService.deleteByMemberId(memberId);
-        notificationMemberCleanupService.deleteByMemberId(memberId);
-        opuMemberCleanupService.deleteByMemberId(memberId);
+        // 4) 이벤트 발행 (트랜잭션 안에서)
+        eventPublisher.publishEvent(new MemberDeactivatedEvent(memberId));
 
         // 5) Refresh Token 제거 (로그아웃)
         authCommandService.logout(memberId);
