@@ -4,6 +4,8 @@ import com.opu.opube.exception.BusinessException;
 import com.opu.opube.exception.ErrorCode;
 import com.opu.opube.feature.member.command.application.dto.request.UpdateMemberProfileRequest;
 import com.opu.opube.feature.member.command.application.dto.response.MemberProfileResponse;
+import com.opu.opube.feature.auth.command.domain.service.AuthDomainService;
+import com.opu.opube.feature.auth.command.domain.service.NicknameTagGenerator;
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.member.command.domain.repository.MemberRepository;
 import com.opu.opube.feature.notification.command.application.service.NotificationMemberCleanupService;
@@ -13,23 +15,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.concurrent.ThreadLocalRandom;
-
 @Service
 @RequiredArgsConstructor
 public class MemberCommandServiceImpl implements MemberCommandService {
-
-    private static final int NICKNAME_MIN_LENGTH = 2;
-    private static final int NICKNAME_MAX_LENGTH = 20;
-
-    private static final int TAG_MIN = 1000;
-    private static final int TAG_MAX = 10000;   // upper bound (exclusive)
-    private static final int TAG_GENERATE_ATTEMPTS = 5;
 
     private final MemberRepository memberRepository;
     private final TodoMemberCleanupService todoMemberCleanupService;
     private final NotificationMemberCleanupService notificationMemberCleanupService;
     private final OpuMemberCleanupService opuMemberCleanupService;
+    private final AuthDomainService authDomainService;
+    private final NicknameTagGenerator nicknameTagGenerator;
 
     @Override
     @Transactional
@@ -42,7 +37,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         String newProfileImageUrl = req.getProfileImageUrl();
 
         if (newNickname != null && !newNickname.equals(member.getNickname())) {
-            validateNickname(newNickname);
+            authDomainService.validateNickname(newNickname);
 
             String currentTag = member.getNicknameTag();
 
@@ -51,11 +46,9 @@ public class MemberCommandServiceImpl implements MemberCommandService {
                             newNickname, currentTag
                     );
 
-            String finalTag = currentTag;
-
-            if (conflict) {
-                finalTag = generateNicknameTag(newNickname); // 회원가입에서 쓰던 메서드 재사용
-            }
+            String finalTag = conflict
+                    ? nicknameTagGenerator.generate(newNickname)
+                    : currentTag;
 
             member.updateNicknameAndTag(newNickname, finalTag);
         }
@@ -90,30 +83,5 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         todoMemberCleanupService.deleteByMemberId(memberId);
         notificationMemberCleanupService.deleteByMemberId(memberId);
         opuMemberCleanupService.deleteByMemberId(memberId);
-    }
-
-    private void validateNickname(String nickname) {
-        if (nickname == null ||
-                nickname.length() < NICKNAME_MIN_LENGTH ||
-                nickname.length() > NICKNAME_MAX_LENGTH) {
-            throw new BusinessException(ErrorCode.INVALID_NICKNAME_LENGTH);
-        }
-    }
-
-    private String generateNicknameTag(String nickname) {
-        for (int i = 0; i < TAG_GENERATE_ATTEMPTS; i++) {
-            int num = ThreadLocalRandom.current().nextInt(TAG_MIN, TAG_MAX);
-            String tag = String.valueOf(num);
-
-            boolean exists = memberRepository.existsByNicknameAndNicknameTag(nickname, tag);
-            if (!exists) {
-                return tag;
-            }
-        }
-
-        throw new BusinessException(
-                ErrorCode.INTERNAL_SERVER_ERROR,
-                "닉네임 태그 생성에 실패했습니다."
-        );
     }
 }

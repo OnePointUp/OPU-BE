@@ -1,18 +1,20 @@
-package com.opu.opube.feature.auth.command.application.util;
+package com.opu.opube.feature.auth.command.domain.service;
 
 import com.opu.opube.exception.BusinessException;
 import com.opu.opube.exception.ErrorCode;
+import org.springframework.stereotype.Service;
 
 import java.util.regex.Pattern;
 
-public class AuthValidator {
+@Service
+public class AuthDomainService {
 
     private static final int NICKNAME_MIN_LENGTH = 2;
     private static final int NICKNAME_MAX_LENGTH = 20;
     private static final Pattern PASSWORD_PATTERN =
             Pattern.compile("^(?=.*[A-Za-z])(?=.*\\d)(?=.*[!@#$%^&*]).{8,}$");
 
-    public static void validatePasswordRule(String password) {
+    public void validatePassword(String password) {
         if (password == null) {
             throw new BusinessException(ErrorCode.INVALID_PASSWORD, "비밀번호를 입력해주세요.");
         }
@@ -22,7 +24,7 @@ public class AuthValidator {
         }
     }
 
-    public static void validateNickname(String nickname) {
+    public void validateNickname(String nickname) {
         if (nickname == null ||
                 nickname.length() < NICKNAME_MIN_LENGTH ||
                 nickname.length() > NICKNAME_MAX_LENGTH) {

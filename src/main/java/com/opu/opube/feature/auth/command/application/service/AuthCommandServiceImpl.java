@@ -10,8 +10,8 @@ import com.opu.opube.feature.auth.command.application.dto.response.KakaoLoginRes
 import com.opu.opube.feature.auth.command.application.dto.response.KakaoTokenResponse;
 import com.opu.opube.feature.auth.command.application.dto.response.KakaoUserInfoResponse;
 import com.opu.opube.feature.auth.command.application.dto.response.TokenResponse;
-import com.opu.opube.feature.auth.command.application.util.AuthValidator;
 import com.opu.opube.feature.auth.command.application.util.EmailHtmlBuilder;
+import com.opu.opube.feature.auth.command.domain.service.AuthDomainService;
 import com.opu.opube.feature.auth.command.domain.service.NicknameTagGenerator;
 import com.opu.opube.feature.auth.command.infrastructure.oauth.KakaoOAuthClient;
 import com.opu.opube.feature.member.command.domain.aggregate.AuthProvider;
@@ -48,6 +48,7 @@ public class AuthCommandServiceImpl implements AuthCommandService {
     private final RefreshTokenService refreshTokenService;
     private final KakaoOAuthClient kakaoOAuthClient;
     private final NicknameTagGenerator nicknameTagGenerator;
+    private final AuthDomainService authDomainService;
 
     @Value("${aws.s3.cloudfront-domain}")
     private String cloudfrontDomain;
@@ -99,8 +100,8 @@ public class AuthCommandServiceImpl implements AuthCommandService {
     @Override
     @Transactional
     public Long register(RegisterRequest req, String backendBaseUrl) {
-        AuthValidator.validatePasswordRule(req.getPassword());
-        AuthValidator.validateNickname(req.getNickname());
+        authDomainService.validatePassword(req.getPassword());
+        authDomainService.validateNickname(req.getNickname());
 
         String nicknameTag = nicknameTagGenerator.generate(req.getNickname());
         boolean webPushAgreed = Boolean.TRUE.equals(req.getWebPushAgreed());
@@ -263,7 +264,7 @@ public class AuthCommandServiceImpl implements AuthCommandService {
             }
         }
 
-        AuthValidator.validatePasswordRule(req.getNewPassword());
+        authDomainService.validatePassword(req.getNewPassword());
 
         member.changePassword(passwordEncoder.encode(req.getNewPassword()));
         member.updatePasswordResetIssuedAt(LocalDateTime.now());
@@ -302,7 +303,7 @@ public class AuthCommandServiceImpl implements AuthCommandService {
     public TokenResponse kakaoRegister(KakaoRegisterRequest req) {
         String providerId = req.getProviderId();
 
-        AuthValidator.validateNickname(req.getNickname());
+        authDomainService.validateNickname(req.getNickname());
 
         String nicknameTag = nicknameTagGenerator.generate(req.getNickname());
         boolean webPushAgreed = Boolean.TRUE.equals(req.getWebPushAgreed());
@@ -366,7 +367,7 @@ public class AuthCommandServiceImpl implements AuthCommandService {
             throw new BusinessException(ErrorCode.INVALID_PASSWORD, "기존 비밀번호가 일치하지 않습니다.");
         }
 
-        AuthValidator.validatePasswordRule(req.getNewPassword());
+        authDomainService.validatePassword(req.getNewPassword());
 
         member.changePassword(passwordEncoder.encode(req.getNewPassword()));
         refreshTokenService.delete(memberId);
