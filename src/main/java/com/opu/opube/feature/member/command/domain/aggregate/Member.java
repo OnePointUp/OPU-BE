@@ -107,6 +107,16 @@ public class Member {
         this.lastLogin = at;
     }
 
+    /** local(email/password) 계정인지 여부 */
+    public boolean isLocalAccount() {
+        return AuthProvider.LOCAL.equalsIgnoreCase(this.authProvider);
+    }
+
+    /** 소셜 계정인지 여부 (현재는 local 이 아닌 모든 경우) */
+    public boolean isSocialAccount() {
+        return !isLocalAccount();
+    }
+
     public void verifyEmail() {
         this.emailVerified = true;
     }

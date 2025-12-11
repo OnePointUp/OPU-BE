@@ -2,34 +2,26 @@ package com.opu.opube.feature.member.command.application.service;
 
 import com.opu.opube.exception.BusinessException;
 import com.opu.opube.exception.ErrorCode;
+import com.opu.opube.feature.auth.command.application.service.AuthCommandService;
 import com.opu.opube.feature.member.command.application.dto.request.UpdateMemberProfileRequest;
 import com.opu.opube.feature.member.command.application.dto.response.MemberProfileResponse;
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
+import com.opu.opube.feature.member.command.domain.event.MemberDeactivatedEvent;
 import com.opu.opube.feature.member.command.domain.repository.MemberRepository;
-import com.opu.opube.feature.notification.command.application.service.NotificationMemberCleanupService;
-import com.opu.opube.feature.opu.command.application.service.OpuMemberCleanupService;
-import com.opu.opube.feature.todo.command.application.service.TodoMemberCleanupService;
+import com.opu.opube.feature.member.command.domain.service.MemberProfileDomainService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 @RequiredArgsConstructor
 public class MemberCommandServiceImpl implements MemberCommandService {
 
-    private static final int NICKNAME_MIN_LENGTH = 2;
-    private static final int NICKNAME_MAX_LENGTH = 20;
-
-    private static final int TAG_MIN = 1000;
-    private static final int TAG_MAX = 10000;   // upper bound (exclusive)
-    private static final int TAG_GENERATE_ATTEMPTS = 5;
-
     private final MemberRepository memberRepository;
-    private final TodoMemberCleanupService todoMemberCleanupService;
-    private final NotificationMemberCleanupService notificationMemberCleanupService;
-    private final OpuMemberCleanupService opuMemberCleanupService;
+    private final MemberProfileDomainService memberProfileDomainService;
+    private final AuthCommandService authCommandService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -37,30 +29,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
-        String newNickname = req.getNickname();
-        String newBio = req.getBio();
-        String newProfileImageUrl = req.getProfileImageUrl();
-
-        if (newNickname != null && !newNickname.equals(member.getNickname())) {
-            validateNickname(newNickname);
-
-            String currentTag = member.getNicknameTag();
-
-            boolean conflict = memberRepository
-                    .existsByNicknameAndNicknameTag(
-                            newNickname, currentTag
-                    );
-
-            String finalTag = currentTag;
-
-            if (conflict) {
-                finalTag = generateNicknameTag(newNickname); // 회원가입에서 쓰던 메서드 재사용
-            }
-
-            member.updateNicknameAndTag(newNickname, finalTag);
-        }
-
-        member.updateProfile(newBio, newProfileImageUrl);
+        memberProfileDomainService.updateProfile(member, req);
 
         return MemberProfileResponse.from(member);
     }
@@ -77,7 +46,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
 
     @Override
     @Transactional
-    public void deactivateMember(Long memberId) {
+    public void deactivateMember(Long memberId, String currentPasswordOrNull) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
@@ -85,35 +54,24 @@ public class MemberCommandServiceImpl implements MemberCommandService {
             return; // 이미 탈퇴된 경우 멱등 처리
         }
 
+        // 1) local 계정이면 비밀번호 필수 + 검증
+        if (member.isLocalAccount()) {
+            if (currentPasswordOrNull == null || currentPasswordOrNull.isBlank()) {
+                throw new BusinessException(ErrorCode.VALIDATION_ERROR);
+            }
+            authCommandService.checkCurrentPassword(memberId, currentPasswordOrNull);
+        }
+
+        // 2) 소셜 계정 unlink
+        authCommandService.unlinkSocialIfNeeded(member);
+
+        // 3) soft delete (개인정보 제거)
         member.deactivate();
 
-        todoMemberCleanupService.deleteByMemberId(memberId);
-        notificationMemberCleanupService.deleteByMemberId(memberId);
-        opuMemberCleanupService.deleteByMemberId(memberId);
-    }
+        // 4) 이벤트 발행 (트랜잭션 안에서)
+        eventPublisher.publishEvent(new MemberDeactivatedEvent(memberId));
 
-    private void validateNickname(String nickname) {
-        if (nickname == null ||
-                nickname.length() < NICKNAME_MIN_LENGTH ||
-                nickname.length() > NICKNAME_MAX_LENGTH) {
-            throw new BusinessException(ErrorCode.INVALID_NICKNAME_LENGTH);
-        }
-    }
-
-    private String generateNicknameTag(String nickname) {
-        for (int i = 0; i < TAG_GENERATE_ATTEMPTS; i++) {
-            int num = ThreadLocalRandom.current().nextInt(TAG_MIN, TAG_MAX);
-            String tag = String.valueOf(num);
-
-            boolean exists = memberRepository.existsByNicknameAndNicknameTag(nickname, tag);
-            if (!exists) {
-                return tag;
-            }
-        }
-
-        throw new BusinessException(
-                ErrorCode.INTERNAL_SERVER_ERROR,
-                "닉네임 태그 생성에 실패했습니다."
-        );
+        // 5) Refresh Token 제거 (로그아웃)
+        authCommandService.logout(memberId);
     }
 }

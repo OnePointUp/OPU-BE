@@ -8,7 +8,7 @@ import com.opu.opube.feature.auth.command.application.dto.response.KakaoLoginRes
 import com.opu.opube.feature.auth.command.application.dto.response.RegisterResponse;
 import com.opu.opube.feature.auth.command.application.dto.response.TokenResponse;
 import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
-import com.opu.opube.feature.auth.command.application.service.AuthService;
+import com.opu.opube.feature.auth.command.application.service.AuthCommandService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -17,9 +17,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import com.opu.opube.config.AppProperties;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -35,10 +34,8 @@ import java.io.IOException;
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
 public class AuthController {
-    private final AuthService authService;
-
-    @Value("${app.frontend-base-url}")
-    private String frontendBaseUrl;   // ← 여기로 설정값 주입
+    private final AuthCommandService authCommandService;
+    private final AppProperties appProperties;
 
     private static final String SIGNUP_EMAIL_CONFIRMED_PATH = "/signup/email-confirmed";
     private static final String SIGNUP_EMAIL_FAILED_PATH    = "/signup/email-failed";
@@ -46,8 +43,6 @@ public class AuthController {
     private static final String REASON_PARAM   = "reason";
     private static final String REASON_EXPIRED = "expired";
     private static final String REASON_INVALID = "invalid";
-
-    String backendBaseUrl = "http://localhost:8080";
 
 
     // 회원가입 이메일 발송
@@ -79,7 +74,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<RegisterResponse>> register(
             @RequestBody @Valid RegisterRequest req) {
 
-        Long id = authService.register(req, backendBaseUrl);
+        Long id = authCommandService.register(req, appProperties.getBackendBaseUrl());
 
         RegisterResponse response = RegisterResponse.builder()
                 .memberId(id)
@@ -118,7 +113,7 @@ public class AuthController {
     })
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<TokenResponse>> login(@RequestBody @Valid LoginRequest req) {
-        TokenResponse tokens = authService.login(req.getEmail(), req.getPassword());
+        TokenResponse tokens = authCommandService.login(req.getEmail(), req.getPassword());
         return ResponseEntity.ok(ApiResponse.success(tokens));
     }
 
@@ -149,10 +144,10 @@ public class AuthController {
     ) throws IOException {
 
         try {
-            authService.verifyEmail(token);
+            authCommandService.verifyEmail(token);
 
             String redirectUrl = UriComponentsBuilder
-                    .fromHttpUrl(frontendBaseUrl)
+                    .fromHttpUrl(appProperties.getFrontendBaseUrl())
                     .path(SIGNUP_EMAIL_CONFIRMED_PATH)
                     .build()
                     .toUriString();
@@ -168,7 +163,7 @@ public class AuthController {
             };
 
             String redirectUrl = UriComponentsBuilder
-                    .fromHttpUrl(frontendBaseUrl)
+                    .fromHttpUrl(appProperties.getFrontendBaseUrl())
                     .path(SIGNUP_EMAIL_FAILED_PATH)
                     .queryParam(REASON_PARAM, reason)
                     .build()
@@ -200,7 +195,7 @@ public class AuthController {
     })
     @PostMapping("/refresh")
     public ResponseEntity<ApiResponse<TokenResponse>> refresh(@RequestBody @Valid RefreshTokenRequest req) {
-        TokenResponse tokenResponse = authService.refreshToken(req);
+        TokenResponse tokenResponse = authCommandService.refreshToken(req);
         return ResponseEntity.ok(ApiResponse.success(tokenResponse));
     }
 
@@ -230,7 +225,7 @@ public class AuthController {
             @RequestParam String code
     ) {
         return ResponseEntity.ok(
-                ApiResponse.success(authService.kakaoLogin(code))
+                ApiResponse.success(authCommandService.kakaoLogin(code))
         );
     }
 
@@ -259,7 +254,7 @@ public class AuthController {
             @RequestBody @Valid KakaoRegisterRequest req
     ) {
         return ResponseEntity.ok(
-                ApiResponse.success(authService.kakaoRegister(req))
+                ApiResponse.success(authCommandService.kakaoRegister(req))
         );
     }
 
@@ -281,7 +276,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> requestPasswordReset(
             @RequestBody PasswordResetRequest req
     ) {
-        authService.requestPasswordReset(req, frontendBaseUrl);
+        authCommandService.requestPasswordReset(req, appProperties.getFrontendBaseUrl());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
@@ -309,7 +304,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> resetPassword(
             @RequestBody PasswordResetConfirmRequest req
     ) {
-        authService.resetPassword(req);
+        authCommandService.resetPassword(req);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
@@ -342,7 +337,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> resendVerificationEmail(
             @RequestBody ResendVerificationEmailRequest req
     ) {
-        authService.resendVerificationEmail(req.getEmail(), backendBaseUrl);
+        authCommandService.resendVerificationEmail(req.getEmail(), appProperties.getBackendBaseUrl());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
@@ -373,7 +368,7 @@ public class AuthController {
             @AuthenticationPrincipal MemberPrincipal principal
     ) {
         Long memberId = principal.getMemberId();
-        authService.changePassword(memberId, req);
+        authCommandService.changePassword(memberId, req);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
@@ -402,7 +397,7 @@ public class AuthController {
             @AuthenticationPrincipal MemberPrincipal principal,
             @RequestBody @Valid PasswordCheckRequest req
     ) {
-        authService.checkCurrentPassword(principal.getMemberId(), req.getPassword());
+        authCommandService.checkCurrentPassword(principal.getMemberId(), req.getPassword());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
@@ -432,7 +427,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<Void>> logout(
             @AuthenticationPrincipal MemberPrincipal principal
     ) {
-        authService.logout(principal.getMemberId());
+        authCommandService.logout(principal.getMemberId());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 
@@ -459,7 +454,7 @@ public class AuthController {
     public ResponseEntity<ApiResponse<EmailVerifyStatusResponse>> getEmailVerifyStatus(
             @RequestParam String email
     ) {
-        boolean verified = authService.isEmailVerified(email);
+        boolean verified = authCommandService.isEmailVerified(email);
 
         EmailVerifyStatusResponse body = EmailVerifyStatusResponse.builder()
                 .verified(verified)
