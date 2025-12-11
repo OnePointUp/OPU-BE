@@ -15,7 +15,7 @@ public class NotificationMemberDeactivatedListener {
 
     private final NotificationMemberCleanupService notificationMemberCleanupService;
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void handle(MemberDeactivatedEvent event) {
         Long memberId = event.memberId();
         log.info("[NOTIFICATION] MemberDeactivatedEvent received. memberId={}", memberId);

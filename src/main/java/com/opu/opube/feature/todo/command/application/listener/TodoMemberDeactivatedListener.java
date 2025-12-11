@@ -15,7 +15,7 @@ public class TodoMemberDeactivatedListener {
 
     private final TodoMemberCleanupService todoMemberCleanupService;
 
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @TransactionalEventListener(phase = TransactionPhase.BEFORE_COMMIT)
     public void handle(MemberDeactivatedEvent event) {
         Long memberId = event.memberId();
         log.info("[TODO] MemberDeactivatedEvent received. memberId={}", memberId);
