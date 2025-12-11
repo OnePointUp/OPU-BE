@@ -1,13 +1,5 @@
 package com.opu.opube.feature.member.command.domain.event;
 
-import lombok.Getter;
+public record MemberDeactivatedEvent(Long memberId) {
 
-@Getter
-public class MemberDeactivatedEvent {
-
-    private final Long memberId;
-
-    public MemberDeactivatedEvent(Long memberId) {
-        this.memberId = memberId;
-    }
 }
