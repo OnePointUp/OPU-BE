@@ -2,6 +2,7 @@ package com.opu.opube.feature.member.command.application.service;
 
 import com.opu.opube.exception.BusinessException;
 import com.opu.opube.exception.ErrorCode;
+import com.opu.opube.feature.auth.command.application.service.AuthCommandService;
 import com.opu.opube.feature.member.command.application.dto.request.UpdateMemberProfileRequest;
 import com.opu.opube.feature.member.command.application.dto.response.MemberProfileResponse;
 import com.opu.opube.feature.auth.command.domain.service.AuthDomainService;
@@ -25,6 +26,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     private final NotificationMemberCleanupService notificationMemberCleanupService;
     private final OpuMemberCleanupService opuMemberCleanupService;
     private final MemberProfileDomainService memberProfileDomainService;
+    private final AuthCommandService authCommandService;
 
     @Override
     @Transactional
@@ -49,7 +51,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
 
     @Override
     @Transactional
-    public void deactivateMember(Long memberId) {
+    public void deactivateMember(Long memberId, String currentPasswordOrNull) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.MEMBER_NOT_FOUND));
 
@@ -57,10 +59,26 @@ public class MemberCommandServiceImpl implements MemberCommandService {
             return; // 이미 탈퇴된 경우 멱등 처리
         }
 
+        // 1) local 계정이면 비밀번호 필수 + 검증
+        if (member.isLocalAccount()) {
+            if (currentPasswordOrNull == null || currentPasswordOrNull.isBlank()) {
+                throw new BusinessException(ErrorCode.VALIDATION_ERROR);
+            }
+            authCommandService.checkCurrentPassword(memberId, currentPasswordOrNull);
+        }
+
+        // 2) 소셜 계정 unlink (local 이면 내부에서 아무 것도 안 하도록 구현되어 있다고 가정)
+        authCommandService.unlinkSocialIfNeeded(member);
+
+        // 3) soft delete (개인정보 제거)
         member.deactivate();
 
+        // 4) 연관 데이터 정리
         todoMemberCleanupService.deleteByMemberId(memberId);
         notificationMemberCleanupService.deleteByMemberId(memberId);
         opuMemberCleanupService.deleteByMemberId(memberId);
+
+        // 5) Refresh Token 제거 (로그아웃)
+        authCommandService.logout(memberId);
     }
 }
