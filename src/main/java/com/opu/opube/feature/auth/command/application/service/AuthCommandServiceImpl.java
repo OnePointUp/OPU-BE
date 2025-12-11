@@ -12,7 +12,8 @@ import com.opu.opube.feature.auth.command.application.dto.response.KakaoUserInfo
 import com.opu.opube.feature.auth.command.application.dto.response.TokenResponse;
 import com.opu.opube.feature.auth.command.application.util.AuthValidator;
 import com.opu.opube.feature.auth.command.application.util.EmailHtmlBuilder;
-import com.opu.opube.feature.auth.command.config.KakaoOAuthProperties;
+import com.opu.opube.feature.auth.command.domain.service.NicknameTagGenerator;
+import com.opu.opube.feature.auth.command.infrastructure.oauth.KakaoOAuthClient;
 import com.opu.opube.feature.member.command.domain.aggregate.AuthProvider;
 import com.opu.opube.feature.member.command.domain.aggregate.Authorization;
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
@@ -20,24 +21,15 @@ import com.opu.opube.feature.member.command.domain.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.util.StringUtils;
-import org.springframework.web.reactive.function.BodyInserters;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
-import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 @RequiredArgsConstructor
@@ -54,29 +46,14 @@ public class AuthCommandServiceImpl implements AuthCommandService {
     private final JwtTokenProvider jwtTokenProvider;
     private final EmailService emailService;
     private final RefreshTokenService refreshTokenService;
-    private final KakaoOAuthProperties kakaoProps;
-    private final WebClient webClient;
+    private final KakaoOAuthClient kakaoOAuthClient;
+    private final NicknameTagGenerator nicknameTagGenerator;
 
     @Value("${aws.s3.cloudfront-domain}")
     private String cloudfrontDomain;
 
     private String getIconUrl() {
         return "https://" + cloudfrontDomain + ICON_PATH;
-    }
-
-    private String generateNicknameTag(String nickname) {
-        for (int i = 0; i < 5; i++) {
-            int num = ThreadLocalRandom.current().nextInt(1000, 10000);
-            String tag = String.valueOf(num);
-            boolean exists = memberRepository.existsByNicknameAndNicknameTag(nickname, tag);
-            if (!exists) {
-                return tag;
-            }
-        }
-        throw new BusinessException(
-                ErrorCode.INTERNAL_SERVER_ERROR,
-                "닉네임 태그 생성에 실패했습니다."
-        );
     }
 
     private TokenResponse createTokenResponse(Long memberId) {
@@ -125,7 +102,7 @@ public class AuthCommandServiceImpl implements AuthCommandService {
         AuthValidator.validatePasswordRule(req.getPassword());
         AuthValidator.validateNickname(req.getNickname());
 
-        String nicknameTag = generateNicknameTag(req.getNickname());
+        String nicknameTag = nicknameTagGenerator.generate(req.getNickname());
         boolean webPushAgreed = Boolean.TRUE.equals(req.getWebPushAgreed());
 
         if (memberRepository.existsByEmail(req.getEmail())) {
@@ -296,8 +273,8 @@ public class AuthCommandServiceImpl implements AuthCommandService {
     @Override
     @Transactional(readOnly = true)
     public KakaoLoginResponse kakaoLogin(String code) {
-        KakaoTokenResponse tokenResponse = requestKakaoToken(code);
-        KakaoUserInfoResponse userInfo = requestKakaoUserInfo(tokenResponse.getAccessToken());
+        KakaoTokenResponse tokenResponse = kakaoOAuthClient.requestToken(code);
+        KakaoUserInfoResponse userInfo = kakaoOAuthClient.requestUserInfo(tokenResponse.getAccessToken());
         Long kakaoId = userInfo.getId();
         String providerId = String.valueOf(kakaoId);
 
@@ -327,7 +304,7 @@ public class AuthCommandServiceImpl implements AuthCommandService {
 
         AuthValidator.validateNickname(req.getNickname());
 
-        String nicknameTag = generateNicknameTag(req.getNickname());
+        String nicknameTag = nicknameTagGenerator.generate(req.getNickname());
         boolean webPushAgreed = Boolean.TRUE.equals(req.getWebPushAgreed());
 
         if (memberRepository.findByAuthProviderAndProviderId("kakao", providerId).isPresent()) {
@@ -349,61 +326,6 @@ public class AuthCommandServiceImpl implements AuthCommandService {
         Member saved = memberRepository.save(newMember);
 
         return createTokenResponse(saved.getId());
-    }
-
-    private KakaoTokenResponse requestKakaoToken(String code) {
-        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
-        form.add("grant_type", "authorization_code");
-        form.add("client_id", kakaoProps.getClientId());
-        form.add("redirect_uri", kakaoProps.getRedirectUri());
-        form.add("code", code);
-
-        if (StringUtils.hasText(kakaoProps.getClientSecret())) {
-            form.add("client_secret", kakaoProps.getClientSecret());
-        }
-
-        KakaoTokenResponse tokenResponse = webClient.post()
-                .uri(kakaoProps.getTokenUri())
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(BodyInserters.fromFormData(form))
-                .retrieve()
-                .onStatus(HttpStatusCode::isError, clientResponse ->
-                        clientResponse.bodyToMono(String.class)
-                                .map(body -> new BusinessException(
-                                        ErrorCode.OAUTH_LOGIN_FAILED,
-                                        "카카오 토큰 발급 실패: " + body
-                                ))
-                )
-                .bodyToMono(KakaoTokenResponse.class)
-                .block();
-
-        if (tokenResponse == null || !StringUtils.hasText(tokenResponse.getAccessToken())) {
-            throw new BusinessException(ErrorCode.OAUTH_LOGIN_FAILED, "카카오 토큰 발급에 실패했습니다.");
-        }
-
-        return tokenResponse;
-    }
-
-    private KakaoUserInfoResponse requestKakaoUserInfo(String accessToken) {
-        KakaoUserInfoResponse userInfo = webClient.get()
-                .uri(kakaoProps.getUserInfoUri())
-                .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
-                .retrieve()
-                .onStatus(HttpStatusCode::isError, clientResponse ->
-                        clientResponse.bodyToMono(String.class)
-                                .map(body -> new BusinessException(
-                                        ErrorCode.OAUTH_LOGIN_FAILED,
-                                        "카카오 사용자 정보 조회 실패: " + body
-                                ))
-                )
-                .bodyToMono(KakaoUserInfoResponse.class)
-                .block();
-
-        if (userInfo == null || userInfo.getId() == null) {
-            throw new BusinessException(ErrorCode.OAUTH_LOGIN_FAILED, "카카오 사용자 정보 조회에 실패했습니다.");
-        }
-
-        return userInfo;
     }
 
     @Override
@@ -487,25 +409,7 @@ public class AuthCommandServiceImpl implements AuthCommandService {
         }
 
         if (AuthProvider.KAKAO.equalsIgnoreCase(provider)) {
-            unlinkKakao(providerId);
-        }
-    }
-
-    private void unlinkKakao(String providerId) {
-        try {
-            webClient.post()
-                    .uri(kakaoProps.getUnlinkUri())
-                    .header(HttpHeaders.AUTHORIZATION, "KakaoAK " + kakaoProps.getAdminKey())
-                    .body(BodyInserters
-                            .fromFormData("target_id_type", "user_id")
-                            .with("target_id", providerId))
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .block();
-
-            log.info("카카오 계정 unlink 성공. providerId={}", providerId);
-        } catch (Exception e) {
-            log.warn("카카오 계정 unlink 실패. providerId={}", providerId, e);
+            kakaoOAuthClient.unlink(providerId);
         }
     }
 }
