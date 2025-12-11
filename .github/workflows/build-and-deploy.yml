@@ -2,9 +2,7 @@ name: Build & Deploy
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ deploy/172 ]
+    branches: [ main, deploy/172 ]
 
 jobs:
   build-and-deploy:
