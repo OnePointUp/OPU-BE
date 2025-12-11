@@ -13,5 +13,13 @@ public class AppProperties {
 
     private String frontendBaseUrl;
     private String backendBaseUrl;
+    
+    private S3 s3 = new S3();
+    
+    @Getter
+    @Setter
+    public static class S3 {
+        private String cloudfrontDomain;
+    }
 }
 
