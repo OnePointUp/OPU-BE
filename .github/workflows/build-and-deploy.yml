@@ -85,12 +85,12 @@ jobs:
       - name: Deploy on EC2
         uses: appleboy/ssh-action@v0.1.6
         env:
-          image: ${{ secrets.ECR_URI }}:${{ env.IMAGE_TAG }}
+          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          MIGRATION_CHANGED: ${{ steps.migration.outputs.migration_changed }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          # aws 권한 받을 시 삭제
           script: |
             export IMAGE_TAG=${{ env.IMAGE_TAG }}
             
@@ -99,13 +99,12 @@ jobs:
             aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
               | docker login --username AWS --password-stdin ${{ secrets.ECR_URI }}
 
-            TAG=${{ env.IMAGE_TAG }}
-            sed -i "s#image: .*#image: ${{ secrets.ECR_URI }}:$TAG#g" docker-compose.yml
+            sed -i "s#image: .*#image: ${{ secrets.ECR_URI }}:IMAGE_TAG#g" docker-compose.yml
                     
             docker-compose -f docker-compose.app.yml up -d
 
 #           Flyway 조건 실행
-            if [ "${{ steps.migration.outputs.migration_changed }}" = "true" ]; then
+            if [ "$MIGRATION_CHANGED" = "true" ]; then
               echo "Flyway migration detected. Running migration..."
               docker-compose -f docker-compose.flyway.yml run --rm flyway
             else
