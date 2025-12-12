@@ -2,7 +2,6 @@ package com.opu.opube.feature.notification.query.controller;
 
 import com.opu.opube.common.dto.ApiResponse;
 import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
-import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.member.query.service.MemberQueryService;
 import com.opu.opube.feature.notification.command.domain.repository.WebPushSubscriptionRepository;
 import com.opu.opube.feature.notification.query.dto.WebPushStatusResponse;
@@ -26,9 +25,7 @@ public class WebPushStatusController {
     ) {
         Long memberId = principal.getMemberId();
 
-        Member member = memberQueryService.getMember(memberId);
-
-        boolean agreed = member.isWebPushAgreed();
+        boolean agreed = memberQueryService.getWebPushAgreed(memberId);
         boolean hasSubscription = subscriptionRepository.existsByMemberId(memberId);
 
         return ApiResponse.success(
