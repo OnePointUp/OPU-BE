@@ -2,6 +2,7 @@ package com.opu.opube.feature.notification.query.controller;
 
 import com.opu.opube.common.dto.ApiResponse;
 import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
+import com.opu.opube.feature.notification.query.dto.NotificationSettingListResponse;
 import com.opu.opube.feature.notification.query.dto.NotificationSettingResponse;
 import com.opu.opube.feature.notification.query.service.NotificationSettingQueryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,14 +52,11 @@ public class NotificationSettingQueryController {
                     description = "인증되지 않은 사용자 (UNAUTHORIZED_USER)"
             )
     })
-    @GetMapping
-    public ApiResponse<List<NotificationSettingResponse>> getMyNotificationSettings(
+    @GetMapping("/settings")
+    public ApiResponse<NotificationSettingListResponse> getMyNotificationSettings(
             @AuthenticationPrincipal MemberPrincipal principal
     ) {
         Long memberId = principal.getMemberId();
-        List<NotificationSettingResponse> res =
-                notificationSettingQueryService.getMySettings(memberId);
-
-        return ApiResponse.success(res);
+        return ApiResponse.success(notificationSettingQueryService.getMySettings(memberId));
     }
 }
