@@ -2,37 +2,33 @@ package com.opu.opube.feature.notification.query.controller;
 
 import com.opu.opube.common.dto.ApiResponse;
 import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
-import com.opu.opube.feature.member.command.domain.aggregate.Member;
-import com.opu.opube.feature.member.query.service.MemberQueryService;
-import com.opu.opube.feature.notification.command.domain.repository.WebPushSubscriptionRepository;
 import com.opu.opube.feature.notification.query.dto.WebPushStatusResponse;
+import com.opu.opube.feature.notification.query.service.WebPushStatusQueryService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/notifications/push")
+@Tag(
+        name = "Notification - WebPush Status",
+        description = "웹 푸시 알림 관련 조회 API"
+)
 public class WebPushStatusController {
 
-    private final MemberQueryService memberQueryService;
-    private final WebPushSubscriptionRepository subscriptionRepository;
+    private final WebPushStatusQueryService webPushStatusQueryService;
 
     @GetMapping("/status")
     public ApiResponse<WebPushStatusResponse> getStatus(
             @AuthenticationPrincipal MemberPrincipal principal
     ) {
         Long memberId = principal.getMemberId();
-
-        Member member = memberQueryService.getMember(memberId);
-
-        boolean agreed = member.isWebPushAgreed();
-        boolean hasSubscription = subscriptionRepository.existsByMemberId(memberId);
-
-        return ApiResponse.success(
-                new WebPushStatusResponse(agreed, hasSubscription)
-        );
+        WebPushStatusResponse res = webPushStatusQueryService.getStatus(memberId);
+        return ApiResponse.success(res);
     }
 }

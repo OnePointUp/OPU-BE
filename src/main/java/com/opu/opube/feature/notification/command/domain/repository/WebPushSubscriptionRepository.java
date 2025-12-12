@@ -1,14 +1,11 @@
 package com.opu.opube.feature.notification.command.domain.repository;
 
 import com.opu.opube.feature.notification.command.domain.aggregate.WebPushSubscription;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface WebPushSubscriptionRepository extends JpaRepository<WebPushSubscription, Long> {
+public interface WebPushSubscriptionRepository {
 
     Optional<WebPushSubscription> findByMemberIdAndEndpoint(Long memberId, String endpoint);
 
@@ -18,7 +15,9 @@ public interface WebPushSubscriptionRepository extends JpaRepository<WebPushSubs
 
     boolean existsByMemberId(Long memberId);
 
-    @Modifying
-    @Query("delete from WebPushSubscription w where w.member.id = :memberId")
     void deleteByMemberId(Long memberId);
+
+    WebPushSubscription save(WebPushSubscription subscription);
+
+    void delete(WebPushSubscription sub);
 }

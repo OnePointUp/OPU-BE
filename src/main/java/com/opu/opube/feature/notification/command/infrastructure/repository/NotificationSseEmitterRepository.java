@@ -1,6 +1,6 @@
 package com.opu.opube.feature.notification.command.infrastructure.repository;
 
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.util.List;
@@ -8,25 +8,30 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-@Component
+@Repository
 public class NotificationSseEmitterRepository {
 
-    private final Map<Long, List<SseEmitter>> store = new ConcurrentHashMap<>();
+    private final Map<Long, CopyOnWriteArrayList<SseEmitter>> store = new ConcurrentHashMap<>();
 
-    public SseEmitter add(Long memberId, SseEmitter emitter) {
-        store.computeIfAbsent(memberId, k -> new CopyOnWriteArrayList<>())
-                .add(emitter);
-        return emitter;
-    }
-
-    public List<SseEmitter> get(Long memberId) {
-        return store.getOrDefault(memberId, List.of());
+    public void add(Long memberId, SseEmitter emitter) {
+        store.computeIfAbsent(memberId, k -> new CopyOnWriteArrayList<>()).add(emitter);
     }
 
     public void remove(Long memberId, SseEmitter emitter) {
-        List<SseEmitter> emitters = store.get(memberId);
-        if (emitters != null) {
-            emitters.remove(emitter);
+        CopyOnWriteArrayList<SseEmitter> list = store.get(memberId);
+        if (list == null) return;
+
+        list.remove(emitter);
+        if (list.isEmpty()) {
+            store.remove(memberId);
         }
+    }
+
+    public List<SseEmitter> get(Long memberId) {
+        return store.getOrDefault(memberId, new CopyOnWriteArrayList<>());
+    }
+
+    public Map<Long, CopyOnWriteArrayList<SseEmitter>> snapshotAll() {
+        return store;
     }
 }

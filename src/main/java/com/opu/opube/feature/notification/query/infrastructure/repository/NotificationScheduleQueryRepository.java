@@ -69,7 +69,8 @@ public class NotificationScheduleQueryRepository {
 
     public List<TodoNotificationProjection> findTodosForReminder(
             LocalDate date,
-            LocalTime time,
+            LocalTime timeFrom,
+            LocalTime timeTo,
             Long todoTypeId,
             boolean todoDefaultEnabled,
             Long allTypeId,
@@ -90,7 +91,6 @@ public class NotificationScheduleQueryRepository {
                 ))
                 .from(todo)
                 .join(todo.member, member)
-                // ALL 설정
                 .leftJoin(allSetting).on(
                         allSetting.member.id.eq(member.id),
                         allSetting.notificationType.id.eq(allTypeId)
@@ -101,18 +101,19 @@ public class NotificationScheduleQueryRepository {
                 )
                 .where(
                         todo.deletedAt.isNull(),
-                        todo.completed.eq(false),
+                        todo.completed.isFalse(),
                         todo.scheduledDate.eq(date),
                         todo.scheduledTime.isNotNull(),
-                        todo.scheduledTime.eq(time),
 
+                        todo.scheduledTime.goe(timeFrom),
+                        todo.scheduledTime.lt(timeTo),
 
                         (
                                 allSetting.id.isNotNull().and(allSetting.enabled.isTrue())
                         ).or(
                                 allDefaultEnabled
                                         ? allSetting.id.isNull()
-                                        : allSetting.id.isNotNull().and(allSetting.enabled.isTrue())
+                                        : allSetting.enabled.isTrue()
                         ),
 
                         (
@@ -120,7 +121,7 @@ public class NotificationScheduleQueryRepository {
                         ).or(
                                 todoDefaultEnabled
                                         ? todoSetting.id.isNull()
-                                        : todoSetting.id.isNotNull().and(todoSetting.enabled.isTrue())
+                                        : todoSetting.enabled.isTrue()
                         )
                 )
                 .fetch()
