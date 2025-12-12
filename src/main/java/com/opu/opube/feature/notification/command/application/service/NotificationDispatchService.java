@@ -59,15 +59,20 @@ public class NotificationDispatchService {
 
     @Transactional
     public void dispatchTodoReminders(LocalTime now) {
+
         NotificationType todoType = getType(NotificationTypeCode.TODO);
         NotificationType allType = getType(NotificationTypeCode.ALL);
 
         LocalDate today = LocalDate.now();
-        LocalTime targetTime = now.truncatedTo(ChronoUnit.MINUTES).plusMinutes(10);
+
+        LocalTime base = now.truncatedTo(ChronoUnit.MINUTES);
+        LocalTime timeFrom = base.plusMinutes(10);
+        LocalTime timeTo = timeFrom.plusMinutes(1);
 
         var todos = scheduleQueryRepository.findTodosForReminder(
                 today,
-                targetTime,
+                timeFrom,
+                timeTo,
                 todoType.getId(),
                 todoType.getDefaultEnabled(),
                 allType.getId(),
