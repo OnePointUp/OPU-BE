@@ -109,7 +109,7 @@ public class OpuCommandController {
             )
     })
     @PatchMapping("/{opuId}/share")
-    public ResponseEntity<ApiResponse<OpuRegisterResponse>> share(
+    public ResponseEntity<ApiResponse<OpuRegisterResponse>> shareOpu(
             @AuthenticationPrincipal MemberPrincipal principal,
             @PathVariable Long opuId
     ) {

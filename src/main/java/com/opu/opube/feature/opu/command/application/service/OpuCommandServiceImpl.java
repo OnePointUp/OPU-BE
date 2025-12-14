@@ -20,7 +20,6 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class OpuCommandServiceImpl implements OpuCommandService {
 
     private final OpuRepository opuRepository;
@@ -119,7 +118,7 @@ public class OpuCommandServiceImpl implements OpuCommandService {
                         o.getRequiredMinutes(),
                         o.getCategory().getId()
                 ))
-                .limit(10) // 너무 길어지는 거 방지(원하는 숫자로)
+                .limit(10)
                 .toList();
     }
 
