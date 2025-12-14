@@ -96,7 +96,7 @@ services:
     container_name: opu-alertmanager-discord
     restart: always
     environment:
-        - DISCORD_WEBHOOK=https://discord.com/api/webhooks/1449442505417297964/6JCYgd5wGro-Seu8VHnDzp_zJVYoyKVW1nNYJ3Bi7mghh4Y1pUJe7WjBG9VWYE2UZse9
+      - DISCORD_WEBHOOK=${DISCORD_WEBHOOK}
 
 volumes:
   mariadb_data:
