@@ -50,7 +50,7 @@ app:
     refresh-exp-sec: 1209600
 
 
-  frontend-base-url: http://localhost:3000
+  frontend-base-url: https://opu-fe.vercel.app
   backend-base-url: http://localhost:8080
 
 kakao:
