@@ -12,4 +12,5 @@ public interface MemberQueryService {
     MemberProfileResponse getMyProfile(Long memberId);
     Member getMember(Long memberId);
     MemberSummaryResponse getMemberSummary(Long memberId);
+    boolean getWebPushAgreed(Long memberId);
 }

@@ -29,7 +29,7 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
 
     @Override
     @Transactional
-    public NotificationResponse sendNotification(
+    public void sendNotification(
             Long memberId,
             NotificationTypeCode typeCode,
             String title,
@@ -61,7 +61,6 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
 
         webPushNotificationService.sendToMember(memberId, title, message);
 
-        return dto;
     }
 
     @Override

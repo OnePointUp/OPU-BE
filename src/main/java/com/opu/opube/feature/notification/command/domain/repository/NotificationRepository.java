@@ -2,13 +2,12 @@ package com.opu.opube.feature.notification.command.domain.repository;
 
 import com.opu.opube.feature.notification.command.domain.aggregate.Notification;
 import io.lettuce.core.dynamic.annotation.Param;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.Optional;
 
-public interface NotificationRepository extends JpaRepository<Notification, Long> {
+public interface NotificationRepository {
 
     Optional<Notification> findByIdAndMember_Id(Long id, Long memberId);
 
@@ -20,4 +19,6 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Modifying
     @Query("delete from Notification n where n.member.id = :memberId")
     void deleteByMemberId(Long memberId);
+
+    Notification save(Notification notification);
 }

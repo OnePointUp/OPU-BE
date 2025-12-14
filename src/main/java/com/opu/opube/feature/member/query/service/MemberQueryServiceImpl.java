@@ -53,4 +53,11 @@ public class MemberQueryServiceImpl implements MemberQueryService {
                 .authProvider(member.getAuthProvider())
                 .build();
     }
+
+    @Override
+    public boolean getWebPushAgreed(Long memberId) {
+        return memberRepository.findById(memberId)
+                .map(Member::isWebPushAgreed)
+                .orElse(false);
+    }
 }
