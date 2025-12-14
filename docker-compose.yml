@@ -50,6 +50,56 @@ services:
     volumes:
       - redis_data:/data
 
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: opu-prometheus
+    restart: always
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/rules:/etc/prometheus/rules:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+    depends_on:
+      - alertmanager
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: opu-alertmanager
+    restart: always
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: opu-grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      TZ: Asia/Seoul
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+  alertmanager-discord:
+    image: benjojo/alertmanager-discord
+    container_name: opu-alertmanager-discord
+    restart: always
+    environment:
+        - DISCORD_WEBHOOK=https://discord.com/api/webhooks/1449442505417297964/6JCYgd5wGro-Seu8VHnDzp_zJVYoyKVW1nNYJ3Bi7mghh4Y1pUJe7WjBG9VWYE2UZse9
+
 volumes:
   mariadb_data:
   redis_data:
+  prometheus_data:
+  grafana_data:
