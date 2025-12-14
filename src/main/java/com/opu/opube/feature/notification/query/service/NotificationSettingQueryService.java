@@ -6,6 +6,7 @@ import com.opu.opube.feature.notification.query.dto.NotificationSettingResponse;
 import com.opu.opube.feature.notification.query.infrastructure.repository.NotificationSettingQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -16,6 +17,7 @@ public class NotificationSettingQueryService {
     private final NotificationSettingQueryRepository settingQueryRepository;
     private final MemberQueryService memberQueryService;
 
+    @Transactional(readOnly = true)
     public NotificationSettingListResponse getMySettings(Long memberId) {
 
         Boolean agreed = memberQueryService.getWebPushAgreed(memberId);

@@ -45,9 +45,8 @@ public class NotificationSseService {
                     .name("notification")
                     .data(dto);
 
-            try {
-                 event = event.id(String.valueOf(dto.getId()));
-            } catch (Exception ignored) {
+            if (dto.getId() != null) {
+                event = event.id(String.valueOf(dto.getId()));
             }
 
             safeSend(memberId, emitter, event);

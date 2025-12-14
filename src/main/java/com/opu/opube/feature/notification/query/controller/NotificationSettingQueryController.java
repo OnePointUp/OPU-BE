@@ -50,7 +50,7 @@ public class NotificationSettingQueryController {
                     description = "인증되지 않은 사용자 (UNAUTHORIZED_USER)"
             )
     })
-    @GetMapping("/settings")
+    @GetMapping
     public ApiResponse<NotificationSettingListResponse> getMyNotificationSettings(
             @AuthenticationPrincipal MemberPrincipal principal
     ) {
