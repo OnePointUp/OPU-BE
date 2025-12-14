@@ -5,6 +5,8 @@ import com.opu.opube.exception.ErrorCode;
 import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.member.query.service.MemberQueryService;
 import com.opu.opube.feature.opu.command.application.dto.request.OpuRegisterDto;
+import com.opu.opube.feature.opu.command.application.dto.response.OpuDuplicateItem;
+import com.opu.opube.feature.opu.command.application.dto.response.OpuRegisterResponse;
 import com.opu.opube.feature.opu.command.domain.aggregate.Opu;
 import com.opu.opube.feature.opu.command.domain.aggregate.OpuCategory;
 import com.opu.opube.feature.opu.command.domain.repository.OpuCategoryRepository;
@@ -18,7 +20,6 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class OpuCommandServiceImpl implements OpuCommandService {
 
     private final OpuRepository opuRepository;
@@ -27,8 +28,13 @@ public class OpuCommandServiceImpl implements OpuCommandService {
     private final TodoCommandService todoCommandService;
 
     @Override
-    public Long registerOpu(OpuRegisterDto dto, Long memberId) {
-        validateDuplicatePublicOpuOnRegister(dto);
+    @Transactional
+    public OpuRegisterResponse registerOpu(OpuRegisterDto dto, Long memberId) {
+
+        List<OpuDuplicateItem> duplicates = findDuplicatePublicOpuOnRegister(dto);
+        if (!duplicates.isEmpty()) {
+            return OpuRegisterResponse.duplicated(duplicates);
+        }
 
         Member member = memberQueryService.getMember(memberId);
         OpuCategory category = opuCategoryRepository.getOpuCategoryById(dto.getCategoryId())
@@ -36,15 +42,26 @@ public class OpuCommandServiceImpl implements OpuCommandService {
 
         Opu opu = Opu.toEntity(dto, member, category);
         Opu savedOpu = opuRepository.save(opu);
-        return savedOpu.getId();
+
+        return OpuRegisterResponse.created(savedOpu.getId());
     }
 
     @Override
     @Transactional
-    public void shareOpu(Long memberId, Long opuId) {
+    public OpuRegisterResponse shareOpu(Long memberId, Long opuId) {
         Opu opu = findOpuAndCheckOwnership(opuId, memberId);
-        validateDuplicatePublicOpuOnShare(opu);
+
+        if (Boolean.TRUE.equals(opu.getIsShared())) {
+            return OpuRegisterResponse.created(opu.getId());
+        }
+
+        List<OpuDuplicateItem> duplicates = findDuplicatePublicOpuOnShare(opu);
+        if (!duplicates.isEmpty()) {
+            return OpuRegisterResponse.duplicated(duplicates);
+        }
+
         opu.share();
+        return OpuRegisterResponse.created(opu.getId());
     }
 
     @Override
@@ -80,37 +97,43 @@ public class OpuCommandServiceImpl implements OpuCommandService {
 
 
 
-    private void validateDuplicatePublicOpuCore(String title, Integer minutes, Long excludeOpuId) {
+    private List<OpuDuplicateItem> findDuplicatePublicOpuCore(
+            String title,
+            Integer minutes,
+            Long excludeOpuId
+    ) {
         String normalizedInput = normalizeTitle(title);
+        if (normalizedInput == null || normalizedInput.isBlank()) {
+            return List.of();
+        }
 
         List<Opu> candidates = opuRepository.findSharedByRequiredMinutes(minutes);
 
-        boolean isDuplicate = candidates.stream()
-                .filter(o -> !(excludeOpuId != null && o.getId().equals(excludeOpuId))) // 자기 자신은 건너뜀
-                .anyMatch(o -> normalizeTitle(o.getTitle()).equals(normalizedInput));
-
-        if (isDuplicate) {
-            throw new BusinessException(ErrorCode.DUPLICATE_OPU);
-        }
+        return candidates.stream()
+                .filter(o -> excludeOpuId == null || !o.getId().equals(excludeOpuId))
+                .filter(o -> normalizeTitle(o.getTitle()).equals(normalizedInput))
+                .map(o -> new OpuDuplicateItem(
+                        o.getId(),
+                        o.getTitle(),
+                        o.getRequiredMinutes(),
+                        o.getCategory().getId()
+                ))
+                .limit(10)
+                .toList();
     }
 
-    private void validateDuplicatePublicOpuOnRegister(OpuRegisterDto dto) {
+    private List<OpuDuplicateItem> findDuplicatePublicOpuOnRegister(OpuRegisterDto dto) {
         if (!Boolean.TRUE.equals(dto.getIsShared())) {
-            return;
+            return List.of();
         }
-        validateDuplicatePublicOpuCore(dto.getTitle(), dto.getRequiredMinutes(), null);
+        return findDuplicatePublicOpuCore(dto.getTitle(), dto.getRequiredMinutes(), null);
     }
 
-    private void validateDuplicatePublicOpuOnShare(Opu opu) {
+    private List<OpuDuplicateItem> findDuplicatePublicOpuOnShare(Opu opu) {
         if (Boolean.TRUE.equals(opu.getIsShared())) {
-            return;
+            return List.of();
         }
-
-        validateDuplicatePublicOpuCore(
-                opu.getTitle(),
-                opu.getRequiredMinutes(),
-                opu.getId()
-        );
+        return findDuplicatePublicOpuCore(opu.getTitle(), opu.getRequiredMinutes(), opu.getId());
     }
 
     private String normalizeTitle(String title) {

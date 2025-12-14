@@ -3,6 +3,7 @@ package com.opu.opube.feature.opu.command.application.controller;
 import com.opu.opube.common.dto.ApiResponse;
 import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
 import com.opu.opube.feature.opu.command.application.dto.request.OpuRegisterDto;
+import com.opu.opube.feature.opu.command.application.dto.response.OpuRegisterResponse;
 import com.opu.opube.feature.opu.command.application.service.OpuCommandService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -30,85 +31,94 @@ public class OpuCommandController {
     @Operation(
             summary = "OPU 생성",
             description = """
-                    새로운 OPU를 생성합니다.
-                    - isShared=true 인 경우, 공개 OPU 중 유사한 항목이 있는지 중복 검사 후 생성됩니다.
-                    """
-            ,
+                새로운 OPU를 생성합니다.
+                - isShared=true 인 경우, 공개 OPU 중 유사 항목이 있으면
+                  409 응답과 함께 추천 OPU 목록을 반환합니다.
+                """,
             security = @SecurityRequirement(name = "BearerAuth")
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "200",
-                    description = "OPU 생성 성공",
-                    content = @Content(schema = @Schema(implementation = Long.class))
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "400",
-                    description = "요청 값 검증 실패",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "404",
-                    description = "OPU 카테고리를 찾을 수 없음 (OPU_CATEGORY_NOT_FOUND)",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
+                    description = "OPU 생성 성공 (created=true)",
+                    content = @Content(
+                            schema = @Schema(implementation = OpuRegisterResponse.class)
+                    )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "409",
-                    description = "이미 유사한 OPU가 존재하는 경우 (DUPLICATE_OPU)",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
+                    description = "유사한 공개 OPU 존재 (created=false, duplicates 포함)",
+                    content = @Content(
+                            schema = @Schema(implementation = OpuRegisterResponse.class)
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "400",
+                    description = "요청 값 검증 실패"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "OPU 카테고리를 찾을 수 없음"
             )
     })
     @PostMapping
-    public ResponseEntity<ApiResponse<Long>> createOpu(
+    public ResponseEntity<ApiResponse<OpuRegisterResponse>> createOpu(
             @AuthenticationPrincipal MemberPrincipal memberPrincipal,
             @Valid @RequestBody OpuRegisterDto dto
     ) {
         Long memberId = memberPrincipal.getMemberId();
-        Long opuId = opuCommandService.registerOpu(dto, memberId);
+        OpuRegisterResponse result = opuCommandService.registerOpu(dto, memberId);
 
-        return ResponseEntity.ok(ApiResponse.success(opuId));
+        if (!result.created()) {
+            return ResponseEntity.status(409).body(ApiResponse.success(result));
+        }
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 
 
     @Operation(
             summary = "OPU 공개 처리",
             description = """
-                    비공개 OPU를 공개 상태로 전환합니다.
-                    - 본인이 소유한 OPU만 공개할 수 있습니다.
-                    - 공개 시, 기존 공개 OPU와 제목/소요시간 기준으로 유사한 OPU가 있는지 중복 검사합니다.
-                    """
-            ,
+                비공개 OPU를 공개 상태로 전환합니다.
+                - 유사한 공개 OPU가 있으면 409와 함께 추천 목록을 반환합니다.
+                """,
             security = @SecurityRequirement(name = "BearerAuth")
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "200",
-                    description = "공개 처리 성공",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "403",
-                    description = "해당 OPU에 대한 권한이 없음 (FORBIDDEN_OPU_ACCESS)",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
-            ),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(
-                    responseCode = "404",
-                    description = "OPU를 찾을 수 없음 (OPU_NOT_FOUND)",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
+                    description = "공개 처리 성공 (created=true)",
+                    content = @Content(
+                            schema = @Schema(implementation = OpuRegisterResponse.class)
+                    )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "409",
-                    description = "이미 유사한 공개 OPU가 존재하는 경우 (DUPLICATE_OPU)",
-                    content = @Content(schema = @Schema(implementation = ApiResponse.class))
+                    description = "유사한 공개 OPU 존재 (created=false)",
+                    content = @Content(
+                            schema = @Schema(implementation = OpuRegisterResponse.class)
+                    )
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "403",
+                    description = "해당 OPU에 대한 권한 없음"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "OPU를 찾을 수 없음"
             )
     })
     @PatchMapping("/{opuId}/share")
-    public ResponseEntity<ApiResponse<Void>> shareOpu(
-            @AuthenticationPrincipal(expression = "memberId") Long memberId,
+    public ResponseEntity<ApiResponse<OpuRegisterResponse>> shareOpu(
+            @AuthenticationPrincipal MemberPrincipal principal,
             @PathVariable Long opuId
     ) {
-        opuCommandService.shareOpu(memberId, opuId);
-        return ResponseEntity.ok(ApiResponse.success(null));
+        OpuRegisterResponse result = opuCommandService.shareOpu(principal.getMemberId(), opuId);
+
+        if (!result.created()) {
+            return ResponseEntity.status(409).body(ApiResponse.success(result));
+        }
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 
 
