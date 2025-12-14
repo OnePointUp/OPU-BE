@@ -3,6 +3,7 @@ package com.opu.opube.feature.opu.command.application.controller;
 import com.opu.opube.common.dto.ApiResponse;
 import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
 import com.opu.opube.feature.opu.command.application.dto.request.OpuRegisterDto;
+import com.opu.opube.feature.opu.command.application.dto.response.OpuRegisterResponse;
 import com.opu.opube.feature.opu.command.application.service.OpuCommandService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -59,14 +60,17 @@ public class OpuCommandController {
             )
     })
     @PostMapping
-    public ResponseEntity<ApiResponse<Long>> createOpu(
+    public ResponseEntity<ApiResponse<OpuRegisterResponse>> createOpu(
             @AuthenticationPrincipal MemberPrincipal memberPrincipal,
             @Valid @RequestBody OpuRegisterDto dto
     ) {
         Long memberId = memberPrincipal.getMemberId();
-        Long opuId = opuCommandService.registerOpu(dto, memberId);
+        OpuRegisterResponse result = opuCommandService.registerOpu(dto, memberId);
 
-        return ResponseEntity.ok(ApiResponse.success(opuId));
+        if (!result.created()) {
+            return ResponseEntity.status(409).body(ApiResponse.success(result));
+        }
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 
 
@@ -103,12 +107,16 @@ public class OpuCommandController {
             )
     })
     @PatchMapping("/{opuId}/share")
-    public ResponseEntity<ApiResponse<Void>> shareOpu(
-            @AuthenticationPrincipal(expression = "memberId") Long memberId,
+    public ResponseEntity<ApiResponse<OpuRegisterResponse>> share(
+            @AuthenticationPrincipal MemberPrincipal principal,
             @PathVariable Long opuId
     ) {
-        opuCommandService.shareOpu(memberId, opuId);
-        return ResponseEntity.ok(ApiResponse.success(null));
+        OpuRegisterResponse result = opuCommandService.shareOpu(principal.getMemberId(), opuId);
+
+        if (!result.created()) {
+            return ResponseEntity.status(409).body(ApiResponse.success(result));
+        }
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 
 
