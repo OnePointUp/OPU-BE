@@ -4,7 +4,6 @@ import lombok.Getter;
 
 @Getter
 public enum NotificationTypeCode {
-    ALL("ALL"),
     MORNING("MORNING"),
     EVENING("EVENING"),
     ROUTINE("ROUTINE"),
