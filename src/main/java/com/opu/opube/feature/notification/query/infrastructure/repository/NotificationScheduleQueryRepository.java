@@ -30,11 +30,10 @@ public class NotificationScheduleQueryRepository {
         QMember member = QMember.member;
         QMemberNotificationSetting setting = QMemberNotificationSetting.memberNotificationSetting;
 
-        BooleanExpression enabledCondition =
-                setting.id.isNotNull().and(setting.enabled.isTrue());
+        BooleanExpression condition = setting.id.isNotNull().and(setting.enabled.isTrue());
 
         if (defaultEnabled) {
-            enabledCondition = enabledCondition.or(setting.id.isNull());
+            condition = condition.or(setting.id.isNull());
         }
 
         return queryFactory
@@ -44,7 +43,7 @@ public class NotificationScheduleQueryRepository {
                         setting.member.id.eq(member.id),
                         setting.notificationType.id.eq(typeId)
                 )
-                .where(enabledWhenSettingExists.or(enabledWhenSettingMissing))
+                .where(condition)
                 .fetch();
     }
 
