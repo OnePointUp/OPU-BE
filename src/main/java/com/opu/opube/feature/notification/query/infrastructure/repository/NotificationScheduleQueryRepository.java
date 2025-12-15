@@ -30,11 +30,12 @@ public class NotificationScheduleQueryRepository {
         QMember member = QMember.member;
         QMemberNotificationSetting setting = QMemberNotificationSetting.memberNotificationSetting;
 
-        BooleanExpression enabledWhenSettingExists =
+        BooleanExpression enabledCondition =
                 setting.id.isNotNull().and(setting.enabled.isTrue());
 
-        BooleanExpression enabledWhenSettingMissing =
-                defaultEnabled ? setting.id.isNull() : null;
+        if (defaultEnabled) {
+            enabledCondition = enabledCondition.or(setting.id.isNull());
+        }
 
         return queryFactory
                 .select(member.id)
