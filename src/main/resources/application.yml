@@ -49,9 +49,8 @@ app:
     access-exp-sec: 1209600
     refresh-exp-sec: 1209600
 
-
-  frontend-base-url: https://opu-fe.vercel.app/
-  backend-base-url: http://localhost:8080
+  frontend-base-url: https://opu-fe.vercel.app
+  backend-base-url: http://ec2-13-209-4-254.ap-northeast-2.compute.amazonaws.com:8080
 
 kakao:
   oauth:

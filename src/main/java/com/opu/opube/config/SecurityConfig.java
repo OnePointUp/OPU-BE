@@ -50,7 +50,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/password/reset-request",
                                 "/api/v1/auth/kakao/**",
                                 "/actuator/**").permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS).permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
@@ -66,7 +66,8 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of(
                 "http://localhost:3000",
                 "http://localhost:63342",
-                "http://127.0.0.1:63342"
+                "http://127.0.0.1:63342",
+                "https://opu-fe.vercel.app"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
