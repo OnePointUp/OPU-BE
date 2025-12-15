@@ -1,0 +1,124 @@
+groups:
+  - name: opu-api-alerts
+    rules:
+
+      # 1) 인스턴스 DOWN (스크랩 자체가 안됨)
+      - alert: OpuApiDown
+        expr: up{job="opu-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "🚨 OPU API DOWN"
+          description: "Prometheus가 opu-api 타겟을 스크랩하지 못합니다. (up=0, 1m 지속)"
+
+      # 2) 5xx 에러 비율 (요청이 거의 없을 때 오탐 방지 위해 req rate 조건 추가)
+      - alert: High5xxErrorRate
+        expr: |
+          (
+            sum(rate(http_server_requests_seconds_count{job="opu-api", status=~"5.."}[5m]))
+            /
+            clamp_min(sum(rate(http_server_requests_seconds_count{job="opu-api"}[5m])), 1)
+          ) > 0.05
+          and
+          sum(rate(http_server_requests_seconds_count{job="opu-api"}[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "🚨 5xx 에러 비율 증가"
+          description: "최근 5분 5xx 비율이 5% 초과이며 트래픽도 존재합니다."
+
+      # 3) 4xx 비율 급증(클라이언트/인증/권한 이슈 감지) - 필요 없으면 삭제
+      - alert: High4xxErrorRate
+        expr: |
+          (
+            sum(rate(http_server_requests_seconds_count{job="opu-api", status=~"4.."}[10m]))
+            /
+            clamp_min(sum(rate(http_server_requests_seconds_count{job="opu-api"}[10m])), 1)
+          ) > 0.30
+          and
+          sum(rate(http_server_requests_seconds_count{job="opu-api"}[10m])) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "⚠️ 4xx 비율 증가"
+          description: "최근 10분 4xx 비율이 30% 초과입니다(인증/권한/요청 포맷 변화 가능)."
+
+      # 4) 응답 지연 p95 (히스토그램 bucket 기반)
+      - alert: HighLatencyP95
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (rate(http_server_requests_seconds_bucket{job="opu-api"}[5m]))
+          ) > 1.0
+          and
+          sum(rate(http_server_requests_seconds_count{job="opu-api"}[5m])) > 0.5
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "⚠️ 응답 지연(p95) 증가"
+          description: "최근 10분 p95 응답시간이 1.0s 초과입니다."
+
+      # 5) JVM 메모리 사용률 (Heap 중심으로 보고 싶으면 area=\"heap\"만 사용)
+      - alert: HighJvmMemoryUsage
+        expr: |
+          (
+            sum(jvm_memory_used_bytes{job="opu-api", area="heap"})
+            /
+            clamp_min(sum(jvm_memory_max_bytes{job="opu-api", area="heap"}), 1)
+          ) > 0.85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "⚠️ JVM Heap 메모리 높음"
+          description: "JVM heap 사용률이 85% 초과 상태가 10분 지속됩니다."
+
+      # 6) GC 멈춤 시간 증가(Stop-the-world 느낌 잡기)
+      - alert: HighGcPause
+        expr: |
+          rate(jvm_gc_pause_seconds_sum{job="opu-api"}[5m]) > 0.3
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "⚠️ GC Pause 증가"
+          description: "GC pause time/sec가 0.3s/s 초과 상태가 10분 지속됩니다."
+
+      # 7) DB 커넥션 풀 고갈 위험 (Hikari)
+      - alert: DbPoolAlmostExhausted
+        expr: |
+          (
+            max(hikaricp_connections_active{job="opu-api"})
+            /
+            clamp_min(max(hikaricp_connections_max{job="opu-api"}), 1)
+          ) > 0.90
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "🚨 DB 커넥션 풀 고갈 위험"
+          description: "Hikari active/max가 90% 초과 상태가 5분 지속됩니다."
+
+      # 8) 스레드 폭증(데드락/블로킹/스레드 누수 조짐)
+      - alert: HighJvmThreads
+        expr: jvm_threads_live_threads{job="opu-api"} > 300
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "⚠️ JVM live thread 증가"
+          description: "live threads가 300 초과 상태가 10분 지속됩니다."
+
+      # ---- 테스트용은 필요할 때만 잠깐 켜기 ----
+      # - alert: TestAlwaysFiring
+      #   expr: vector(1)
+      #   for: 10s
+      #   labels:
+      #     severity: test
+      #   annotations:
+      #     summary: "🧪 test"
+      #     description: "연동 테스트용"
