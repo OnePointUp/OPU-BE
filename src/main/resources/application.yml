@@ -50,7 +50,7 @@ app:
     refresh-exp-sec: 1209600
 
 
-  frontend-base-url: https://opu-fe.vercel.app
+  frontend-base-url: https://www.onepointup.site
   backend-base-url: http://ec2-13-209-4-254.ap-northeast-2.compute.amazonaws.com:8080
 
 kakao:
