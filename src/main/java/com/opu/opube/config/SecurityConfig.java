@@ -66,7 +66,9 @@ public class SecurityConfig {
                 "http://localhost:3000",
                 "http://localhost:63342",
                 "http://127.0.0.1:63342",
-                "https://opu-fe.vercel.app"
+                "https://opu-fe.vercel.app",
+                "https://www.onepointup.site",
+                "https://onepointup.site"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
