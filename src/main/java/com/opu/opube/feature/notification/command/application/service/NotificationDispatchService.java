@@ -30,8 +30,6 @@ public class NotificationDispatchService {
     public void dispatchTimeMatchedNotifications(List<NotificationTypeCode> typeCodes, LocalTime now) {
         LocalTime nowMin = now.truncatedTo(ChronoUnit.MINUTES);
 
-        NotificationType allType = getType(NotificationTypeCode.ALL);
-
         for (NotificationTypeCode code : typeCodes) {
             NotificationType type = getType(code);
 
@@ -39,8 +37,8 @@ public class NotificationDispatchService {
             if (!nowMin.equals(target)) continue;
 
             List<Long> memberIds = scheduleQueryRepository.findTargetMemberIdsForType(
-                    type.getId(), type.getDefaultEnabled(),
-                    allType.getId(), allType.getDefaultEnabled()
+                    type.getId(),
+                    type.getDefaultEnabled()
             );
 
             NotificationMessageFactory.NotificationMessage msg = messageFactory.create(code);
@@ -59,9 +57,7 @@ public class NotificationDispatchService {
 
     @Transactional
     public void dispatchTodoReminders(LocalTime now) {
-
         NotificationType todoType = getType(NotificationTypeCode.TODO);
-        NotificationType allType = getType(NotificationTypeCode.ALL);
 
         LocalDate today = LocalDate.now();
 
@@ -74,9 +70,7 @@ public class NotificationDispatchService {
                 timeFrom,
                 timeTo,
                 todoType.getId(),
-                todoType.getDefaultEnabled(),
-                allType.getId(),
-                allType.getDefaultEnabled()
+                todoType.getDefaultEnabled()
         );
 
         for (var todo : todos) {
@@ -93,13 +87,10 @@ public class NotificationDispatchService {
     @Transactional
     public void dispatchWeeklyRoutineReminder() {
         NotificationType routineType = getType(NotificationTypeCode.ROUTINE);
-        NotificationType allType = getType(NotificationTypeCode.ALL);
 
         List<Long> memberIds = scheduleQueryRepository.findTargetMemberIdsForType(
                 routineType.getId(),
-                routineType.getDefaultEnabled(),
-                allType.getId(),
-                allType.getDefaultEnabled()
+                routineType.getDefaultEnabled()
         );
 
         for (Long memberId : memberIds) {

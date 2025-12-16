@@ -5,6 +5,7 @@ import com.opu.opube.feature.notification.command.domain.aggregate.QMemberNotifi
 import com.opu.opube.feature.notification.query.dto.TodoNotificationProjection;
 import com.opu.opube.feature.notification.query.dto.TodoNotificationResponse;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -21,64 +22,52 @@ public class NotificationScheduleQueryRepository {
 
     private final JPAQueryFactory queryFactory;
 
-    public List<Long> findTargetMemberIdsForType(
-            Long typeId,
-            boolean defaultEnabled,
-            Long allTypeId,
-            boolean allDefaultEnabled
-    ) {
+    /**
+     * - setting 존재: enabled=true인 사람만
+     * - setting 없음: defaultEnabled=true면 포함, false면 제외
+     */
+    public List<Long> findTargetMemberIdsForType(Long typeId, boolean defaultEnabled) {
         QMember member = QMember.member;
         QMemberNotificationSetting setting = QMemberNotificationSetting.memberNotificationSetting;
-        QMemberNotificationSetting allSetting = new QMemberNotificationSetting("allSetting");
+
+        BooleanExpression condition = setting.id.isNotNull().and(setting.enabled.isTrue());
+
+        if (defaultEnabled) {
+            condition = condition.or(setting.id.isNull());
+        }
 
         return queryFactory
                 .select(member.id)
                 .from(member)
-                // ALL 설정 join
-                .leftJoin(allSetting).on(
-                        allSetting.member.id.eq(member.id),
-                        allSetting.notificationType.id.eq(allTypeId)
-                )
-                // 타입별 설정 join
                 .leftJoin(setting).on(
                         setting.member.id.eq(member.id),
                         setting.notificationType.id.eq(typeId)
                 )
-                .where(
-                        // ALL On 조건
-                        (
-                                allSetting.id.isNotNull().and(allSetting.enabled.isTrue())
-                        ).or(
-                                allDefaultEnabled
-                                        ? allSetting.id.isNull() // default = true
-                                        : allSetting.id.isNotNull().and(allSetting.enabled.isTrue())
-                        ),
-
-                        // 해당 타입 On 조건
-                        (
-                                setting.id.isNotNull().and(setting.enabled.isTrue())
-                        ).or(
-                                defaultEnabled
-                                        ? setting.id.isNull()
-                                        : setting.id.isNotNull().and(setting.enabled.isTrue())
-                        )
-                )
+                .where(condition)
                 .fetch();
     }
 
-
+    /**
+     * - todoSetting 존재: enabled=true인 사람만
+     * - todoSetting 없음: todoDefaultEnabled=true면 포함, false면 제외
+     */
     public List<TodoNotificationProjection> findTodosForReminder(
             LocalDate date,
             LocalTime timeFrom,
             LocalTime timeTo,
             Long todoTypeId,
-            boolean todoDefaultEnabled,
-            Long allTypeId,
-            boolean allDefaultEnabled
+            boolean todoDefaultEnabled
     ) {
         QMember member = QMember.member;
         QMemberNotificationSetting todoSetting = QMemberNotificationSetting.memberNotificationSetting;
-        QMemberNotificationSetting allSetting = new QMemberNotificationSetting("allSetting");
+
+        BooleanExpression todoEnabledCondition =
+                todoSetting.id.isNotNull().and(todoSetting.enabled.isTrue());
+
+        if (todoDefaultEnabled) {
+            todoEnabledCondition = todoEnabledCondition
+                    .or(todoSetting.id.isNull());
+        }
 
         return queryFactory
                 .select(Projections.constructor(
@@ -91,10 +80,6 @@ public class NotificationScheduleQueryRepository {
                 ))
                 .from(todo)
                 .join(todo.member, member)
-                .leftJoin(allSetting).on(
-                        allSetting.member.id.eq(member.id),
-                        allSetting.notificationType.id.eq(allTypeId)
-                )
                 .leftJoin(todoSetting).on(
                         todoSetting.member.id.eq(member.id),
                         todoSetting.notificationType.id.eq(todoTypeId)
@@ -104,25 +89,9 @@ public class NotificationScheduleQueryRepository {
                         todo.completed.isFalse(),
                         todo.scheduledDate.eq(date),
                         todo.scheduledTime.isNotNull(),
-
                         todo.scheduledTime.goe(timeFrom),
                         todo.scheduledTime.lt(timeTo),
-
-                        (
-                                allSetting.id.isNotNull().and(allSetting.enabled.isTrue())
-                        ).or(
-                                allDefaultEnabled
-                                        ? allSetting.id.isNull()
-                                        : allSetting.enabled.isTrue()
-                        ),
-
-                        (
-                                todoSetting.id.isNotNull().and(todoSetting.enabled.isTrue())
-                        ).or(
-                                todoDefaultEnabled
-                                        ? todoSetting.id.isNull()
-                                        : todoSetting.enabled.isTrue()
-                        )
+                        todoEnabledCondition
                 )
                 .fetch()
                 .stream()
