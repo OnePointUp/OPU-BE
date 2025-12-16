@@ -10,20 +10,19 @@ import com.opu.opube.feature.opu.command.domain.aggregate.QOpu;
 import com.opu.opube.feature.opu.command.domain.aggregate.QOpuCategory;
 import com.opu.opube.feature.opu.query.dto.request.OpuListFilterRequest;
 import com.opu.opube.feature.opu.query.dto.request.OpuSortOption;
-import com.opu.opube.feature.opu.query.dto.response.BlockedOpuSummaryResponse;
-import com.opu.opube.feature.opu.query.dto.response.OpuSummaryResponse;
-import com.opu.opube.feature.opu.query.dto.response.QBlockedOpuSummaryResponse;
-import com.opu.opube.feature.opu.query.dto.response.QOpuSummaryResponse;
+import com.opu.opube.feature.opu.query.dto.response.*;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
 import com.querydsl.jpa.JPAExpressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.expression.spel.ast.Projection;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -41,6 +40,7 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
     private final QBlockedOpu blockedOpu = QBlockedOpu.blockedOpu;
     private final QMemberOpuCounter opuCounter = QMemberOpuCounter.memberOpuCounter;
     private final QMember member = QMember.member;
+    private final QOpuCategory opuCategory = QOpuCategory.opuCategory;
 
 
     @Override
@@ -377,6 +377,19 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
                 .fetchOne();
 
         return Optional.ofNullable(result);
+    }
+
+    @Override
+    public List<OpuCategoryDto> getOpuCategories() {
+        return queryFactory
+                .select(Projections.constructor(
+                        OpuCategoryDto.class,
+                        opuCategory.id,
+                        opuCategory.name
+                ))
+                .from(opuCategory)
+                .orderBy(opuCategory.id.asc())
+                .fetch();
     }
 
     private NumberExpression<Double> randomExpr() {
