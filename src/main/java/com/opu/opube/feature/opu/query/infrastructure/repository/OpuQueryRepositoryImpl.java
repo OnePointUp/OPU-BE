@@ -394,7 +394,7 @@ public class OpuQueryRepositoryImpl implements OpuQueryRepository {
 
     private NumberExpression<Double> randomExpr() {
         return Expressions.numberTemplate(Double.class, "RAND()");
-    }
+}
 
     private void applyRandomFilters(BooleanBuilder predicate,
                                     Integer requiredMinutes,
