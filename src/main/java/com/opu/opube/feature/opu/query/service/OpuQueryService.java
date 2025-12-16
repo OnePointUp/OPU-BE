@@ -10,6 +10,7 @@ import com.opu.opube.feature.opu.command.domain.repository.OpuRandomDrawEventRep
 import com.opu.opube.feature.opu.query.dto.request.OpuListFilterRequest;
 import com.opu.opube.feature.opu.query.dto.request.OpuRandomSource;
 import com.opu.opube.feature.opu.query.dto.response.BlockedOpuSummaryResponse;
+import com.opu.opube.feature.opu.query.dto.response.OpuCategoryDto;
 import com.opu.opube.feature.opu.query.dto.response.OpuCountSummaryResponse;
 import com.opu.opube.feature.opu.query.dto.response.OpuSummaryResponse;
 import jakarta.persistence.EntityManager;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.opu.opube.feature.opu.query.infrastructure.repository.OpuQueryRepository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -127,5 +129,9 @@ public class OpuQueryService {
         return optional.orElseThrow(() -> new BusinessException(ErrorCode.OPU_NOT_FOUND));
 
 
+    }
+
+    public List<OpuCategoryDto> getOpuCategories() {
+        return opuQueryRepository.getOpuCategories();
     }
 }
