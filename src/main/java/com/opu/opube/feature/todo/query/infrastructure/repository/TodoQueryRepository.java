@@ -4,7 +4,6 @@ import java.time.LocalDate;
 import java.util.List;
 
 import com.opu.opube.common.dto.PageResponse;
-import com.opu.opube.feature.todo.command.domain.aggregate.Todo;
 import com.opu.opube.feature.todo.query.dto.response.*;
 
 public interface TodoQueryRepository {
