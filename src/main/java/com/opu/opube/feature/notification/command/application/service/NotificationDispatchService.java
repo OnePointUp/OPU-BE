@@ -115,7 +115,7 @@ public class NotificationDispatchService {
             List<RoutineWeeklyProjection> myRoutines = byMember.getOrDefault(memberId, List.of());
             if (myRoutines.isEmpty()) continue;
 
-            String title = "다음주에 " + myRoutines.size() + "개의 루틴이 있어요 🙂";
+            String title = String.format("다음주에 %d개의 루틴이 있어요 🙂", myRoutines.size());
             String message = buildWeeklyRoutineSummaryMessage(myRoutines, nextWeekStart, nextWeekEnd);
 
             notificationCommandService.sendNotification(
