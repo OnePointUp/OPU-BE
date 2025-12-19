@@ -30,6 +30,11 @@ public class NotificationDispatchService {
     private final NotificationCommandService notificationCommandService;
     private final NotificationMessageFactory messageFactory;
 
+    private static final List<DayOfWeek> KOREAN_DAY_OF_WEEK_ORDER = List.of(
+            DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
+            DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY
+    );
+
     @Transactional
     public void dispatchTimeMatchedNotifications(List<NotificationTypeCode> typeCodes, LocalTime now) {
         LocalTime nowMin = now.truncatedTo(ChronoUnit.MINUTES);
@@ -181,8 +186,9 @@ public class NotificationDispatchService {
 
         return switch (r.frequency()) {
             case WEEKLY -> weeklyDays(r.weekDays(), nextWeekStart, nextWeekEnd);
-            case DAILY -> EnumSet.allOf(DayOfWeek.class).stream()
-                    .filter(d -> isDayInRange(d, nextWeekStart, nextWeekEnd))
+            case DAILY -> nextWeekStart.datesUntil(nextWeekEnd.plusDays(1))
+                    .filter(d -> !d.isBefore(start) && !d.isAfter(end))
+                    .map(LocalDate::getDayOfWeek)
                     .collect(Collectors.toCollection(() -> EnumSet.noneOf(DayOfWeek.class)));
             case BIWEEKLY, MONTHLY, YEARLY -> Set.of();
         };
@@ -209,14 +215,6 @@ public class NotificationDispatchService {
         return (dow.getValue() + 6) % 7;
     }
 
-    private boolean isDayInRange(DayOfWeek dow, LocalDate from, LocalDate to) {
-        LocalDate cursor = from;
-        while (!cursor.isAfter(to)) {
-            if (cursor.getDayOfWeek() == dow) return true;
-            cursor = cursor.plusDays(1);
-        }
-        return false;
-    }
 
     private Set<Integer> parseIntSet(String csv) {
         return Arrays.stream(csv.split(","))
@@ -227,11 +225,7 @@ public class NotificationDispatchService {
     }
 
     private String formatKorDays(Set<DayOfWeek> days) {
-        List<DayOfWeek> order = List.of(
-                DayOfWeek.MONDAY, DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY,
-                DayOfWeek.THURSDAY, DayOfWeek.FRIDAY, DayOfWeek.SATURDAY, DayOfWeek.SUNDAY
-        );
-        List<DayOfWeek> sorted = order.stream().filter(days::contains).toList();
+        List<DayOfWeek> sorted = KOREAN_DAY_OF_WEEK_ORDER.stream().filter(days::contains).toList();
 
         return sorted.stream()
                 .map(this::toKorDay)
