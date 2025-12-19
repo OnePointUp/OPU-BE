@@ -151,7 +151,7 @@ public class NotificationDispatchService {
 
             String titlePart = titles.get(0);
             if (titles.size() >= 2) {
-                titlePart = titlePart + " (+ 외 " + (titles.size() - 1) + "개)";
+                titlePart = String.format("%s (+ 외 %d개)", titlePart, titles.size() - 1);
             }
 
             lines.add("• " + entry.getKey() + ": " + titlePart);
