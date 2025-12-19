@@ -2,8 +2,10 @@ package com.opu.opube.feature.notification.query.infrastructure.repository;
 
 import com.opu.opube.feature.member.command.domain.aggregate.QMember;
 import com.opu.opube.feature.notification.command.domain.aggregate.QMemberNotificationSetting;
+import com.opu.opube.feature.notification.query.dto.RoutineWeeklyProjection;
 import com.opu.opube.feature.notification.query.dto.TodoNotificationProjection;
 import com.opu.opube.feature.notification.query.dto.TodoNotificationResponse;
+import com.opu.opube.feature.todo.command.domain.aggregate.QRoutine;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -97,5 +99,35 @@ public class NotificationScheduleQueryRepository {
                 .stream()
                 .map(it -> (TodoNotificationProjection) it)
                 .toList();
+    }
+
+    public List<RoutineWeeklyProjection> findRoutinesOverlappingNextWeek(
+            List<Long> memberIds,
+            LocalDate nextWeekStart,
+            LocalDate nextWeekEnd
+    ) {
+        QRoutine r = QRoutine.routine;
+
+        return queryFactory
+                .select(Projections.constructor(
+                        RoutineWeeklyProjection.class,
+                        r.member.id,
+                        r.id,
+                        r.title,
+                        r.frequency,
+                        r.startDate,
+                        r.endDate,
+                        r.weekDays,
+                        r.monthDays,
+                        r.days.as("yearDays")
+                ))
+                .from(r)
+                .where(
+                        r.active.isTrue(),
+                        r.member.id.in(memberIds),
+                        r.startDate.loe(nextWeekEnd),
+                        r.endDate.goe(nextWeekStart)
+                )
+                .fetch();
     }
 }

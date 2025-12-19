@@ -34,9 +34,14 @@ public class NotificationScheduleService {
         dispatchService.dispatchTodoReminders(now);
     }
 
-    @Scheduled(cron = "0 0 18 ? * SUN")
+//    @Scheduled(cron = "0 0 18 ? * SUN")
+//    public void processWeeklyRoutineReminder() {
+//        log.info("[Scheduler] WEEKLY ROUTINE REMINDER triggered");
+//        dispatchService.dispatchWeeklyRoutineReminder();
+//    }
+    @Scheduled(cron = "0 * * * * *") // 매 분 실행 (테스트용)
     public void processWeeklyRoutineReminder() {
-        log.info("[Scheduler] WEEKLY ROUTINE REMINDER triggered");
+        log.info("[Scheduler][TEST] WEEKLY ROUTINE REMINDER triggered");
         dispatchService.dispatchWeeklyRoutineReminder();
     }
 }
