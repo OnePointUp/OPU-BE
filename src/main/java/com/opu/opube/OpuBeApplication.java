@@ -9,7 +9,7 @@ import java.util.TimeZone;
 @SpringBootApplication
 public class OpuBeApplication {
     @PostConstruct
-    public void started() {
+    public void initTimezone() {
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Seoul"));
     }
 
