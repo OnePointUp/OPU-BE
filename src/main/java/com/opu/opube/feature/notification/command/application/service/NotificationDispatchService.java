@@ -12,9 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalTime;
+import java.time.*;
+
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 import java.util.*;
@@ -24,6 +23,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class NotificationDispatchService {
+
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final NotificationTypeRepository notificationTypeRepository;
     private final NotificationScheduleQueryRepository scheduleQueryRepository;
@@ -36,12 +37,14 @@ public class NotificationDispatchService {
     );
 
     @Transactional
-    public void dispatchTimeMatchedNotifications(List<NotificationTypeCode> typeCodes, LocalTime now) {
-        LocalTime nowMin = now.truncatedTo(ChronoUnit.MINUTES);
+    public void dispatchTimeMatchedNotifications(List<NotificationTypeCode> typeCodes, LocalTime ignoredNow) {
+        // KST 기준 현재 시각(분 단위)
+        LocalTime nowMin = ZonedDateTime.now(KST).toLocalTime().truncatedTo(ChronoUnit.MINUTES);
 
         for (NotificationTypeCode code : typeCodes) {
             NotificationType type = getType(code);
 
+            // DB에 저장된 기본 시간도 분 단위로 맞춤
             LocalTime target = type.getDefaultTime().truncatedTo(ChronoUnit.MINUTES);
             if (!nowMin.equals(target)) continue;
 
@@ -65,12 +68,13 @@ public class NotificationDispatchService {
     }
 
     @Transactional
-    public void dispatchTodoReminders(LocalTime now) {
+    public void dispatchTodoReminders(LocalTime ignoredNow) {
         NotificationType todoType = getType(NotificationTypeCode.TODO);
 
-        LocalDate today = LocalDate.now();
+        ZonedDateTime nowKst = ZonedDateTime.now(KST).truncatedTo(ChronoUnit.MINUTES);
+        LocalDate today = nowKst.toLocalDate();
 
-        LocalTime base = now.truncatedTo(ChronoUnit.MINUTES);
+        LocalTime base = nowKst.toLocalTime();          // 이미 분 단위
         LocalTime timeFrom = base.plusMinutes(10);
         LocalTime timeTo = timeFrom.plusMinutes(1);
 
