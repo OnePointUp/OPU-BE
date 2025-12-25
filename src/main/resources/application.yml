@@ -62,7 +62,7 @@ app:
 
 
   frontend-base-url: https://www.onepointup.site
-  backend-base-url: http://ec2-13-209-4-254.ap-northeast-2.compute.amazonaws.com:8080
+  backend-base-url: https://api.onepointup.site
 
 kakao:
   oauth:
