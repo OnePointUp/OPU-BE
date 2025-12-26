@@ -4,7 +4,9 @@ import com.opu.opube.feature.member.command.domain.aggregate.Member;
 import com.opu.opube.feature.todo.command.application.dto.request.*;
 import com.opu.opube.feature.todo.command.domain.aggregate.Routine;
 
+import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.Set;
 
 public interface TodoCommandService {
     Long createTodo(Long memberId, TodoCreateDto todoCreateDto);
@@ -19,7 +21,7 @@ public interface TodoCommandService {
 
     Long createTodoByOpu(Long memberId, Long opuId, OpuTodoCreateDto opuTodoCreateDto);
 
-    void createTodoByRoutine(Member member, Routine routine);
+    void createTodoByRoutine(Member member, Routine routine, Set<LocalDate> dates);
 
     void clearOpuFromTodos(Long opuId);
 

@@ -70,8 +70,7 @@ public class TodoCommandServiceImpl implements TodoCommandService {
 
     @Override
     @Transactional
-    public void createTodoByRoutine(Member member, Routine routine) {
-        Set<LocalDate> dates = routineDateCalculator.getDates(routine);
+    public void createTodoByRoutine(Member member, Routine routine, Set<LocalDate> dates) {
         for (LocalDate date : dates) {
             saveTodo(member, routine, date, routine.getAlarmTime());
         }
@@ -96,7 +95,12 @@ public class TodoCommandServiceImpl implements TodoCommandService {
 
         Set<LocalDate> newDates = routineDateCalculator.getDates(routine);
 
-        // 삭제 정책 - scope가 all 이면 모두 삭제, scope가 uncompleted면 uncompleted만 삭제 후 나머지는 연결 해제
+        if (newDates.isEmpty()) {
+            throw new BusinessException(
+                    ErrorCode.ROUTINE_NO_TODO_DATES
+            );
+        }
+
         Set<LocalDate> toDelete = existingDates.stream()
                 .filter(d -> !newDates.contains(d))
                 .collect(Collectors.toSet());
@@ -105,7 +109,7 @@ public class TodoCommandServiceImpl implements TodoCommandService {
                 .filter(d -> !existingDates.contains(d))
                 .collect(Collectors.toSet());
 
-        // 삭제 처리 - 정책에 따름
+        // 삭제/연결해제 처리
         deleteOrUnlinkTodos(existingTodos, toDelete, scope);
 
         // 신규 생성
