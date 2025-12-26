@@ -58,14 +58,11 @@ public class RoutineCommandServiceImpl implements RoutineCommandService {
             throw new BusinessException(ErrorCode.ROUTINE_FORBIDDEN);
         }
 
-        // routine 업데이트
         routine.update(dto);
 
-        // todos 업데이트
-        todoCommandService.updateTodoByRoutine(routine.getId(), dto.getTitle(), dto.getAlarmTime());
-
-        // 변경된 루틴 주기 기반으로 Todos diff 반영
         todoCommandService.updateTodoByRoutineChange(member, routine, dto.getScope());
+
+        todoCommandService.updateTodoByRoutine(routine.getId(), dto.getTitle(), dto.getAlarmTime());
     }
 
     @Override
