@@ -70,8 +70,7 @@ public class TodoCommandServiceImpl implements TodoCommandService {
 
     @Override
     @Transactional
-    public void createTodoByRoutine(Member member, Routine routine) {
-        Set<LocalDate> dates = routineDateCalculator.getDates(routine);
+    public void createTodoByRoutine(Member member, Routine routine, Set<LocalDate> dates) {
         for (LocalDate date : dates) {
             saveTodo(member, routine, date, routine.getAlarmTime());
         }

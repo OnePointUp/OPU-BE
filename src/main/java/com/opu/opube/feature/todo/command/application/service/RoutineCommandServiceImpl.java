@@ -9,9 +9,13 @@ import com.opu.opube.feature.todo.command.application.dto.request.RoutineScope;
 import com.opu.opube.feature.todo.command.application.dto.request.RoutineUpdateDto;
 import com.opu.opube.feature.todo.command.domain.aggregate.Routine;
 import com.opu.opube.feature.todo.command.domain.repository.RoutineRepository;
+import com.opu.opube.feature.todo.command.domain.service.RoutineDateCalculator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -20,7 +24,7 @@ public class RoutineCommandServiceImpl implements RoutineCommandService {
     private final RoutineRepository routineRepository;
     private final MemberQueryService memberQueryService;
     private final TodoCommandService todoCommandService;
-
+    private final RoutineDateCalculator routineDateCalculator;
 
     @Override
     @Transactional
@@ -29,10 +33,16 @@ public class RoutineCommandServiceImpl implements RoutineCommandService {
 
         // routine
         Routine routine = Routine.toEntity(routineCreateDto, member);
+
+        Set<LocalDate> dates = routineDateCalculator.getDates(routine);
+        if (dates.isEmpty()) {
+            throw new BusinessException(ErrorCode.ROUTINE_NO_TODO_DATES);
+        }
+
         Routine savedRoutine = routineRepository.save(routine);
 
         // todo
-        todoCommandService.createTodoByRoutine(member, savedRoutine);
+        todoCommandService.createTodoByRoutine(member, savedRoutine, dates);
 
         return savedRoutine.getId();
     }
