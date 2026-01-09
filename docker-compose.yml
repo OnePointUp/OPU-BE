@@ -97,9 +97,33 @@ services:
     restart: always
     environment:
       - DISCORD_WEBHOOK=${DISCORD_WEBHOOK}
+  loki:
+    image: grafana/loki:2.9.3
+    container_name: opu-loki
+    restart: always
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./monitoring/loki/loki.yml:/etc/loki/loki.yml:ro
+      - loki_data:/loki
+    command: -config.file=/etc/loki/loki.yml
+
+  promtail:
+    image: grafana/promtail:2.9.3
+    container_name: opu-promtail
+    restart: always
+    volumes:
+      - ./monitoring/promtail/promtail.yml:/etc/promtail/promtail.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/log:/var/log:ro
+    command: -config.file=/etc/promtail/promtail.yml
+    depends_on:
+      - loki
+
 
 volumes:
   mariadb_data:
   redis_data:
   prometheus_data:
   grafana_data:
+  loki_data:
