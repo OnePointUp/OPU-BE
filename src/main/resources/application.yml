@@ -24,7 +24,7 @@ spring:
     properties:
       hibernate:
         format_sql: true
-    show-sql: true
+    show-sql: false
   flyway:
     enabled: true
     baseline-on-migrate: true
@@ -64,6 +64,7 @@ app:
   frontend-base-url: https://www.onepointup.site
   backend-base-url: https://api.onepointup.site
 
+
 kakao:
   oauth:
     client-id: ${KAKAO_REST_API_KEY}
@@ -87,3 +88,20 @@ webpush:
       public-key: ${WEBPUSH_PUBLIC_KEY}
       private-key: ${WEBPUSH_PRIVATE_KEY}
       subject: ${WEBPUSH_SUBJECT}
+
+logging:
+  level:
+    org.hibernate.SQL: INFO
+    org.hibernate.orm.jdbc.bind: OFF
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+  metrics:
+    tags:
+      application: ${spring.application.name}

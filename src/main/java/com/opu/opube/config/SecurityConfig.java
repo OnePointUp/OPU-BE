@@ -48,7 +48,8 @@ public class SecurityConfig {
                                 "/api/v1/auth/refresh",
                                 "/api/v1/auth/password/reset",
                                 "/api/v1/auth/password/reset-request",
-                                "/api/v1/auth/kakao/**").permitAll()
+                                "/api/v1/auth/kakao/**",
+                                "/actuator/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .anyRequest().authenticated()
                 )

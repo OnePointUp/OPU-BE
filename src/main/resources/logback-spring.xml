@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- ========================= -->
+    <!-- Spring properties -->
+    <!-- ========================= -->
+    <springProperty name="APP_NAME"
+                    source="spring.application.name"
+                    defaultValue="opu"/>
+
+    <springProperty name="ACTIVE_PROFILE"
+                    source="spring.profiles.active"
+                    defaultValue="local"/>
+
+    <!-- ========================= -->
+    <!-- JSON Console Appender -->
+    <!-- ========================= -->
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+            <providers>
+
+                <!-- timestamp -->
+                <timestamp>
+                    <timeZone>Asia/Seoul</timeZone>
+                </timestamp>
+
+                <!-- basics -->
+                <logLevel/>
+                <loggerName/>
+                <threadName/>
+                <message/>
+
+                <!-- MDC -->
+                <mdc/>
+
+                <!-- stacktrace -->
+                <stackTrace/>
+
+                <!-- static fields -->
+                <globalCustomFields>
+                    {"app":"${APP_NAME}","profile":"${ACTIVE_PROFILE}"}
+                </globalCustomFields>
+
+            </providers>
+        </encoder>
+    </appender>
+
+    <!-- ========================= -->
+    <!-- Baseline: noise suppression (all profiles) -->
+    <!-- ========================= -->
+
+    <!-- Spring framework -->
+    <logger name="org.springframework" level="INFO"/>
+    <logger name="org.springframework.web" level="INFO"/>
+    <logger name="org.springframework.security" level="INFO"/>
+
+    <!-- DB driver / pool noise -->
+    <logger name="org.mariadb" level="WARN"/>
+    <logger name="com.zaxxer.hikari" level="INFO"/>
+
+    <!-- JMX / RMI noise -->
+    <logger name="sun.rmi" level="WARN"/>
+    <logger name="javax.management" level="WARN"/>
+
+    <!-- Hibernate internal verbose logs -->
+    <logger name="org.hibernate.orm.sql.ast" level="WARN"/>
+    <logger name="org.hibernate.query.sqm" level="WARN"/>
+    <logger name="org.hibernate.internal.util.EntityPrinter" level="WARN"/>
+    <logger name="org.hibernate.event.internal" level="WARN"/>
+    <logger name="org.hibernate.orm.results" level="WARN"/>
+
+    <!-- ========================= -->
+    <!-- Root -->
+    <!-- ========================= -->
+    <root level="INFO">
+        <appender-ref ref="JSON_CONSOLE"/>
+    </root>
+
+    <!-- ========================= -->
+    <!-- Profiles -->
+    <!-- ========================= -->
+
+    <!-- local/dev -->
+    <springProfile name="local,dev">
+        <!-- application -->
+        <logger name="com.opu.opube" level="DEBUG"/>
+
+        <logger name="org.hibernate.SQL" level="DEBUG"/>
+        <logger name="org.hibernate.orm.jdbc.bind" level="TRACE"/>
+
+        <root level="INFO">
+            <appender-ref ref="JSON_CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <!-- prod  -->
+    <springProfile name="prod">
+        <logger name="com.opu.opube" level="INFO"/>
+
+        <logger name="org.hibernate.SQL" level="OFF"/>
+        <logger name="org.hibernate.orm.jdbc.bind" level="OFF"/>
+
+        <root level="INFO">
+            <appender-ref ref="JSON_CONSOLE"/>
+        </root>
+    </springProfile>
+
+</configuration>
