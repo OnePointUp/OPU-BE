@@ -2,10 +2,7 @@ package com.opu.opube.feature.todo.query.infrastructure.repository;
 
 import com.opu.opube.common.dto.PageResponse;
 import com.opu.opube.feature.todo.command.domain.aggregate.QTodo;
-import com.opu.opube.feature.todo.query.dto.response.DayTodoStats;
-import com.opu.opube.feature.todo.query.dto.response.TodoResponseDto;
-import com.opu.opube.feature.todo.query.dto.response.TodoStatRow;
-import com.opu.opube.feature.todo.query.dto.response.TodoStatisticsDto;
+import com.opu.opube.feature.todo.query.dto.response.*;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
@@ -57,6 +54,43 @@ public class TodoQueryRepositoryImpl implements TodoQueryRepository {
 
         return PageResponse.from(content, totalCount, page, size);
     }
+
+    @Override
+    public TodoMonthResponse getTodosInMonth(Long memberId, int year, int month) {
+        QTodo todo = QTodo.todo;
+
+        LocalDate start = LocalDate.of(year, month, 1);
+        LocalDate end = start.plusMonths(1);
+
+        List<TodoResponseDto> rows = queryFactory
+                .selectFrom(todo)
+                .where(
+                        todo.member.id.eq(memberId),
+                        todo.deletedAt.isNull(),
+                        todo.scheduledDate.goe(start),
+                        todo.scheduledDate.lt(end)
+                )
+                .orderBy(todo.scheduledDate.asc(), todo.sortOrder.asc())
+                .fetch()
+                .stream()
+                .map(TodoResponseDto::fromEntity)
+                .toList();
+
+        // 날짜별 그룹핑
+        var grouped = rows.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        TodoResponseDto::getScheduledDate,
+                        java.util.LinkedHashMap::new,
+                        java.util.stream.Collectors.toList()
+                ));
+
+        List<TodoDayGroup> days = grouped.entrySet().stream()
+                .map(e -> new TodoDayGroup(e.getKey(), e.getValue()))
+                .toList();
+
+        return new TodoMonthResponse(year, month, days);
+    }
+
 
     @Override
     public List<TodoStatisticsDto> findStatisticsByDateRange(Long memberId, LocalDate startDate, LocalDate endDate) {

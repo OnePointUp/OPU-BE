@@ -1,4 +1,9 @@
+server:
+  forward-headers-strategy: framework
+
 spring:
+  jackson:
+    time-zone: Asia/Seoul
   profiles:
     active: dev
   application:
@@ -7,6 +12,12 @@ spring:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 2
+      idle-timeout: 300000
+      max-lifetime: 1800000
+      connection-timeout: 30000
   jpa:
     hibernate:
       ddl-auto: update
@@ -49,8 +60,10 @@ app:
     access-exp-sec: 1209600
     refresh-exp-sec: 1209600
 
-  frontend-base-url: https://opu-fe.vercel.app
-  backend-base-url: http://ec2-13-209-4-254.ap-northeast-2.compute.amazonaws.com:8080
+
+  frontend-base-url: https://www.onepointup.site
+  backend-base-url: https://api.onepointup.site
+
 
 kakao:
   oauth:

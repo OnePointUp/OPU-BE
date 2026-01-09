@@ -28,6 +28,11 @@ public class TodoQueryService {
     }
 
     @Transactional(readOnly = true)
+    public TodoMonthResponse getTodosInMonth(Long memberId, int year, int month) {
+        return todoQueryRepository.getTodosInMonth(memberId, year, month);
+    }
+
+    @Transactional(readOnly = true)
     public List<TodoStatisticsDto> getStatisticsByDateRange(Long memberId, LocalDate startDate, LocalDate endDate) {
         List<TodoStatisticsDto> results = todoQueryRepository.findStatisticsByDateRange(memberId, startDate, endDate);
 

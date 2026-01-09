@@ -1,11 +1,13 @@
 package com.opu.opube.feature.opu.query.infrastructure.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.opu.opube.common.dto.PageResponse;
 import com.opu.opube.feature.opu.command.domain.aggregate.Opu;
 import com.opu.opube.feature.opu.query.dto.request.OpuListFilterRequest;
 import com.opu.opube.feature.opu.query.dto.response.BlockedOpuSummaryResponse;
+import com.opu.opube.feature.opu.query.dto.response.OpuCategoryDto;
 import com.opu.opube.feature.opu.query.dto.response.OpuSummaryResponse;
 
 public interface OpuQueryRepository {
@@ -57,4 +59,5 @@ public interface OpuQueryRepository {
             Long excludeOpuId
     );
 
+    List<OpuCategoryDto> getOpuCategories();
 }
