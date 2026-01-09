@@ -6,6 +6,7 @@ import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
 import com.opu.opube.feature.opu.query.dto.request.OpuListFilterRequest;
 import com.opu.opube.feature.opu.query.dto.request.OpuRandomSource;
 import com.opu.opube.feature.opu.query.dto.response.BlockedOpuSummaryResponse;
+import com.opu.opube.feature.opu.query.dto.response.OpuCategoryDto;
 import com.opu.opube.feature.opu.query.dto.response.OpuSummaryResponse;
 import com.opu.opube.feature.opu.query.service.OpuQueryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,6 +20,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Tag(
         name = "OPU - Query",
@@ -245,6 +248,20 @@ public class OpuQueryController {
 
         OpuSummaryResponse result =
                 opuQueryService.drawRandomOpu(memberId, source, requiredMinutes, excludeOpuId);
+
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    @Operation(
+            summary = "OPU 카테고리 조회",
+            description = """
+                OPU 카테고리를 id, 카테고리명 형식으로 반환합니다.
+                """,
+            security = @SecurityRequirement(name = "BearerAuth")
+    )
+    @GetMapping("/categories")
+    public ResponseEntity<ApiResponse<List<OpuCategoryDto>>> getOpuCategories() {
+        List<OpuCategoryDto> result = opuQueryService.getOpuCategories();
 
         return ResponseEntity.ok(ApiResponse.success(result));
     }

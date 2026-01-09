@@ -2,6 +2,7 @@ package com.opu.opube.feature.todo.query.controller;
 
 import com.opu.opube.common.dto.PageResponse;
 import com.opu.opube.feature.auth.command.application.security.MemberPrincipal;
+import com.opu.opube.feature.todo.query.dto.response.TodoMonthResponse;
 import com.opu.opube.feature.todo.query.dto.response.TodoResponseDto;
 import com.opu.opube.feature.todo.query.dto.response.TodoStatisticsDto;
 import io.swagger.v3.oas.annotations.Operation;
@@ -40,6 +41,20 @@ public class TodoQueryController {
         Long memberId = memberPrincipal.getMemberId();
         PageResponse<TodoResponseDto> todos = todoQueryService.getTodoByUserAndDate(memberId, date, page, size);
         return ResponseEntity.ok(todos);
+    }
+
+    @Operation(
+            summary = "월별 todo 조회",
+            description = "캘린더 월 뷰에서 표시하기 위해 해당 월의 todo를 날짜별로 묶어 조회합니다."
+    )
+    @GetMapping("/month")
+    public ResponseEntity<TodoMonthResponse> getTodosInMonth(
+            @AuthenticationPrincipal MemberPrincipal memberPrincipal,
+            @RequestParam int year,
+            @RequestParam int month
+    ) {
+        Long memberId = memberPrincipal.getMemberId();
+        return ResponseEntity.ok(todoQueryService.getTodosInMonth(memberId, year, month));
     }
 
     /**
